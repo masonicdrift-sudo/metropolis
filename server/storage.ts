@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import type {
   Unit, InsertUnit,
   Operation, InsertOperation,
@@ -9,6 +10,7 @@ import type {
   CommsLog, InsertCommsLog,
   Asset, InsertAsset,
   Threat, InsertThreat,
+  User, InsertUser,
 } from "@shared/schema";
 
 const sqlite = new Database("tacedge.db");
@@ -16,6 +18,14 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user',
+    created_at TEXT NOT NULL,
+    last_login TEXT DEFAULT ''
+  );
   CREATE TABLE IF NOT EXISTS units (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     callsign TEXT NOT NULL,
@@ -89,6 +99,19 @@ sqlite.exec(`
   );
 `);
 
+// Seed Overlord admin account
+const adminExists = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
+if (!adminExists) {
+  const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
+  db.insert(schema.users).values({
+    username: "Overlord",
+    passwordHash: hash,
+    role: "admin",
+    createdAt: new Date().toISOString(),
+    lastLogin: "",
+  }).run();
+}
+
 // Seed demo data if empty
 const unitCount = (db.select().from(schema.units).all()).length;
 if (unitCount === 0) {
@@ -139,6 +162,13 @@ if (unitCount === 0) {
 }
 
 export interface IStorage {
+  // Users
+  getUsers(): Omit<User, "passwordHash">[];
+  getUserById(id: number): User | undefined;
+  getUserByUsername(username: string): User | undefined;
+  createUser(username: string, password: string, role: string): User;
+  deleteUser(id: number): void;
+  updateLastLogin(id: number): void;
   // Units
   getUnits(): Unit[];
   getUnit(id: number): Unit | undefined;
@@ -175,6 +205,39 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // Users
+  getUsers() {
+    return db.select({
+      id: schema.users.id,
+      username: schema.users.username,
+      role: schema.users.role,
+      createdAt: schema.users.createdAt,
+      lastLogin: schema.users.lastLogin,
+    }).from(schema.users).all();
+  }
+  getUserById(id: number) {
+    return db.select().from(schema.users).where(eq(schema.users.id, id)).get();
+  }
+  getUserByUsername(username: string) {
+    return db.select().from(schema.users).where(eq(schema.users.username, username)).get();
+  }
+  createUser(username: string, password: string, role: string) {
+    const hash = bcrypt.hashSync(password, 10);
+    return db.insert(schema.users).values({
+      username,
+      passwordHash: hash,
+      role,
+      createdAt: new Date().toISOString(),
+      lastLogin: "",
+    }).returning().get();
+  }
+  deleteUser(id: number) {
+    db.delete(schema.users).where(eq(schema.users.id, id)).run();
+  }
+  updateLastLogin(id: number) {
+    db.update(schema.users).set({ lastLogin: new Date().toISOString() }).where(eq(schema.users.id, id)).run();
+  }
+
   // Units
   getUnits() { return db.select().from(schema.units).all(); }
   getUnit(id: number) { return db.select().from(schema.units).where(eq(schema.units.id, id)).get(); }

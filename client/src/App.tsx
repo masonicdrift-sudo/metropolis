@@ -2,6 +2,7 @@ import { Switch, Route, Router, Link, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
+import { AuthProvider, useAuth } from "./lib/auth";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "./pages/Dashboard";
 import Operations from "./pages/Operations";
@@ -10,10 +11,12 @@ import Communications from "./pages/Communications";
 import Assets from "./pages/Assets";
 import Threats from "./pages/Threats";
 import Units from "./pages/Units";
+import UserManagement from "./pages/UserManagement";
+import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
-  Crosshair, Package, Users, Zap
+  Crosshair, Package, Users, Zap, LogOut, ShieldCheck
 } from "lucide-react";
 
 const NAV = [
@@ -28,6 +31,8 @@ const NAV = [
 
 function Sidebar() {
   const [location] = useLocation();
+  const { user, logout } = useAuth();
+
   return (
     <aside className="flex flex-col w-[200px] min-h-screen border-r border-border bg-card shrink-0">
       {/* Logo */}
@@ -58,23 +63,48 @@ function Sidebar() {
           const active = location === path || (path !== "/" && location.startsWith(path));
           return (
             <Link key={path} href={path} className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
-                active
-                  ? "bg-green-950/60 text-green-400 border border-green-900/60"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-              }`} data-testid={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}>
-                <Icon size={13} className={active ? "text-green-400" : ""} />
-                {label}
-              </Link>
+              active
+                ? "bg-green-950/60 text-green-400 border border-green-900/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`} data-testid={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+              <Icon size={13} className={active ? "text-green-400" : ""} />
+              {label}
+            </Link>
           );
         })}
+
+        {/* Admin-only: User Management */}
+        {user?.role === "admin" && (
+          <Link href="/users" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
+            location === "/users"
+              ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`} data-testid="nav-users">
+            <ShieldCheck size={13} className={location === "/users" ? "text-yellow-400" : ""} />
+            USER MGMT
+          </Link>
+        )}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
-        <div className="text-[10px] text-muted-foreground space-y-1">
-          <div className="flex items-center gap-1"><Zap size={9} className="text-yellow-500" /><span>POWER: NOMINAL</span></div>
-          <div className="text-[9px] tracking-wider opacity-60">TOC // SECTOR ALPHA</div>
+      {/* User info + logout */}
+      <div className="px-3 py-3 border-t border-border space-y-2">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-5 h-5 rounded bg-green-900/50 border border-green-800/50 flex items-center justify-center">
+            {user?.role === "admin"
+              ? <ShieldCheck size={11} className="text-yellow-400" />
+              : <Users size={11} className="text-green-400" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">{user?.username}</div>
+            <div className="text-[9px] text-muted-foreground tracking-wider uppercase">{user?.role === "admin" ? "ADMINISTRATOR" : "OPERATOR"}</div>
+          </div>
         </div>
+        <button onClick={logout}
+          className="w-full flex items-center gap-2 px-3 py-1.5 rounded text-[10px] text-muted-foreground hover:text-red-400 hover:bg-red-950/20 transition-all tracking-wider"
+          data-testid="button-logout">
+          <LogOut size={11} />LOGOUT
+        </button>
+        <div className="text-[9px] text-muted-foreground/50 tracking-wider px-1">TOC // SECTOR ALPHA</div>
       </div>
     </aside>
   );
@@ -91,24 +121,48 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center scanlines">
+        <div className="text-center space-y-2">
+          <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="text-[10px] text-muted-foreground tracking-widest">INITIALIZING NODE...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <Login />;
+
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/operations" component={Operations} />
+        <Route path="/intel" component={Intel} />
+        <Route path="/comms" component={Communications} />
+        <Route path="/assets" component={Assets} />
+        <Route path="/threats" component={Threats} />
+        <Route path="/units" component={Units} />
+        <Route path="/users" component={user.role === "admin" ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router hook={useHashLocation}>
-        <Layout>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/operations" component={Operations} />
-            <Route path="/intel" component={Intel} />
-            <Route path="/comms" component={Communications} />
-            <Route path="/assets" component={Assets} />
-            <Route path="/threats" component={Threats} />
-            <Route path="/units" component={Units} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
-      </Router>
-      <Toaster />
+      <AuthProvider>
+        <Router hook={useHashLocation}>
+          <AppRoutes />
+        </Router>
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

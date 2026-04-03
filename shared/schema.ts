@@ -2,6 +2,19 @@ import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// ─── Users / Auth ─────────────────────────────────────────────────────────────
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("user"), // admin | user
+  createdAt: text("created_at").notNull(),
+  lastLogin: text("last_login").default(""),
+});
+export const insertUserSchema = createInsertSchema(users).omit({ id: true });
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 // ─── Units / Personnel ───────────────────────────────────────────────────────
 export const units = sqliteTable("units", {
   id: integer("id").primaryKey({ autoIncrement: true }),

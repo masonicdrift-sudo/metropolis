@@ -33,6 +33,22 @@ export const insertAccessCodeSchema = createInsertSchema(accessCodes).omit({ id:
 export type InsertAccessCode = z.infer<typeof insertAccessCodeSchema>;
 export type AccessCode = typeof accessCodes.$inferSelect;
 
+// ─── Messages (DMs + General) ───────────────────────────────────────────────
+export const messages = sqliteTable("messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  fromUsername: text("from_username").notNull(),
+  // For DMs: toUsername is the recipient. For general: toUsername = 'GENERAL'
+  toUsername: text("to_username").notNull(),
+  content: text("content").notNull(),
+  sentAt: text("sent_at").notNull(),
+  // Track per-recipient read status as JSON: { "username": true/false }
+  readBy: text("read_by").notNull().default("{}"),
+  deleted: integer("deleted", { mode: "boolean" }).default(false),
+});
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true });
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
 // ─── Units / Personnel ───────────────────────────────────────────────────────
 export const units = sqliteTable("units", {
   id: integer("id").primaryKey({ autoIncrement: true }),

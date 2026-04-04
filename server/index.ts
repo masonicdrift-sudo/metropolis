@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectSqlite3 from "connect-sqlite3";
 import helmet from "helmet";
+import { WebSocketServer, WebSocket } from "ws";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -30,7 +31,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:"],
     },
   },
   // Hide Express version from response headers
@@ -138,18 +139,59 @@ app.use((req, res, next) => {
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  httpServer.listen({ port, host: "0.0.0.0", reusePort: true }, () => {
+    log(`serving on port ${port}`);
+  });
+
+  // ── WebSocket server for real-time messaging ───────────────────────────────
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+  // Map of username -> Set of WebSocket connections (same user can have multiple tabs)
+  const clients = new Map<string, Set<WebSocket>>();
+
+  function broadcast(message: object, toUsernames?: string[]) {
+    const data = JSON.stringify(message);
+    if (toUsernames) {
+      toUsernames.forEach(username => {
+        clients.get(username)?.forEach(ws => {
+          if (ws.readyState === WebSocket.OPEN) ws.send(data);
+        });
+      });
+    } else {
+      // Broadcast to all connected clients
+      clients.forEach(sockets => sockets.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(data);
+      }));
+    }
+  }
+
+  // Export broadcast so routes can use it
+  (global as any).__wsBroadcast = broadcast;
+
+  wss.on("connection", (ws, req) => {
+    let connUsername: string | null = null;
+
+    ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+        // First message must be AUTH with username
+        if (msg.type === "AUTH") {
+          connUsername = msg.username;
+          if (!clients.has(connUsername!)) clients.set(connUsername!, new Set());
+          clients.get(connUsername!)!.add(ws);
+          ws.send(JSON.stringify({ type: "AUTH_OK" }));
+        }
+      } catch {}
+    });
+
+    ws.on("close", () => {
+      if (connUsername) {
+        clients.get(connUsername)?.delete(ws);
+        if (clients.get(connUsername)?.size === 0) clients.delete(connUsername);
+      }
+    });
+
+    ws.on("error", () => {});
+  });
 })();

@@ -13,11 +13,14 @@ import Threats from "./pages/Threats";
 import Units from "./pages/Units";
 import UserManagement from "./pages/UserManagement";
 import AccessCodes from "./pages/AccessCodes";
+import Messaging from "./pages/Messaging";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "./lib/queryClient";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
-  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown
+  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown, MessageSquare
 } from "lucide-react";
 
 const NAV = [
@@ -33,6 +36,15 @@ const NAV = [
 function Sidebar() {
   const [location] = useLocation();
   const { user, logout } = useAuth();
+
+  // Unread message badge
+  const { data: unread } = useQuery<{ dms: number; general: number }>({
+    queryKey: ["/api/messages/unread"],
+    queryFn: () => apiRequest("GET", "/api/messages/unread"),
+    refetchInterval: 15000,
+    enabled: !!user,
+  });
+  const totalUnread = (unread?.dms || 0) + (unread?.general || 0);
 
   return (
     <aside className="flex flex-col w-[200px] min-h-screen border-r border-border bg-card shrink-0">
@@ -73,6 +85,27 @@ function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Messaging — for all users */}
+        {(() => {
+          const path = "/messages";
+          const active = location === path || location.startsWith(path);
+          return (
+            <Link href={path} className={`flex items-center justify-between px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
+              active ? "bg-green-950/60 text-green-400 border border-green-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            }`} data-testid="nav-messages">
+              <div className="flex items-center gap-3">
+                <MessageSquare size={13} className={active ? "text-green-400" : ""} />
+                MESSAGES
+              </div>
+              {totalUnread > 0 && !active && (
+                <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 rounded-full min-w-[16px] text-center">
+                  {totalUnread > 99 ? "99+" : totalUnread}
+                </span>
+              )}
+            </Link>
+          );
+        })()}
 
         {/* Admin+: User Management */}
         {(user?.role === "admin" || user?.role === "owner") && (
@@ -136,7 +169,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background scanlines">
       <Sidebar />
-      <main className="flex-1 min-w-0 overflow-y-auto">
+      <main className="flex-1 min-w-0 overflow-y-auto flex flex-col">
         {children}
       </main>
     </div>
@@ -169,6 +202,7 @@ function AppRoutes() {
         <Route path="/assets" component={Assets} />
         <Route path="/threats" component={Threats} />
         <Route path="/units" component={Units} />
+        <Route path="/messages" component={Messaging} />
         <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />

@@ -132,6 +132,93 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  // ── Messaging ────────────────────────────────────────────────────────────────
+  // General channel
+  app.get("/api/messages/general", requireAuth, (req, res) => {
+    const msgs = storage.getGeneralMessages();
+    // Mark all as read for this user
+    const me = req.session.username!;
+    msgs.forEach(m => {
+      if (m.fromUsername !== me) {
+        const readBy = JSON.parse(m.readBy || "{}");
+        if (!readBy[me]) {
+          readBy[me] = true;
+          const { eq } = require("drizzle-orm");
+        }
+      }
+    });
+    res.json(msgs);
+  });
+
+  app.post("/api/messages/general", requireAuth, (req, res) => {
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const msg = storage.sendMessage(req.session.username!, "GENERAL", content.trim());
+    // Broadcast to all connected WS clients
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "GENERAL_MESSAGE", message: msg });
+    res.status(201).json(msg);
+  });
+
+  // DM list for current user
+  app.get("/api/messages/dms", requireAuth, (req, res) => {
+    res.json(storage.getDMList(req.session.username!));
+  });
+
+  // DM conversation with a specific user
+  app.get("/api/messages/dm/:username", requireAuth, (req, res) => {
+    const me = req.session.username!;
+    const other = req.params.username;
+    const msgs = storage.getDMConversation(me, other);
+    // Mark as read
+    storage.markRead(other, me, me);
+    res.json(msgs);
+  });
+
+  app.post("/api/messages/dm/:username", requireAuth, (req, res) => {
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const me = req.session.username!;
+    const to = req.params.username;
+    if (me === to) return res.status(400).json({ error: "Cannot DM yourself" });
+    const msg = storage.sendMessage(me, to, content.trim());
+    // Push to both sender and recipient via WebSocket
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "DM", message: msg }, [me, to]);
+    res.status(201).json(msg);
+  });
+
+  // Unread counts
+  app.get("/api/messages/unread", requireAuth, (req, res) => {
+    const me = req.session.username!;
+    res.json({
+      dms: storage.getUnreadDMCount(me),
+      general: storage.getUnreadGeneralCount(me),
+    });
+  });
+
+  // Mark general as read
+  app.post("/api/messages/general/read", requireAuth, (req, res) => {
+    const me = req.session.username!;
+    const msgs = storage.getGeneralMessages();
+    // Mark all unread general messages as read
+    msgs.forEach(m => {
+      if (m.fromUsername !== me) {
+        const readBy = JSON.parse(m.readBy || "{}");
+        if (!readBy[me]) storage.markRead(m.fromUsername, "GENERAL", me);
+      }
+    });
+    res.json({ ok: true });
+  });
+
+  // Delete a message (owner of message or admin+)
+  app.delete("/api/messages/:id", requireAuth, (req, res) => {
+    storage.deleteMessage(Number(req.params.id));
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "MESSAGE_DELETED", id: Number(req.params.id) });
+    res.status(204).send();
+  });
+
   // ── Units ────────────────────────────────────────────────────────────────────
   app.get("/api/units", requireAuth, (_, res) => res.json(storage.getUnits()));
   app.post("/api/units", requireAuth, (req, res) => {

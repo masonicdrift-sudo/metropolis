@@ -12,6 +12,7 @@ import type {
   Threat, InsertThreat,
   User, InsertUser,
   AccessCode,
+  Message,
 } from "@shared/schema";
 
 const sqlite = new Database("tacedge.db");
@@ -19,6 +20,16 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_username TEXT NOT NULL,
+    to_username TEXT NOT NULL,
+    content TEXT NOT NULL,
+    sent_at TEXT NOT NULL,
+    read_by TEXT NOT NULL DEFAULT '{}',
+    deleted INTEGER DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_messages_to ON messages(to_username);
   CREATE TABLE IF NOT EXISTS access_codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE,
@@ -186,6 +197,15 @@ if (unitCount === 0) {
 }
 
 export interface IStorage {
+  // Messages
+  getGeneralMessages(limit?: number): Message[];
+  getDMConversation(userA: string, userB: string, limit?: number): Message[];
+  getDMList(username: string): { username: string; lastMessage: string; sentAt: string; unread: number }[];
+  sendMessage(from: string, to: string, content: string): Message;
+  markRead(fromUsername: string, toUsername: string, readerUsername: string): void;
+  getUnreadDMCount(username: string): number;
+  getUnreadGeneralCount(username: string): number;
+  deleteMessage(id: number): void;
   // Access Codes
   getAccessCodes(): AccessCode[];
   generateAccessCode(createdBy: string, expiresAt?: string): AccessCode;
@@ -234,6 +254,81 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // Messages
+  getGeneralMessages(limit = 200): Message[] {
+    return db.select().from(schema.messages)
+      .where(eq(schema.messages.toUsername, "GENERAL"))
+      .orderBy(schema.messages.id)
+      .all().slice(-limit);
+  }
+  getDMConversation(userA: string, userB: string, limit = 200): Message[] {
+    const all = db.select().from(schema.messages).all();
+    return all.filter(m =>
+      (m.fromUsername === userA && m.toUsername === userB) ||
+      (m.fromUsername === userB && m.toUsername === userA)
+    ).slice(-limit);
+  }
+  getDMList(username: string): { username: string; lastMessage: string; sentAt: string; unread: number }[] {
+    const all = db.select().from(schema.messages).all();
+    const dmMap = new Map<string, { lastMessage: string; sentAt: string; unread: number }>();
+    for (const m of all) {
+      if (m.toUsername === "GENERAL") continue;
+      const other = m.fromUsername === username ? m.toUsername : m.fromUsername;
+      if (m.fromUsername !== username && m.toUsername !== username) continue;
+      const existing = dmMap.get(other);
+      if (!existing || m.sentAt > existing.sentAt) {
+        const readBy = JSON.parse(m.readBy || "{}");
+        const unread = m.fromUsername !== username && !readBy[username] ? 1 : 0;
+        dmMap.set(other, { lastMessage: m.content, sentAt: m.sentAt, unread: existing ? existing.unread + unread : unread });
+      }
+    }
+    return Array.from(dmMap.entries()).map(([u, v]) => ({ username: u, ...v }))
+      .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
+  }
+  sendMessage(from: string, to: string, content: string): Message {
+    return db.insert(schema.messages).values({
+      fromUsername: from,
+      toUsername: to,
+      content,
+      sentAt: new Date().toISOString(),
+      readBy: JSON.stringify({ [from]: true }),
+      deleted: false,
+    }).returning().get();
+  }
+  markRead(fromUsername: string, toUsername: string, readerUsername: string): void {
+    // Mark all messages in this conversation as read by the reader
+    const msgs = this.getDMConversation(fromUsername, toUsername);
+    for (const m of msgs) {
+      if (m.fromUsername !== readerUsername) {
+        const readBy = JSON.parse(m.readBy || "{}");
+        if (!readBy[readerUsername]) {
+          readBy[readerUsername] = true;
+          db.update(schema.messages).set({ readBy: JSON.stringify(readBy) }).where(eq(schema.messages.id, m.id)).run();
+        }
+      }
+    }
+  }
+  getUnreadDMCount(username: string): number {
+    const all = db.select().from(schema.messages).all();
+    return all.filter(m => {
+      if (m.toUsername === "GENERAL" || m.fromUsername === username) return false;
+      if (m.toUsername !== username) return false;
+      const readBy = JSON.parse(m.readBy || "{}");
+      return !readBy[username];
+    }).length;
+  }
+  getUnreadGeneralCount(username: string): number {
+    const all = db.select().from(schema.messages).all();
+    return all.filter(m => {
+      if (m.toUsername !== "GENERAL" || m.fromUsername === username) return false;
+      const readBy = JSON.parse(m.readBy || "{}");
+      return !readBy[username];
+    }).length;
+  }
+  deleteMessage(id: number): void {
+    db.update(schema.messages).set({ deleted: true, content: "[message deleted]" }).where(eq(schema.messages.id, id)).run();
+  }
+
   // Access Codes
   getAccessCodes() {
     return db.select().from(schema.accessCodes).orderBy(desc(schema.accessCodes.id)).all();

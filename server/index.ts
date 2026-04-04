@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectSqlite3 from "connect-sqlite3";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -19,6 +21,28 @@ const SQLiteStore = connectSqlite3(session);
 const app = express();
 const httpServer = createServer(app);
 
+// Security headers — hides server info, sets CSP, prevents clickjacking etc.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+    },
+  },
+  // Hide Express version from response headers
+  hidePoweredBy: true,
+  // Prevent MIME type sniffing
+  noSniff: true,
+  // Prevent clickjacking
+  frameguard: { action: "deny" },
+  // Force HTTPS in production
+  hsts: process.env.NODE_ENV === "production" ? { maxAge: 31536000, includeSubDomains: true } : false,
+}));
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -35,13 +59,19 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-// Session middleware
+// Session middleware — secret loaded from environment variable, never hardcoded
 app.use(session({
   store: new (SQLiteStore as any)({ db: "sessions.db", dir: "." }),
-  secret: "tacedge-secret-key-osg-2026",
+  secret: process.env.SESSION_SECRET || "tacedge-fallback-dev-only",
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 }, // 24 hours
+  name: "tacedge.sid", // Don't use default 'connect.sid' name (fingerprinting)
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,               // JS cannot access the cookie
+    sameSite: "strict",           // CSRF protection
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+  },
 }));
 
 export function log(message: string, source = "express") {

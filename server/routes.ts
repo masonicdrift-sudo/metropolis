@@ -2,10 +2,29 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
 } from "@shared/schema";
+
+// Rate limiter: max 10 login attempts per 15 minutes per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Too many login attempts. Try again in 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Don't expose rate limit info that could help attackers
+  skipSuccessfulRequests: true,
+});
+
+// Helper: strip passwordHash before sending any user object
+function safeUser(user: any) {
+  if (!user) return null;
+  const { passwordHash, ...safe } = user;
+  return safe;
+}
 
 // Middleware: require logged-in session
 function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -22,17 +41,20 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 
 export function registerRoutes(httpServer: ReturnType<typeof createServer>, app: Express) {
   // ── Auth ────────────────────────────────────────────────────────────────────
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", loginLimiter, async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ error: "Username and password required" });
+    // Generic error — never reveal whether username or password was wrong
+    if (!username || !password) return res.status(401).json({ error: "Invalid credentials" });
     const user = storage.getUserByUsername(username);
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
-    const valid = bcrypt.compareSync(password, user.passwordHash);
-    if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+    // Always run bcrypt compare to prevent timing attacks (even if user not found)
+    const dummyHash = "$2a$10$invalidhashfortimingprotection000000000000000000000000";
+    const valid = user ? bcrypt.compareSync(password, user.passwordHash) : bcrypt.compareSync(password, dummyHash);
+    if (!user || !valid) return res.status(401).json({ error: "Invalid credentials" });
     storage.updateLastLogin(user.id);
     req.session.userId = user.id;
     req.session.username = user.username;
     req.session.role = user.role;
+    // Only return safe fields — never the hash
     res.json({ id: user.id, username: user.username, role: user.role });
   });
 
@@ -53,8 +75,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const exists = storage.getUserByUsername(username);
     if (exists) return res.status(409).json({ error: "Username already exists" });
     const user = storage.createUser(username, password, role || "user");
-    const { passwordHash, ...safe } = user;
-    res.status(201).json(safe);
+    res.status(201).json(safeUser(user));
   });
   app.delete("/api/users/:id", requireAdmin, (req, res) => {
     const id = Number(req.params.id);

@@ -15,6 +15,24 @@ export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// Role hierarchy: owner > admin > user
+export const ROLE_RANK: Record<string, number> = { owner: 3, admin: 2, user: 1 };
+
+// ─── Access Codes ─────────────────────────────────────────────────────────────
+export const accessCodes = sqliteTable("access_codes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  code: text("code").notNull().unique(),
+  createdBy: text("created_by").notNull(),     // username of owner who generated it
+  createdAt: text("created_at").notNull(),
+  usedBy: text("used_by").default(""),          // username who redeemed it
+  usedAt: text("used_at").default(""),
+  used: integer("used", { mode: "boolean" }).default(false),
+  expiresAt: text("expires_at").default(""),    // optional expiry
+});
+export const insertAccessCodeSchema = createInsertSchema(accessCodes).omit({ id: true });
+export type InsertAccessCode = z.infer<typeof insertAccessCodeSchema>;
+export type AccessCode = typeof accessCodes.$inferSelect;
+
 // ─── Units / Personnel ───────────────────────────────────────────────────────
 export const units = sqliteTable("units", {
   id: integer("id").primaryKey({ autoIncrement: true }),

@@ -11,6 +11,7 @@ import type {
   Asset, InsertAsset,
   Threat, InsertThreat,
   User, InsertUser,
+  AccessCode,
 } from "@shared/schema";
 
 const sqlite = new Database("tacedge.db");
@@ -18,6 +19,16 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS access_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    used_by TEXT DEFAULT '',
+    used_at TEXT DEFAULT '',
+    used INTEGER DEFAULT 0,
+    expires_at TEXT DEFAULT ''
+  );
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
@@ -99,6 +110,19 @@ sqlite.exec(`
   );
 `);
 
+// Seed ZR1 as Owner (highest privilege)
+const zr1Exists = db.select().from(schema.users).where(eq(schema.users.username, "ZR1")).get();
+if (!zr1Exists) {
+  const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
+  db.insert(schema.users).values({
+    username: "ZR1",
+    passwordHash: hash,
+    role: "owner",
+    createdAt: new Date().toISOString(),
+    lastLogin: "",
+  }).run();
+}
+
 // Seed Overlord admin account
 const adminExists = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
 if (!adminExists) {
@@ -162,6 +186,11 @@ if (unitCount === 0) {
 }
 
 export interface IStorage {
+  // Access Codes
+  getAccessCodes(): AccessCode[];
+  generateAccessCode(createdBy: string, expiresAt?: string): AccessCode;
+  validateAndRedeemCode(code: string, username: string): AccessCode | null;
+  deleteAccessCode(id: number): void;
   // Users
   getUsers(): Omit<User, "passwordHash">[];
   getUserById(id: number): User | undefined;
@@ -205,6 +234,41 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // Access Codes
+  getAccessCodes() {
+    return db.select().from(schema.accessCodes).orderBy(desc(schema.accessCodes.id)).all();
+  }
+  generateAccessCode(createdBy: string, expiresAt = "") {
+    // Generate a readable but unguessable 16-char alphanumeric code e.g. TACX-8K2M-PQ9R
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const seg = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    const code = `${seg(4)}-${seg(4)}-${seg(4)}`;
+    return db.insert(schema.accessCodes).values({
+      code,
+      createdBy,
+      createdAt: new Date().toISOString(),
+      usedBy: "",
+      usedAt: "",
+      used: false,
+      expiresAt,
+    }).returning().get();
+  }
+  validateAndRedeemCode(code: string, username: string) {
+    const entry = db.select().from(schema.accessCodes).where(eq(schema.accessCodes.code, code.toUpperCase())).get();
+    if (!entry || entry.used) return null;
+    // Check expiry if set
+    if (entry.expiresAt && new Date(entry.expiresAt) < new Date()) return null;
+    // Redeem it
+    return db.update(schema.accessCodes).set({
+      used: true,
+      usedBy: username,
+      usedAt: new Date().toISOString(),
+    }).where(eq(schema.accessCodes.id, entry.id)).returning().get() ?? null;
+  }
+  deleteAccessCode(id: number) {
+    db.delete(schema.accessCodes).where(eq(schema.accessCodes.id, id)).run();
+  }
+
   // Users
   getUsers() {
     return db.select({

@@ -12,11 +12,12 @@ import Assets from "./pages/Assets";
 import Threats from "./pages/Threats";
 import Units from "./pages/Units";
 import UserManagement from "./pages/UserManagement";
+import AccessCodes from "./pages/AccessCodes";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
-  Crosshair, Package, Users, Zap, LogOut, ShieldCheck
+  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown
 } from "lucide-react";
 
 const NAV = [
@@ -73,8 +74,8 @@ function Sidebar() {
           );
         })}
 
-        {/* Admin-only: User Management */}
-        {user?.role === "admin" && (
+        {/* Admin+: User Management */}
+        {(user?.role === "admin" || user?.role === "owner") && (
           <Link href="/users" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
             location === "/users"
               ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60"
@@ -84,19 +85,40 @@ function Sidebar() {
             USER MGMT
           </Link>
         )}
+
+        {/* Owner-only: Access Codes */}
+        {user?.role === "owner" && (
+          <Link href="/access-codes" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
+            location === "/access-codes"
+              ? "bg-orange-950/60 text-orange-400 border border-orange-900/60"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`} data-testid="nav-access-codes">
+            <KeyRound size={13} className={location === "/access-codes" ? "text-orange-400" : ""} />
+            ACCESS CODES
+          </Link>
+        )}
       </nav>
 
       {/* User info + logout */}
       <div className="px-3 py-3 border-t border-border space-y-2">
         <div className="flex items-center gap-2 px-1">
-          <div className="w-5 h-5 rounded bg-green-900/50 border border-green-800/50 flex items-center justify-center">
-            {user?.role === "admin"
+          <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+            user?.role === "owner" ? "bg-orange-900/50 border-orange-800/50" :
+            user?.role === "admin" ? "bg-yellow-900/50 border-yellow-800/50" :
+            "bg-green-900/50 border-green-800/50"
+          }`}>
+            {user?.role === "owner"
+              ? <Crown size={11} className="text-orange-400" />
+              : user?.role === "admin"
               ? <ShieldCheck size={11} className="text-yellow-400" />
               : <Users size={11} className="text-green-400" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">{user?.username}</div>
-            <div className="text-[9px] text-muted-foreground tracking-wider uppercase">{user?.role === "admin" ? "ADMINISTRATOR" : "OPERATOR"}</div>
+            <div className={`text-[9px] tracking-wider uppercase ${
+              user?.role === "owner" ? "text-orange-400" :
+              user?.role === "admin" ? "text-yellow-400" : "text-muted-foreground"
+            }`}>{user?.role === "owner" ? "OWNER" : user?.role === "admin" ? "ADMINISTRATOR" : "OPERATOR"}</div>
           </div>
         </div>
         <button onClick={logout}
@@ -147,7 +169,8 @@ function AppRoutes() {
         <Route path="/assets" component={Assets} />
         <Route path="/threats" component={Threats} />
         <Route path="/units" component={Units} />
-        <Route path="/users" component={user.role === "admin" ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
+        <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
+        <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

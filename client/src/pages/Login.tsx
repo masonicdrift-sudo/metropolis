@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Shield } from "lucide-react";
+import { Loader2, Lock, Shield, KeyRound } from "lucide-react";
+import Register from "./Register";
 
 export default function Login() {
   const { login } = useAuth();
@@ -9,6 +10,9 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+
+  if (showRegister) return <Register onBack={() => setShowRegister(false)} />;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +93,12 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-4 pt-3 border-t border-border text-center">
-            <div className="text-[9px] text-muted-foreground/50 tracking-wider">
+          <div className="mt-4 pt-3 border-t border-border">
+            <button onClick={() => setShowRegister(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground hover:text-yellow-400 tracking-wider transition-colors py-1">
+              <KeyRound size={10} /> HAVE AN ACCESS CODE? REGISTER HERE
+            </button>
+            <div className="text-center text-[9px] text-muted-foreground/40 tracking-wider mt-2">
               UNAUTHORIZED ACCESS PROHIBITED // AES-256
             </div>
           </div>

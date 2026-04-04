@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useState } from "react";
-import { Plus, Trash2, Users, ShieldCheck, User } from "lucide-react";
+import { Plus, Trash2, Users, ShieldCheck, User, Crown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -164,7 +164,9 @@ export default function UserManagement() {
               <tr key={u.id} className={`hover:bg-secondary/20 transition-colors ${u.username === me?.username ? "bg-green-950/10" : ""}`} data-testid={`user-row-${u.id}`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    {u.role === "admin"
+                    {u.role === "owner"
+                      ? <Crown size={12} className="text-orange-400 shrink-0" />
+                      : u.role === "admin"
                       ? <ShieldCheck size={12} className="text-yellow-400 shrink-0" />
                       : <User size={12} className="text-green-400 shrink-0" />}
                     <span className="font-mono font-bold tracking-wider">{u.username}</span>
@@ -173,17 +175,22 @@ export default function UserManagement() {
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase ${
+                    u.role === "owner" ? "bg-orange-900/30 text-orange-400 border border-orange-800/40" :
                     u.role === "admin" ? "badge-standby" : "badge-active"
-                  }`}>{u.role === "admin" ? "ADMIN" : "OPERATOR"}</span>
+                  }`}>{u.role === "owner" ? "OWNER" : u.role === "admin" ? "ADMIN" : "OPERATOR"}</span>
                 </td>
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(u.createdAt)}</td>
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(u.lastLogin || "")}</td>
                 <td className="px-4 py-3">
-                  {u.username !== me?.username && (
+                  {/* Can't delete yourself or anyone with equal/higher role */}
+                  {u.username !== me?.username && u.role !== "owner" && (
                     <button onClick={() => del.mutate(u.id)}
                       className="p-1 text-muted-foreground hover:text-red-400 transition-colors" data-testid={`delete-user-${u.id}`}>
                       <Trash2 size={12} />
                     </button>
+                  )}
+                  {u.role === "owner" && u.username !== me?.username && (
+                    <span className="text-[9px] text-orange-400/50 tracking-wider">PROTECTED</span>
                   )}
                 </td>
               </tr>

@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
+  ROLE_RANK,
 } from "@shared/schema";
 
 // Rate limiter: max 10 login attempts per 15 minutes per IP
@@ -32,10 +33,17 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Middleware: require admin role
+// Middleware: require admin or higher
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
-  if (req.session.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+  if ((ROLE_RANK[req.session.role || ""] ?? 0) < ROLE_RANK.admin) return res.status(403).json({ error: "Forbidden" });
+  next();
+}
+
+// Middleware: require owner role only
+function requireOwner(req: Request, res: Response, next: NextFunction) {
+  if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
+  if (req.session.role !== "owner") return res.status(403).json({ error: "Forbidden — Owner only" });
   next();
 }
 
@@ -67,19 +75,59 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json({ id: req.session.userId, username: req.session.username, role: req.session.role });
   });
 
-  // ── User management (admin only) ────────────────────────────────────────
+  // ── Public registration with access code ─────────────────────────────────
+  const registerLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: "Too many registration attempts." } });
+  app.post("/api/auth/register", registerLimiter, (req, res) => {
+    const { username, password, accessCode } = req.body;
+    if (!username || !password || !accessCode) return res.status(400).json({ error: "Username, password, and access code required" });
+    if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+    const exists = storage.getUserByUsername(username);
+    if (exists) return res.status(409).json({ error: "Username already taken" });
+    // Validate and redeem the code atomically
+    const redeemed = storage.validateAndRedeemCode(accessCode, username);
+    if (!redeemed) return res.status(403).json({ error: "Invalid or expired access code" });
+    const user = storage.createUser(username, password, "user");
+    // Auto log in
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    res.status(201).json(safeUser(user));
+  });
+
+  // ── Access codes (Owner only) ────────────────────────────────────────────
+  app.get("/api/access-codes", requireOwner, (_, res) => res.json(storage.getAccessCodes()));
+  app.post("/api/access-codes", requireOwner, (req, res) => {
+    const code = storage.generateAccessCode(req.session.username!, req.body.expiresAt || "");
+    res.status(201).json(code);
+  });
+  app.delete("/api/access-codes/:id", requireOwner, (req, res) => {
+    storage.deleteAccessCode(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── User management (admin+ can list/create, only owner can delete admins) ───
   app.get("/api/users", requireAdmin, (_, res) => res.json(storage.getUsers()));
   app.post("/api/users", requireAdmin, (req, res) => {
     const { username, password, role } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
+    // Admins cannot create owner-level accounts
+    const requestedRole = role || "user";
+    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
+    if (ROLE_RANK[requestedRole] >= callerRank) return res.status(403).json({ error: "Cannot create a user with equal or higher role than your own" });
     const exists = storage.getUserByUsername(username);
     if (exists) return res.status(409).json({ error: "Username already exists" });
-    const user = storage.createUser(username, password, role || "user");
+    const user = storage.createUser(username, password, requestedRole);
     res.status(201).json(safeUser(user));
   });
   app.delete("/api/users/:id", requireAdmin, (req, res) => {
     const id = Number(req.params.id);
     if (id === req.session.userId) return res.status(400).json({ error: "Cannot delete your own account" });
+    // Check target user's role — you can only delete users with lower rank than you
+    const target = storage.getUserById(id);
+    if (!target) return res.status(404).json({ error: "User not found" });
+    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
+    const targetRank = ROLE_RANK[target.role] ?? 0;
+    if (targetRank >= callerRank) return res.status(403).json({ error: "Cannot delete a user with equal or higher role" });
     storage.deleteUser(id);
     res.status(204).send();
   });

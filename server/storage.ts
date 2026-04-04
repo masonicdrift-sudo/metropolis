@@ -3,6 +3,7 @@ import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { encrypt, decrypt } from "./crypto";
 import type {
   Unit, InsertUnit,
   Operation, InsertOperation,
@@ -255,18 +256,21 @@ export interface IStorage {
 
 export class Storage implements IStorage {
   // Messages
+  private decryptMsg(m: Message): Message {
+    return { ...m, content: decrypt(m.content) };
+  }
   getGeneralMessages(limit = 200): Message[] {
     return db.select().from(schema.messages)
       .where(eq(schema.messages.toUsername, "GENERAL"))
       .orderBy(schema.messages.id)
-      .all().slice(-limit);
+      .all().slice(-limit).map(m => this.decryptMsg(m));
   }
   getDMConversation(userA: string, userB: string, limit = 200): Message[] {
     const all = db.select().from(schema.messages).all();
     return all.filter(m =>
       (m.fromUsername === userA && m.toUsername === userB) ||
       (m.fromUsername === userB && m.toUsername === userA)
-    ).slice(-limit);
+    ).slice(-limit).map(m => this.decryptMsg(m));
   }
   getDMList(username: string): { username: string; lastMessage: string; sentAt: string; unread: number }[] {
     const all = db.select().from(schema.messages).all();
@@ -279,21 +283,25 @@ export class Storage implements IStorage {
       if (!existing || m.sentAt > existing.sentAt) {
         const readBy = JSON.parse(m.readBy || "{}");
         const unread = m.fromUsername !== username && !readBy[username] ? 1 : 0;
-        dmMap.set(other, { lastMessage: m.content, sentAt: m.sentAt, unread: existing ? existing.unread + unread : unread });
+        // Decrypt the preview snippet
+        const preview = decrypt(m.content);
+        dmMap.set(other, { lastMessage: preview, sentAt: m.sentAt, unread: existing ? existing.unread + unread : unread });
       }
     }
     return Array.from(dmMap.entries()).map(([u, v]) => ({ username: u, ...v }))
       .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
   }
   sendMessage(from: string, to: string, content: string): Message {
-    return db.insert(schema.messages).values({
+    const stored = db.insert(schema.messages).values({
       fromUsername: from,
       toUsername: to,
-      content,
+      content: encrypt(content),   // AES-256-GCM encrypted at rest
       sentAt: new Date().toISOString(),
       readBy: JSON.stringify({ [from]: true }),
       deleted: false,
     }).returning().get();
+    // Return decrypted for the API response (in-transit is TLS protected)
+    return { ...stored, content };
   }
   markRead(fromUsername: string, toUsername: string, readerUsername: string): void {
     // Mark all messages in this conversation as read by the reader
@@ -326,7 +334,7 @@ export class Storage implements IStorage {
     }).length;
   }
   deleteMessage(id: number): void {
-    db.update(schema.messages).set({ deleted: true, content: "[message deleted]" }).where(eq(schema.messages.id, id)).run();
+    db.update(schema.messages).set({ deleted: true, content: encrypt("[message deleted]") }).where(eq(schema.messages.id, id)).run();
   }
 
   // Access Codes
@@ -424,9 +432,16 @@ export class Storage implements IStorage {
   }
   deleteIntelReport(id: number) { db.delete(schema.intelReports).where(eq(schema.intelReports.id, id)).run(); }
 
-  // Comms
-  getCommsLog() { return db.select().from(schema.commsLog).orderBy(desc(schema.commsLog.id)).all(); }
-  createCommsEntry(c: InsertCommsLog) { return db.insert(schema.commsLog).values(c).returning().get(); }
+  // Comms — message content encrypted at rest
+  getCommsLog() {
+    return db.select().from(schema.commsLog).orderBy(desc(schema.commsLog.id)).all()
+      .map(m => ({ ...m, message: decrypt(m.message) }));
+  }
+  createCommsEntry(c: InsertCommsLog) {
+    const encrypted = { ...c, message: encrypt(c.message) };
+    const stored = db.insert(schema.commsLog).values(encrypted).returning().get();
+    return { ...stored, message: c.message }; // return plaintext to caller
+  }
   acknowledgeComms(id: number) {
     return db.update(schema.commsLog).set({ acknowledged: true }).where(eq(schema.commsLog.id, id)).returning().get();
   }

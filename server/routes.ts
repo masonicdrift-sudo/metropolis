@@ -3,6 +3,7 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
+import { upload } from "./upload";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
@@ -68,6 +69,18 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => res.json({ ok: true }));
+  });
+
+  // Change own password
+  app.post("/api/auth/change-password", requireAuth, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: "Both passwords required" });
+    if (newPassword.length < 6) return res.status(400).json({ error: "New password must be at least 6 characters" });
+    const user = storage.getUserById(req.session.userId!);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!bcrypt.compareSync(currentPassword, user.passwordHash)) return res.status(401).json({ error: "Current password is incorrect" });
+    storage.updateUserById(user.id, { passwordHash: bcrypt.hashSync(newPassword, 10) });
+    res.json({ ok: true });
   });
 
   app.get("/api/auth/me", (req, res) => {
@@ -159,6 +172,48 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  // ── File Upload (images/files for messages and ISOFAC) ────────────────────────
+  app.post("/api/upload", requireAuth, upload.single("file"), (req: any, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      url,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+    });
+  });
+
+  // ── ISOFAC Documents ───────────────────────────────────────────────────
+  app.get("/api/isofac", requireAuth, (_, res) => res.json(storage.getIsofacDocs()));
+  app.get("/api/isofac/:id", requireAuth, (req, res) => {
+    const doc = storage.getIsofacDoc(Number(req.params.id));
+    if (!doc) return res.status(404).json({ error: "Not found" });
+    res.json(doc);
+  });
+  app.post("/api/isofac", requireAuth, (req, res) => {
+    const now = new Date().toISOString();
+    const doc = storage.createIsofacDoc({
+      ...req.body,
+      createdBy: req.session.username!,
+      createdAt: now,
+      updatedAt: now,
+      attachments: req.body.attachments || "[]",
+      tags: req.body.tags || "[]",
+    });
+    res.status(201).json(doc);
+  });
+  app.patch("/api/isofac/:id", requireAuth, (req, res) => {
+    const doc = storage.updateIsofacDoc(Number(req.params.id), req.body);
+    if (!doc) return res.status(404).json({ error: "Not found" });
+    res.json(doc);
+  });
+  app.delete("/api/isofac/:id", requireAdmin, (req, res) => {
+    storage.deleteIsofacDoc(Number(req.params.id));
+    res.status(204).send();
+  });
+
   // ── Commo Cards ────────────────────────────────────────────────────────────────
   app.get("/api/commo-cards", requireAuth, (_, res) => res.json(storage.getCommoCards()));
   app.get("/api/commo-cards/active", requireAuth, (_, res) => {
@@ -218,7 +273,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!members.includes(req.session.username!)) return res.status(403).json({ error: "Not a member" });
     const { content } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: "Content required" });
-    const msg = storage.sendMessage(req.session.username!, `GROUP:${id}`, content.trim());
+    const { attachment } = req.body;
+    const msg = storage.sendMessage(req.session.username!, `GROUP:${id}`, content.trim(), attachment || "");
     const broadcast = (global as any).__wsBroadcast;
     if (broadcast) broadcast({ type: "GROUP_MESSAGE", groupId: id, message: msg }, members);
     res.status(201).json(msg);
@@ -274,10 +330,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   app.post("/api/messages/general", requireAuth, (req, res) => {
-    const { content } = req.body;
-    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
-    const msg = storage.sendMessage(req.session.username!, "GENERAL", content.trim());
-    // Broadcast to all connected WS clients
+    const { content, attachment } = req.body;
+    if (!content?.trim() && !attachment) return res.status(400).json({ error: "Content or attachment required" });
+    const msg = storage.sendMessage(req.session.username!, "GENERAL", content?.trim() || "", attachment || "");
     const broadcast = (global as any).__wsBroadcast;
     if (broadcast) broadcast({ type: "GENERAL_MESSAGE", message: msg });
     res.status(201).json(msg);
@@ -299,13 +354,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   app.post("/api/messages/dm/:username", requireAuth, (req, res) => {
-    const { content } = req.body;
-    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const { content, attachment } = req.body;
+    if (!content?.trim() && !attachment) return res.status(400).json({ error: "Content or attachment required" });
     const me = req.session.username!;
     const to = req.params.username;
     if (me === to) return res.status(400).json({ error: "Cannot DM yourself" });
-    const msg = storage.sendMessage(me, to, content.trim());
-    // Push to both sender and recipient via WebSocket
+    const msg = storage.sendMessage(me, to, content?.trim() || "", attachment || "");
     const broadcast = (global as any).__wsBroadcast;
     if (broadcast) broadcast({ type: "DM", message: msg }, [me, to]);
     res.status(201).json(msg);

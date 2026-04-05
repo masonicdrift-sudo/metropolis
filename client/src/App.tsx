@@ -15,13 +15,15 @@ import UserManagement from "./pages/UserManagement";
 import AccessCodes from "./pages/AccessCodes";
 import Messaging from "./pages/Messaging";
 import CommoCardPage from "./pages/CommoCard";
+import IsofacPage from "./pages/Isofac";
+import ChangePassword from "./pages/ChangePassword";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "./lib/queryClient";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
-  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown, MessageSquare, Signal
+  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown, MessageSquare, Signal, BookOpen, Settings
 } from "lucide-react";
 
 const NAV = [
@@ -30,6 +32,7 @@ const NAV = [
   { path: "/intel", label: "INTELLIGENCE", icon: ShieldAlert },
   { path: "/comms", label: "COMMS", icon: Radio },
   { path: "/commo-card", label: "COMMO CARD", icon: Signal },
+  { path: "/isofac", label: "ISOFAC", icon: BookOpen },
   { path: "/assets", label: "ASSETS", icon: Package },
   { path: "/threats", label: "THREAT BOARD", icon: Target },
   { path: "/units", label: "UNITS", icon: Users },
@@ -156,11 +159,18 @@ function Sidebar() {
             }`}>{user?.role === "owner" ? "OWNER" : user?.role === "admin" ? "ADMINISTRATOR" : "OPERATOR"}</div>
           </div>
         </div>
-        <button onClick={logout}
-          className="w-full flex items-center gap-2 px-3 py-1.5 rounded text-[10px] text-muted-foreground hover:text-red-400 hover:bg-red-950/20 transition-all tracking-wider"
-          data-testid="button-logout">
-          <LogOut size={11} />LOGOUT
-        </button>
+        <div className="flex gap-1">
+          <Link href="/settings" className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded text-[10px] transition-all tracking-wider ${
+            location === "/settings" ? "text-green-400 bg-green-950/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`}>
+            <Settings size={11} />SETTINGS
+          </Link>
+          <button onClick={logout}
+            className="flex items-center gap-2 px-3 py-1.5 rounded text-[10px] text-muted-foreground hover:text-red-400 hover:bg-red-950/20 transition-all tracking-wider"
+            data-testid="button-logout">
+            <LogOut size={11} />
+          </button>
+        </div>
         <div className="text-[9px] text-muted-foreground/50 tracking-wider px-1">TOC // SECTOR ALPHA</div>
       </div>
     </aside>
@@ -206,6 +216,8 @@ function AppRoutes() {
         <Route path="/units" component={Units} />
         <Route path="/messages" component={Messaging} />
         <Route path="/commo-card" component={CommoCardPage} />
+        <Route path="/isofac" component={IsofacPage} />
+        <Route path="/settings" component={ChangePassword} />
         <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />

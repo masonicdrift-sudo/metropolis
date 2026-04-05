@@ -16,6 +16,7 @@ import type {
   Message,
   CommoCard, InsertCommoCard,
   GroupChat,
+  IsofacDoc, InsertIsofacDoc,
 } from "@shared/schema";
 
 // Use persistent disk path on Render if it exists, fallback to local
@@ -29,6 +30,21 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS isofac_docs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    classification TEXT NOT NULL DEFAULT 'UNCLASS',
+    status TEXT NOT NULL DEFAULT 'DRAFT',
+    content TEXT NOT NULL DEFAULT '',
+    attachments TEXT NOT NULL DEFAULT '[]',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    op_name TEXT DEFAULT '',
+    target_grid TEXT DEFAULT '',
+    tags TEXT NOT NULL DEFAULT '[]'
+  );
   CREATE TABLE IF NOT EXISTS group_chats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -60,9 +76,16 @@ sqlite.exec(`
     content TEXT NOT NULL,
     sent_at TEXT NOT NULL,
     read_by TEXT NOT NULL DEFAULT '{}',
-    deleted INTEGER DEFAULT 0
+    deleted INTEGER DEFAULT 0,
+    attachment TEXT DEFAULT ''
   );
   CREATE INDEX IF NOT EXISTS idx_messages_to ON messages(to_username);
+`); // safe to call even if tables exist
+
+// Add columns that may not exist on older DBs
+try { sqlite.exec(`ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT ''`); } catch {}
+
+sqlite.exec(`
   CREATE TABLE IF NOT EXISTS access_codes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE,
@@ -253,56 +276,15 @@ if (!adminExists) {
   }).run();
 }
 
-// Seed demo data if empty
-const unitCount = (db.select().from(schema.units).all()).length;
-if (unitCount === 0) {
-  const now = new Date().toISOString();
-  // Units
-  db.insert(schema.units).values([
-    { callsign: "ALPHA-1", type: "infantry", status: "active", grid: "38T LP 4821 7334", commander: "CPT Rodriguez", pax: 12, notes: "Assault element" },
-    { callsign: "BRAVO-2", type: "armor", status: "active", grid: "38T LP 5102 7210", commander: "1LT Chen", pax: 4, notes: "M1A2 x2" },
-    { callsign: "CHARLIE-3", type: "intel", status: "standby", grid: "38T LP 4600 7500", commander: "SFC Williams", pax: 6, notes: "ISR team" },
-    { callsign: "DELTA-4", type: "support", status: "active", grid: "38T LP 4400 7100", commander: "SSG Martinez", pax: 8, notes: "Log/Sustainment" },
-    { callsign: "EAGLE-5", type: "air", status: "offline", grid: "38T LP 4200 7800", commander: "CW3 Thompson", pax: 2, notes: "UAS offline/maintenance" },
-  ]).run();
-  // Operations
-  db.insert(schema.operations).values([
-    { name: "OP IRON VEIL", type: "recon", priority: "high", status: "active", objective: "Confirm enemy OP at grid LP 5300 7400", grid: "38T LP 5300 7400", assignedUnits: "[1,3]", startTime: now, endTime: "", notes: "Night movement only" },
-    { name: "OP THUNDER RUN", type: "strike", priority: "critical", status: "planning", objective: "Neutralize enemy cache site", grid: "38T LP 5600 7600", assignedUnits: "[1,2]", startTime: now, endTime: "", notes: "Requires fire support coordination" },
-    { name: "OP SWIFT SUPPLY", type: "logistics", priority: "medium", status: "complete", objective: "Resupply ALPHA-1 with Class III/V", grid: "38T LP 4821 7334", assignedUnits: "[4]", startTime: now, endTime: now, notes: "Completed 0230L" },
-  ]).run();
-  // Intel
-  db.insert(schema.intelReports).values([
-    { title: "Enemy Vehicle Movement NW Grid", classification: "SECRET", category: "IMINT", threat: "high", source: "UAS-1 Persistent Stare", grid: "38T LP 5300 7400", summary: "3x BTR-80s observed moving NW along dirt road. Possible reinforcement of checkpoint at LP 5400. Movement corroborates previous HUMINT report.", timestamp: now, verified: 1, relatedOpId: 1 },
-    { title: "SIGINT Intercept - Enemy Comms Spike", classification: "SECRET", category: "SIGINT", threat: "moderate", source: "EW Team Blackbird", grid: "38T LP 5500 7500", summary: "Significant radio traffic detected on enemy frequency 34.75 MHz. Encrypted burst transmissions suggest command-level coordination. Duration: 45 min.", timestamp: now, verified: 1, relatedOpId: 0 },
-    { title: "Local National Report - IED Emplacement", classification: "CUI", category: "HUMINT", threat: "critical", source: "LN Source EAGLE", grid: "38T LP 4900 7200", summary: "Source reports 2x military-age males emplacing device near culvert on MSR TAMPA. Device described as pressure-plate IED. Unverified.", timestamp: now, verified: 0, relatedOpId: 0 },
-    { title: "Cyber: Attempted Network Intrusion", classification: "SECRET", category: "CYBER", threat: "moderate", source: "CND Watch Officer", grid: "", summary: "Detected port scanning activity from external IP against tactical network segment. Blocked at perimeter firewall. Attribution: unknown. Recommend network audit.", timestamp: now, verified: 1, relatedOpId: 0 },
-  ]).run();
-  // Comms
-  db.insert(schema.commsLog).values([
-    { fromCallsign: "ALPHA-1", toCallsign: "TOC", channel: "PRIMARY", type: "SITREP", message: "ALPHA-1 SITREP: Location 38T LP 4821 7334. PAX 12 all UP. No CONTACT. Enemy activity neg. Equipment status GREEN. Resupply required Class III by 0600L.", timestamp: now, acknowledged: 1, priority: "routine" },
-    { fromCallsign: "CHARLIE-3", toCallsign: "TOC", channel: "PRIMARY", type: "SALUTE", message: "SALUTE REPORT: SIZE - Plt(-). ACT - Moving NW. LOC - LP 5300 7400. UNIT - Unknown, BTR-80s. TIME - 0115L. EQUIP - 3x BTR-80.", timestamp: now, acknowledged: 1, priority: "priority" },
-    { fromCallsign: "TOC", toCallsign: "ALL", channel: "PRIMARY", type: "FRAGO", message: "FRAGO 03: ALPHA-1 and BRAVO-2 will establish OPs vic LP 5200 7300 NLT 0300L. CHARLIE-3 maintains ISR coverage on enemy movement. ACK.", timestamp: now, acknowledged: 0, priority: "immediate" },
-    { fromCallsign: "DELTA-4", toCallsign: "TOC", channel: "ALTERNATE", type: "LOGSTAT", message: "LOGSTAT: Class I 3 days. Class III 60%. Class V AMMO: 75%. Class IX: 2x broken Humvee windshields req. CASEVAC: 0 WIA/KIA.", timestamp: now, acknowledged: 1, priority: "routine" },
-  ]).run();
-  // Assets
-  db.insert(schema.assets).values([
-    { name: "M1A2 SEPv3 #1", type: "vehicle", status: "operational", assignedUnitId: 2, grid: "38T LP 5102 7210", fuelPct: 80, ammoPct: 90, serialNumber: "1TK-221-001", notes: "Main gun boresighted" },
-    { name: "M1A2 SEPv3 #2", type: "vehicle", status: "degraded", assignedUnitId: 2, grid: "38T LP 5102 7210", fuelPct: 65, ammoPct: 90, serialNumber: "1TK-221-002", notes: "Track tension issue - monitor" },
-    { name: "RQ-7 Shadow", type: "aircraft", status: "operational", assignedUnitId: 3, grid: "38T LP 4200 7800", fuelPct: 100, ammoPct: 0, serialNumber: "UAS-RQ7-055", notes: "Airborne - sector NW" },
-    { name: "JTRS Manpack Radio #1", type: "comms_gear", status: "operational", assignedUnitId: 1, grid: "38T LP 4821 7334", fuelPct: 100, ammoPct: 0, serialNumber: "JTRS-0091", notes: "KY-99 loaded, freq plan current" },
-    { name: "M777 Howitzer", type: "weapon", status: "operational", assignedUnitId: 4, grid: "38T LP 4400 7100", fuelPct: 0, ammoPct: 75, serialNumber: "M777-FA-014", notes: "Registered, met data current" },
-  ]).run();
-  // Threats
-  db.insert(schema.threats).values([
-    { label: "Enemy BTR-80 Plt", category: "enemy_force", confidence: "confirmed", grid: "38T LP 5300 7400", reportedBy: "CHARLIE-3", timestamp: now, active: 1, notes: "Moving NW, 3 vehicles" },
-    { label: "Suspected IED - MSR TAMPA", category: "IED", confidence: "probable", grid: "38T LP 4900 7200", reportedBy: "HUMINT-EAGLE", timestamp: now, active: 1, notes: "Unverified LN report - do not use road segment" },
-    { label: "Possible Sniper OP", category: "sniper", confidence: "possible", grid: "38T LP 5100 7450", reportedBy: "ALPHA-1", timestamp: now, active: 1, notes: "Glass glint observed from treeline" },
-    { label: "Hostile Drone Observed", category: "drone", confidence: "confirmed", grid: "38T LP 5000 7300", reportedBy: "CHARLIE-3", timestamp: now, active: 0, notes: "Neutralized by counter-UAS at 0047L" },
-  ]).run();
-}
+// No demo data seeded — start clean
 
 export interface IStorage {
+  // ISOFAC
+  getIsofacDocs(): IsofacDoc[];
+  getIsofacDoc(id: number): IsofacDoc | undefined;
+  createIsofacDoc(d: InsertIsofacDoc): IsofacDoc;
+  updateIsofacDoc(id: number, d: Partial<InsertIsofacDoc>): IsofacDoc | undefined;
+  deleteIsofacDoc(id: number): void;
   // Group Chats
   getGroupsForUser(username: string): GroupChat[];
   getAllGroups(): GroupChat[];
@@ -323,7 +305,7 @@ export interface IStorage {
   getGeneralMessages(limit?: number): Message[];
   getDMConversation(userA: string, userB: string, limit?: number): Message[];
   getDMList(username: string): { username: string; lastMessage: string; sentAt: string; unread: number }[];
-  sendMessage(from: string, to: string, content: string): Message;
+  sendMessage(from: string, to: string, content: string, attachment?: string): Message;
   markRead(fromUsername: string, toUsername: string, readerUsername: string): void;
   getUnreadDMCount(username: string): number;
   getUnreadGeneralCount(username: string): number;
@@ -379,6 +361,16 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // ISOFAC
+  getIsofacDocs() { return db.select().from(schema.isofacDocs).orderBy(desc(schema.isofacDocs.id)).all(); }
+  getIsofacDoc(id: number) { return db.select().from(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).get(); }
+  createIsofacDoc(d: InsertIsofacDoc) { return db.insert(schema.isofacDocs).values(d).returning().get(); }
+  updateIsofacDoc(id: number, d: Partial<InsertIsofacDoc>) {
+    return db.update(schema.isofacDocs).set({ ...d, updatedAt: new Date().toISOString() })
+      .where(eq(schema.isofacDocs.id, id)).returning().get();
+  }
+  deleteIsofacDoc(id: number) { db.delete(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).run(); }
+
   // Group Chats
   getGroupsForUser(username: string): GroupChat[] {
     return db.select().from(schema.groupChats).all()
@@ -476,17 +468,17 @@ export class Storage implements IStorage {
     return Array.from(dmMap.entries()).map(([u, v]) => ({ username: u, ...v }))
       .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
   }
-  sendMessage(from: string, to: string, content: string): Message {
+  sendMessage(from: string, to: string, content: string, attachment = ""): Message {
     const stored = db.insert(schema.messages).values({
       fromUsername: from,
       toUsername: to,
-      content: encrypt(content),   // AES-256-GCM encrypted at rest
+      content: content ? encrypt(content) : encrypt("[file]"),
       sentAt: new Date().toISOString(),
       readBy: JSON.stringify({ [from]: true }),
       deleted: false,
+      attachment,
     }).returning().get();
-    // Return decrypted for the API response (in-transit is TLS protected)
-    return { ...stored, content };
+    return { ...stored, content: content || "[file]", attachment };
   }
   markRead(fromUsername: string, toUsername: string, readerUsername: string): void {
     // Mark all messages in this conversation as read by the reader

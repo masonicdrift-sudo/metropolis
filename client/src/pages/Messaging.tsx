@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect, useRef } from "react";
-import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X } from "lucide-react";
+import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download } from "lucide-react";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,25 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
           "bg-secondary border border-border text-foreground"
         }`}>
           {msg.content}
+            {/* Attachment */}
+          {msg.attachment && (() => {
+            try {
+              const att: Attachment = JSON.parse(msg.attachment);
+              if (att.mimeType?.startsWith("image/")) return (
+                <a href={att.url} target="_blank" rel="noreferrer" className="block mt-1.5">
+                  <img src={att.url} alt={att.originalName} className="max-h-48 max-w-xs rounded border border-border object-cover hover:opacity-90 transition-opacity" />
+                </a>
+              );
+              return (
+                <a href={att.url} target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 mt-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px] text-green-400 hover:text-green-300 transition-colors max-w-xs">
+                  <Paperclip size={9} />
+                  <span className="truncate">{att.originalName}</span>
+                  <Download size={9} className="ml-auto shrink-0" />
+                </a>
+              );
+            } catch { return null; }
+          })()}
           {/* Delete button */}
           {!deleted && canDelete && hovered && (
             <button onClick={() => onDelete(msg.id)}
@@ -77,29 +96,70 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
 }
 
 // ── Message input ────────────────────────────────────────────────
-function MessageInput({ onSend, placeholder }: { onSend: (text: string) => void; placeholder: string }) {
+interface Attachment { url: string; originalName: string; mimeType: string; }
+
+function MessageInput({ onSend, placeholder }: {
+  onSend: (text: string, attachment?: Attachment) => void;
+  placeholder: string;
+}) {
   const [text, setText] = useState("");
+  const [pending, setPending] = useState<Attachment | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    onSend(text.trim());
-    setText("");
+    if (!text.trim() && !pending) return;
+    onSend(text.trim(), pending ?? undefined);
+    setText(""); setPending(null);
   };
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      setPending(await res.json());
+    } catch { /* silently fail */ }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
+
   return (
-    <form onSubmit={submit} className="flex gap-2 px-4 py-3 border-t border-border bg-card/50">
-      <input
-        value={text}
-        onChange={e => setText(e.target.value)}
-        placeholder={placeholder}
-        className="flex-1 bg-secondary border border-border rounded px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700"
-        data-testid="input-message-text"
-      />
-      <button type="submit" disabled={!text.trim()}
-        className="px-3 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-green-100 text-xs transition-colors flex items-center gap-1"
-        data-testid="button-send-message">
-        <Send size={11} />
-      </button>
-    </form>
+    <div className="border-t border-border bg-card/50">
+      {pending && (
+        <div className="flex items-center gap-2 px-4 pt-2">
+          {pending.mimeType?.startsWith("image/") ? (
+            <div className="relative">
+              <img src={pending.url} className="h-16 rounded border border-border object-cover" alt={pending.originalName} />
+              <button onClick={() => setPending(null)} className="absolute -top-1 -right-1 w-4 h-4 bg-red-900 rounded-full flex items-center justify-center"><X size={8} className="text-white" /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px]">
+              <Paperclip size={9} className="text-muted-foreground" />
+              <span className="text-green-400 max-w-[200px] truncate">{pending.originalName}</span>
+              <button onClick={() => setPending(null)} className="text-muted-foreground hover:text-red-400 ml-1"><X size={9} /></button>
+            </div>
+          )}
+        </div>
+      )}
+      <form onSubmit={submit} className="flex gap-2 px-4 py-3 items-center">
+        <label className={`p-1.5 rounded cursor-pointer transition-colors ${uploading ? "text-muted-foreground/30" : "text-muted-foreground hover:text-green-400"}`} title="Attach image or file">
+          <Paperclip size={13} />
+          <input ref={fileRef} type="file" className="hidden" disabled={uploading}
+            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        </label>
+        <input value={text} onChange={e => setText(e.target.value)} placeholder={placeholder}
+          className="flex-1 bg-secondary border border-border rounded px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+          data-testid="input-message-text" />
+        <button type="submit" disabled={!text.trim() && !pending}
+          className="px-3 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-green-100 text-xs transition-colors flex items-center gap-1"
+          data-testid="button-send-message">
+          <Send size={11} />
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -330,17 +390,20 @@ export default function Messaging() {
 
   // Send general
   const sendGeneral = useMutation({
-    mutationFn: (content: string) => apiRequest("POST", "/api/messages/general", { content }),
+    mutationFn: ({ text, attachment }: { text: string; attachment?: string }) =>
+      apiRequest("POST", "/api/messages/general", { content: text, attachment }),
     onSuccess: () => refetchGeneral(),
   });
   // Send DM
   const sendDM = useMutation({
-    mutationFn: (content: string) => apiRequest("POST", `/api/messages/dm/${activeDMUser}`, { content }),
+    mutationFn: ({ text, attachment }: { text: string; attachment?: string }) =>
+      apiRequest("POST", `/api/messages/dm/${activeDMUser}`, { content: text, attachment }),
     onSuccess: () => { refetchDM(); refetchDMList(); },
   });
   // Send group message
   const sendGroup = useMutation({
-    mutationFn: (content: string) => apiRequest("POST", `/api/groups/${activeGroupId}/messages`, { content }),
+    mutationFn: ({ text, attachment }: { text: string; attachment?: string }) =>
+      apiRequest("POST", `/api/groups/${activeGroupId}/messages`, { content: text, attachment }),
     onSuccess: () => refetchGroupMsgs(),
   });
   // Leave group
@@ -367,10 +430,11 @@ export default function Messaging() {
   }, [activeChannel]);
 
   const activeMsgs = isGroup ? groupMsgs : activeChannel === GENERAL ? generalMsgs : dmMsgs;
-  const handleSend = (text: string) => {
-    if (activeChannel === GENERAL) sendGeneral.mutate(text);
-    else if (isGroup) sendGroup.mutate(text);
-    else sendDM.mutate(text);
+  const handleSend = (text: string, attachment?: Attachment) => {
+    const attStr = attachment ? JSON.stringify(attachment) : "";
+    if (activeChannel === GENERAL) sendGeneral.mutate({ text, attachment: attStr });
+    else if (isGroup) sendGroup.mutate({ text, attachment: attStr });
+    else sendDM.mutate({ text, attachment: attStr });
   };
 
   const canDelete = (msg: Message) =>

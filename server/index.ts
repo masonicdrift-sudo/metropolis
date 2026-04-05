@@ -7,6 +7,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { UPLOAD_DIR } from "./upload";
 
 // Augment session type
 declare module "express-session" {
@@ -27,6 +28,9 @@ const httpServer = createServer(app);
 // causing session cookies to silently fail in production
 app.set("trust proxy", 1);
 
+// Serve uploaded files statically
+app.use("/uploads", express.static(UPLOAD_DIR));
+
 // Security headers — hides server info, sets CSP, prevents clickjacking etc.
 app.use(helmet({
   contentSecurityPolicy: {
@@ -35,7 +39,8 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
-      imgSrc: ["'self'", "data:"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      mediaSrc: ["'self'"],
       connectSrc: ["'self'", "ws:", "wss:"],
     },
   },

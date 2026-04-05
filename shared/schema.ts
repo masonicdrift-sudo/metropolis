@@ -33,6 +33,26 @@ export const insertAccessCodeSchema = createInsertSchema(accessCodes).omit({ id:
 export type InsertAccessCode = z.infer<typeof insertAccessCodeSchema>;
 export type AccessCode = typeof accessCodes.$inferSelect;
 
+// ─── ISOFAC Documents ──────────────────────────────────────────────────────────
+export const isofacDocs = sqliteTable("isofac_docs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  type: text("type").notNull(), // OPORD | IMINT | HVT_CARD | FRAGORD | ISR_PLAN | CASEVAC_PLAN | ROE | INTEL_SUMMARY | CUSTOM
+  title: text("title").notNull(),
+  classification: text("classification").notNull().default("UNCLASS"),
+  status: text("status").notNull().default("DRAFT"), // DRAFT | ACTIVE | SUPERSEDED | ARCHIVED
+  content: text("content").notNull().default(""),   // Rich text / formatted body
+  attachments: text("attachments").notNull().default("[]"), // JSON array of {filename, originalName, url, type}
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  opName: text("op_name").default(""),             // Associated operation name
+  targetGrid: text("target_grid").default(""),
+  tags: text("tags").notNull().default("[]"),       // JSON string array
+});
+export const insertIsofacDocSchema = createInsertSchema(isofacDocs).omit({ id: true });
+export type InsertIsofacDoc = z.infer<typeof insertIsofacDocSchema>;
+export type IsofacDoc = typeof isofacDocs.$inferSelect;
+
 // ─── Radio Commo Cards ──────────────────────────────────────────────────
 export const commoCards = sqliteTable("commo_cards", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -86,6 +106,8 @@ export const messages = sqliteTable("messages", {
   // Track per-recipient read status as JSON: { "username": true/false }
   readBy: text("read_by").notNull().default("{}"),
   deleted: integer("deleted", { mode: "boolean" }).default(false),
+  // Optional file/image attachment: {filename, originalName, url, mimeType}
+  attachment: text("attachment").default(""),
 });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true });
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

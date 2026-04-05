@@ -22,6 +22,11 @@ const SQLiteStore = connectSqlite3(session);
 const app = express();
 const httpServer = createServer(app);
 
+// CRITICAL: Trust Render's reverse proxy so secure cookies work correctly
+// Without this, Express sees all requests as HTTP even though Render forwards HTTPS
+// causing session cookies to silently fail in production
+app.set("trust proxy", 1);
+
 // Security headers — hides server info, sets CSP, prevents clickjacking etc.
 app.use(helmet({
   contentSecurityPolicy: {
@@ -70,8 +75,8 @@ app.use(session({
   cookie: {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,               // JS cannot access the cookie
-    sameSite: "strict",           // CSRF protection
-    secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+    sameSite: "lax",              // 'lax' works correctly behind Render's proxy; 'strict' drops cookies on proxy redirects
+    secure: process.env.NODE_ENV === "production", // HTTPS only in prod (requires trust proxy above)
   },
 }));
 

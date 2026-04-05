@@ -33,6 +33,33 @@ export const insertAccessCodeSchema = createInsertSchema(accessCodes).omit({ id:
 export type InsertAccessCode = z.infer<typeof insertAccessCodeSchema>;
 export type AccessCode = typeof accessCodes.$inferSelect;
 
+// ─── Radio Commo Cards ──────────────────────────────────────────────────
+export const commoCards = sqliteTable("commo_cards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),             // e.g. "COMMO CARD - 24FEB2026"
+  effectiveDate: text("effective_date").notNull(),
+  // Crypto
+  primaryKey: text("primary_key").notNull().default(""),
+  primaryTdl: text("primary_tdl").notNull().default(""),
+  backupKey: text("backup_key").notNull().default(""),
+  backupTdl: text("backup_tdl").notNull().default(""),
+  // Nets JSON array: [{label, freq, callsigns, notes}]
+  nets: text("nets").notNull().default("[]"),
+  // Ranger/secondary nets JSON
+  rangerNets: text("ranger_nets").notNull().default("{}"),
+  // Keycalls JSON: [{word, meaning, externalOnly}]
+  keycalls: text("keycalls").notNull().default("[]"),
+  keycallTheme: text("keycall_theme").default(""),
+  keycallNote: text("keycall_note").default(""),
+  // Status
+  active: integer("active", { mode: "boolean" }).default(true),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export const insertCommoCardSchema = createInsertSchema(commoCards).omit({ id: true });
+export type InsertCommoCard = z.infer<typeof insertCommoCardSchema>;
+export type CommoCard = typeof commoCards.$inferSelect;
+
 // ─── Messages (DMs + General) ───────────────────────────────────────────────
 export const messages = sqliteTable("messages", {
   id: integer("id").primaryKey({ autoIncrement: true }),

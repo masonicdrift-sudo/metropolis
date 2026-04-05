@@ -14,6 +14,7 @@ import type {
   User, InsertUser,
   AccessCode,
   Message,
+  CommoCard, InsertCommoCard,
 } from "@shared/schema";
 
 const sqlite = new Database("tacedge.db");
@@ -21,6 +22,23 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS commo_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    effective_date TEXT NOT NULL,
+    primary_key TEXT NOT NULL DEFAULT '',
+    primary_tdl TEXT NOT NULL DEFAULT '',
+    backup_key TEXT NOT NULL DEFAULT '',
+    backup_tdl TEXT NOT NULL DEFAULT '',
+    nets TEXT NOT NULL DEFAULT '[]',
+    ranger_nets TEXT NOT NULL DEFAULT '{}',
+    keycalls TEXT NOT NULL DEFAULT '[]',
+    keycall_theme TEXT DEFAULT '',
+    keycall_note TEXT DEFAULT '',
+    active INTEGER DEFAULT 1,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     from_username TEXT NOT NULL,
@@ -122,6 +140,79 @@ sqlite.exec(`
   );
 `);
 
+// Seed 24FEB2026 Commo Card
+const commoCardExists = db.select().from(schema.commoCards).get();
+if (!commoCardExists) {
+  const now = new Date().toISOString();
+  db.insert(schema.commoCards).values({
+    title: "COMMO CARD - 24FEB2026",
+    effectiveDate: "24FEB2026",
+    primaryKey: "ANUB",
+    primaryTdl: "Same",
+    backupKey: "AMON",
+    backupTdl: "Same",
+    nets: JSON.stringify([
+      { label: "ATG", freq: "49.0", callsigns: "Gypsy Flight, 2-1, ZR, ZU, TU, TR", notes: "" },
+      { label: "Inter-Ship", freq: "48.5", callsigns: "Gypsy Flight", notes: "" },
+      { label: "Ship 1", freq: "47.5", callsigns: "", notes: "" },
+      { label: "Ship 2", freq: "47.0", callsigns: "", notes: "" },
+      { label: "GROUND Inter-Command", freq: "46.2", callsigns: "", notes: "" },
+      { label: "C2 HQ", freq: "46.0", callsigns: "2-1, 2-2, RTO, GFC, ZU", notes: "" },
+      { label: "C2 HQ/DS/EN", freq: "45.5", callsigns: "", notes: "" },
+      { label: "C2 ASLT 1", freq: "45.0", callsigns: "ZE", notes: "" },
+      { label: "C2 ASLT 2", freq: "44.5", callsigns: "ZF", notes: "" },
+      { label: "C2 Combined Team", freq: "44.0", callsigns: "", notes: "" },
+      { label: "G3 HQ", freq: "43.5", callsigns: "3-1, 3-2, RTO, TU", notes: "" },
+      { label: "G3 HQ/DS/EN", freq: "43.0", callsigns: "", notes: "" },
+      { label: "G3 EX TEAM 1", freq: "42.5", callsigns: "TI", notes: "" },
+      { label: "sUAS OPS", freq: "41.0", callsigns: "TI, Z99, GFC", notes: "mHz" },
+      { label: "MEDICAL", freq: "40.5", callsigns: "ZM", notes: "mHz" },
+      { label: "CONVOY", freq: "", callsigns: "", notes: "Use Ground Inter-Command unless otherwise directed" },
+    ]),
+    rangerNets: JSON.stringify({
+      label: "Ranger Nets",
+      color: "Red",
+      encrypted: true,
+      primaryKey: "Knight",
+      primaryTdl: "Knight",
+      backupKey: "2RB",
+      backupTdl: "2RB",
+      nets: [
+        { label: "Batt CMD", freq: "47" },
+        { label: "Batt Ops", freq: "47.2" },
+        { label: "Batt Med", freq: "47.6" },
+        { label: "Batt Fires", freq: "47.4" },
+        { label: "MEDEVAC", freq: "58.0" },
+        { label: "CSAR", freq: "57.0" },
+        { label: "CAS", freq: "56.0" },
+        { label: "JOINT OPS CMD", freq: "48.0" },
+        { label: "ACO CMD", freq: "49.0", tdl: "Assassin" },
+        { label: "BCO CMD", freq: "46.0", tdl: "Bushmaster" },
+        { label: "DCO CMD", freq: "42.0", tdl: "Dread" },
+      ]
+    }),
+    keycalls: JSON.stringify([
+      { word: "ANUBIS", meaning: "BROKEN CRYPTO", externalOnly: false },
+      { word: "HORUS", meaning: "SP", externalOnly: true },
+      { word: "SETH", meaning: "PRE-ASSAULT FIRES", externalOnly: true },
+      { word: "RA", meaning: "EXECUTE", externalOnly: true },
+      { word: "OSIRIS", meaning: "MASCAL", externalOnly: true },
+      { word: "HORUS", meaning: "JACKPOT", externalOnly: true },
+      { word: "AMMIT", meaning: "DRY HOLE", externalOnly: true },
+      { word: "BASTET", meaning: "ALL SECURE", externalOnly: true },
+      { word: "PTAH", meaning: "BIP", externalOnly: true },
+      { word: "THOTH", meaning: "SSE", externalOnly: true },
+      { word: "KHONSU", meaning: "EXFIL", externalOnly: true },
+      { word: "AMUN", meaning: "RTB", externalOnly: true },
+    ]),
+    keycallTheme: "Egyptian Mythology Theme",
+    keycallNote: "All Keycalls except BROKEN CRYPTO are external use only.",
+    active: true,
+    createdBy: "ZR1",
+    createdAt: now,
+  }).run();
+}
+
 // Seed ZR1 as Owner (highest privilege)
 const zr1Exists = db.select().from(schema.users).where(eq(schema.users.username, "ZR1")).get();
 if (!zr1Exists) {
@@ -198,6 +289,13 @@ if (unitCount === 0) {
 }
 
 export interface IStorage {
+  // Commo Cards
+  getCommoCards(): CommoCard[];
+  getCommoCard(id: number): CommoCard | undefined;
+  createCommoCard(c: InsertCommoCard): CommoCard;
+  updateCommoCard(id: number, c: Partial<InsertCommoCard>): CommoCard | undefined;
+  deleteCommoCard(id: number): void;
+  setActiveCard(id: number): void;
   // Messages
   getGeneralMessages(limit?: number): Message[];
   getDMConversation(userA: string, userB: string, limit?: number): Message[];
@@ -255,6 +353,20 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // Commo Cards
+  getCommoCards() { return db.select().from(schema.commoCards).orderBy(desc(schema.commoCards.id)).all(); }
+  getCommoCard(id: number) { return db.select().from(schema.commoCards).where(eq(schema.commoCards.id, id)).get(); }
+  createCommoCard(c: InsertCommoCard) { return db.insert(schema.commoCards).values(c).returning().get(); }
+  updateCommoCard(id: number, c: Partial<InsertCommoCard>) {
+    return db.update(schema.commoCards).set(c).where(eq(schema.commoCards.id, id)).returning().get();
+  }
+  deleteCommoCard(id: number) { db.delete(schema.commoCards).where(eq(schema.commoCards.id, id)).run(); }
+  setActiveCard(id: number) {
+    // Deactivate all, then activate the selected one
+    db.update(schema.commoCards).set({ active: false }).run();
+    db.update(schema.commoCards).set({ active: true }).where(eq(schema.commoCards.id, id)).run();
+  }
+
   // Messages
   private decryptMsg(m: Message): Message {
     return { ...m, content: decrypt(m.content) };

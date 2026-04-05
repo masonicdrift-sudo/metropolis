@@ -132,6 +132,31 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  // ── Commo Cards ────────────────────────────────────────────────────────────────
+  app.get("/api/commo-cards", requireAuth, (_, res) => res.json(storage.getCommoCards()));
+  app.get("/api/commo-cards/active", requireAuth, (_, res) => {
+    const cards = storage.getCommoCards();
+    const active = cards.find(c => c.active) || cards[0] || null;
+    res.json(active);
+  });
+  app.post("/api/commo-cards", requireAdmin, (req, res) => {
+    const card = storage.createCommoCard({ ...req.body, createdBy: req.session.username!, createdAt: new Date().toISOString() });
+    res.status(201).json(card);
+  });
+  app.patch("/api/commo-cards/:id", requireAdmin, (req, res) => {
+    const card = storage.updateCommoCard(Number(req.params.id), req.body);
+    if (!card) return res.status(404).json({ error: "Not found" });
+    res.json(card);
+  });
+  app.patch("/api/commo-cards/:id/activate", requireAdmin, (req, res) => {
+    storage.setActiveCard(Number(req.params.id));
+    res.json({ ok: true });
+  });
+  app.delete("/api/commo-cards/:id", requireAdmin, (req, res) => {
+    storage.deleteCommoCard(Number(req.params.id));
+    res.status(204).send();
+  });
+
   // ── Messaging ────────────────────────────────────────────────────────────────
   // General channel
   app.get("/api/messages/general", requireAuth, (req, res) => {

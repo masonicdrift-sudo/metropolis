@@ -14,13 +14,14 @@ import Units from "./pages/Units";
 import UserManagement from "./pages/UserManagement";
 import AccessCodes from "./pages/AccessCodes";
 import Messaging from "./pages/Messaging";
+import CommoCardPage from "./pages/CommoCard";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "./lib/queryClient";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
-  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown, MessageSquare
+  Crosshair, Package, Users, Zap, LogOut, ShieldCheck, KeyRound, Crown, MessageSquare, Signal
 } from "lucide-react";
 
 const NAV = [
@@ -28,6 +29,7 @@ const NAV = [
   { path: "/operations", label: "OPERATIONS", icon: Crosshair },
   { path: "/intel", label: "INTELLIGENCE", icon: ShieldAlert },
   { path: "/comms", label: "COMMS", icon: Radio },
+  { path: "/commo-card", label: "COMMO CARD", icon: Signal },
   { path: "/assets", label: "ASSETS", icon: Package },
   { path: "/threats", label: "THREAT BOARD", icon: Target },
   { path: "/units", label: "UNITS", icon: Users },
@@ -203,6 +205,7 @@ function AppRoutes() {
         <Route path="/threats" component={Threats} />
         <Route path="/units" component={Units} />
         <Route path="/messages" component={Messaging} />
+        <Route path="/commo-card" component={CommoCardPage} />
         <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />

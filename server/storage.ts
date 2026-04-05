@@ -17,6 +17,12 @@ import type {
   CommoCard, InsertCommoCard,
   GroupChat,
   IsofacDoc, InsertIsofacDoc,
+  Perstat, InsertPerstat,
+  AfterActionReport, InsertAar,
+  OpTask, InsertOpTask,
+  Award, InsertAward,
+  TrainingRecord, InsertTraining,
+  Broadcast, InsertBroadcast,
 } from "@shared/schema";
 
 // Use persistent disk path on Render if it exists, fallback to local
@@ -87,6 +93,77 @@ try { sqlite.exec(`ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT ''`);
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN rank TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN assigned_unit TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN images TEXT NOT NULL DEFAULT '[]'`); } catch {}
+
+// New feature tables
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS perstat (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    duty_status TEXT NOT NULL DEFAULT 'active',
+    last_seen TEXT NOT NULL,
+    notes TEXT DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS after_action_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    operation_id INTEGER DEFAULT 0,
+    operation_name TEXT DEFAULT '',
+    date TEXT NOT NULL,
+    submitted_by TEXT NOT NULL,
+    classification TEXT NOT NULL DEFAULT 'UNCLASS',
+    summary TEXT NOT NULL DEFAULT '',
+    what_went_well TEXT NOT NULL DEFAULT '',
+    sustain_items TEXT NOT NULL DEFAULT '',
+    improve_items TEXT NOT NULL DEFAULT '',
+    lessons_learned TEXT NOT NULL DEFAULT '',
+    casualties TEXT NOT NULL DEFAULT '',
+    equipment TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS op_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    operation_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    phase TEXT NOT NULL DEFAULT 'PREP',
+    assigned_to TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS awards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    award_name TEXT NOT NULL,
+    award_type TEXT NOT NULL DEFAULT 'commendation',
+    reason TEXT NOT NULL DEFAULT '',
+    awarded_by TEXT NOT NULL,
+    awarded_at TEXT NOT NULL,
+    related_op_id INTEGER DEFAULT 0,
+    related_op_name TEXT DEFAULT ''
+  );
+  CREATE TABLE IF NOT EXISTS training_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    date TEXT NOT NULL,
+    result TEXT NOT NULL DEFAULT 'pass',
+    instructor TEXT DEFAULT '',
+    expires_at TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS broadcasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    priority TEXT NOT NULL DEFAULT 'flash',
+    sent_by TEXT NOT NULL,
+    sent_at TEXT NOT NULL,
+    expires_at TEXT DEFAULT '',
+    active INTEGER DEFAULT 1
+  );
+`);
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS access_codes (
@@ -361,6 +438,35 @@ export interface IStorage {
   createThreat(t: InsertThreat): Threat;
   updateThreat(id: number, t: Partial<InsertThreat>): Threat | undefined;
   deleteTheat(id: number): void;
+  // PERSTAT
+  getPerstat(): Perstat[];
+  upsertPerstat(username: string, dutyStatus: string, notes?: string): Perstat;
+  // After Action Reports
+  getAars(): AfterActionReport[];
+  getAar(id: number): AfterActionReport | undefined;
+  createAar(a: InsertAar): AfterActionReport;
+  updateAar(id: number, a: Partial<InsertAar>): AfterActionReport | undefined;
+  deleteAar(id: number): void;
+  // Op Tasks
+  getOpTasks(operationId: number): OpTask[];
+  createOpTask(t: InsertOpTask): OpTask;
+  updateOpTask(id: number, t: Partial<InsertOpTask>): OpTask | undefined;
+  deleteOpTask(id: number): void;
+  // Awards
+  getAwards(username?: string): Award[];
+  createAward(a: InsertAward): Award;
+  deleteAward(id: number): void;
+  // Training
+  getTrainingRecords(username?: string): TrainingRecord[];
+  createTrainingRecord(t: InsertTraining): TrainingRecord;
+  updateTrainingRecord(id: number, t: Partial<InsertTraining>): TrainingRecord | undefined;
+  deleteTrainingRecord(id: number): void;
+  // Broadcasts
+  getBroadcasts(): Broadcast[];
+  getActiveBroadcasts(): Broadcast[];
+  createBroadcast(b: InsertBroadcast): Broadcast;
+  dismissBroadcast(id: number): void;
+  deleteBroadcast(id: number): void;
 }
 
 export class Storage implements IStorage {
@@ -653,6 +759,69 @@ export class Storage implements IStorage {
     return db.update(schema.threats).set(t).where(eq(schema.threats.id, id)).returning().get();
   }
   deleteTheat(id: number) { db.delete(schema.threats).where(eq(schema.threats.id, id)).run(); }
+
+  // PERSTAT
+  getPerstat() { return db.select().from(schema.perstat).all(); }
+  upsertPerstat(username: string, dutyStatus: string, notes = ""): Perstat {
+    const existing = db.select().from(schema.perstat).where(eq(schema.perstat.username, username)).get();
+    const now = new Date().toISOString();
+    if (existing) {
+      return db.update(schema.perstat).set({ dutyStatus, lastSeen: now, notes })
+        .where(eq(schema.perstat.username, username)).returning().get()!;
+    }
+    return db.insert(schema.perstat).values({ username, dutyStatus, lastSeen: now, notes }).returning().get();
+  }
+
+  // After Action Reports
+  getAars() { return db.select().from(schema.afterActionReports).orderBy(desc(schema.afterActionReports.id)).all(); }
+  getAar(id: number) { return db.select().from(schema.afterActionReports).where(eq(schema.afterActionReports.id, id)).get(); }
+  createAar(a: InsertAar) { return db.insert(schema.afterActionReports).values(a).returning().get(); }
+  updateAar(id: number, a: Partial<InsertAar>) {
+    return db.update(schema.afterActionReports).set(a).where(eq(schema.afterActionReports.id, id)).returning().get();
+  }
+  deleteAar(id: number) { db.delete(schema.afterActionReports).where(eq(schema.afterActionReports.id, id)).run(); }
+
+  // Op Tasks
+  getOpTasks(operationId: number) {
+    return db.select().from(schema.opTasks).where(eq(schema.opTasks.operationId, operationId)).all();
+  }
+  createOpTask(t: InsertOpTask) { return db.insert(schema.opTasks).values(t).returning().get(); }
+  updateOpTask(id: number, t: Partial<InsertOpTask>) {
+    return db.update(schema.opTasks).set(t).where(eq(schema.opTasks.id, id)).returning().get();
+  }
+  deleteOpTask(id: number) { db.delete(schema.opTasks).where(eq(schema.opTasks.id, id)).run(); }
+
+  // Awards
+  getAwards(username?: string) {
+    const all = db.select().from(schema.awards).orderBy(desc(schema.awards.id)).all();
+    return username ? all.filter(a => a.username === username) : all;
+  }
+  createAward(a: InsertAward) { return db.insert(schema.awards).values(a).returning().get(); }
+  deleteAward(id: number) { db.delete(schema.awards).where(eq(schema.awards.id, id)).run(); }
+
+  // Training Records
+  getTrainingRecords(username?: string) {
+    const all = db.select().from(schema.trainingRecords).orderBy(desc(schema.trainingRecords.id)).all();
+    return username ? all.filter(r => r.username === username) : all;
+  }
+  createTrainingRecord(t: InsertTraining) { return db.insert(schema.trainingRecords).values(t).returning().get(); }
+  updateTrainingRecord(id: number, t: Partial<InsertTraining>) {
+    return db.update(schema.trainingRecords).set(t).where(eq(schema.trainingRecords.id, id)).returning().get();
+  }
+  deleteTrainingRecord(id: number) { db.delete(schema.trainingRecords).where(eq(schema.trainingRecords.id, id)).run(); }
+
+  // Broadcasts
+  getBroadcasts() { return db.select().from(schema.broadcasts).orderBy(desc(schema.broadcasts.id)).all(); }
+  getActiveBroadcasts() {
+    return db.select().from(schema.broadcasts).all().filter(b => {
+      if (!b.active) return false;
+      if (b.expiresAt && new Date(b.expiresAt) < new Date()) return false;
+      return true;
+    });
+  }
+  createBroadcast(b: InsertBroadcast) { return db.insert(schema.broadcasts).values(b).returning().get(); }
+  dismissBroadcast(id: number) { db.update(schema.broadcasts).set({ active: false }).where(eq(schema.broadcasts.id, id)).run(); }
+  deleteBroadcast(id: number) { db.delete(schema.broadcasts).where(eq(schema.broadcasts.id, id)).run(); }
 }
 
 export const storage = new Storage();

@@ -248,6 +248,103 @@ export const insertAssetSchema = createInsertSchema(assets).omit({ id: true });
 export type InsertAsset = z.infer<typeof insertAssetSchema>;
 export type Asset = typeof assets.$inferSelect;
 
+// ─── PERSTAT (Personnel Accountability) ─────────────────────────────────────
+export const perstat = sqliteTable("perstat", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull().unique(),
+  dutyStatus: text("duty_status").notNull().default("active"), // active | off_duty | leave | mia | kia
+  lastSeen: text("last_seen").notNull(),
+  notes: text("notes").default(""),
+});
+export const insertPerstatSchema = createInsertSchema(perstat).omit({ id: true });
+export type InsertPerstat = z.infer<typeof insertPerstatSchema>;
+export type Perstat = typeof perstat.$inferSelect;
+
+// ─── After Action Reports ─────────────────────────────────────────────────────
+export const afterActionReports = sqliteTable("after_action_reports", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  operationId: integer("operation_id").default(0),
+  operationName: text("operation_name").default(""),
+  date: text("date").notNull(),
+  submittedBy: text("submitted_by").notNull(),
+  classification: text("classification").notNull().default("UNCLASS"),
+  summary: text("summary").notNull().default(""),
+  whatWentWell: text("what_went_well").notNull().default(""),
+  sustainItems: text("sustain_items").notNull().default(""),
+  improveItems: text("improve_items").notNull().default(""),
+  lessonsLearned: text("lessons_learned").notNull().default(""),
+  casualties: text("casualties").notNull().default(""),
+  equipment: text("equipment").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+});
+export const insertAarSchema = createInsertSchema(afterActionReports).omit({ id: true });
+export type InsertAar = z.infer<typeof insertAarSchema>;
+export type AfterActionReport = typeof afterActionReports.$inferSelect;
+
+// ─── Op-Order Tasks (Kanban) ──────────────────────────────────────────────────
+export const opTasks = sqliteTable("op_tasks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  operationId: integer("operation_id").notNull(),
+  title: text("title").notNull(),
+  phase: text("phase").notNull().default("PREP"), // PREP | INFIL | ACTION | EXFIL | CONSOLIDATE
+  assignedTo: text("assigned_to").default(""),    // username or unit callsign
+  status: text("status").notNull().default("pending"), // pending | in_progress | complete
+  notes: text("notes").default(""),
+  createdAt: text("created_at").notNull(),
+});
+export const insertOpTaskSchema = createInsertSchema(opTasks).omit({ id: true });
+export type InsertOpTask = z.infer<typeof insertOpTaskSchema>;
+export type OpTask = typeof opTasks.$inferSelect;
+
+// ─── Awards / Commendations ───────────────────────────────────────────────────
+export const awards = sqliteTable("awards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull(),
+  awardName: text("award_name").notNull(),
+  awardType: text("award_type").notNull().default("commendation"), // commendation | medal | citation | achievement
+  reason: text("reason").notNull().default(""),
+  awardedBy: text("awarded_by").notNull(),
+  awardedAt: text("awarded_at").notNull(),
+  relatedOpId: integer("related_op_id").default(0),
+  relatedOpName: text("related_op_name").default(""),
+});
+export const insertAwardSchema = createInsertSchema(awards).omit({ id: true });
+export type InsertAward = z.infer<typeof insertAwardSchema>;
+export type Award = typeof awards.$inferSelect;
+
+// ─── Training Records ─────────────────────────────────────────────────────────
+export const trainingRecords = sqliteTable("training_records", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  username: text("username").notNull(),
+  eventName: text("event_name").notNull(),
+  category: text("category").notNull().default("general"), // general | weapons | medical | comms | leadership | special
+  date: text("date").notNull(),
+  result: text("result").notNull().default("pass"), // pass | fail | qualified | expired
+  instructor: text("instructor").default(""),
+  expiresAt: text("expires_at").default(""),
+  notes: text("notes").default(""),
+  createdAt: text("created_at").notNull(),
+});
+export const insertTrainingSchema = createInsertSchema(trainingRecords).omit({ id: true });
+export type InsertTraining = z.infer<typeof insertTrainingSchema>;
+export type TrainingRecord = typeof trainingRecords.$inferSelect;
+
+// ─── Flash Broadcasts ─────────────────────────────────────────────────────────
+export const broadcasts = sqliteTable("broadcasts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  priority: text("priority").notNull().default("flash"), // flash | immediate | priority
+  sentBy: text("sent_by").notNull(),
+  sentAt: text("sent_at").notNull(),
+  expiresAt: text("expires_at").default(""),
+  active: integer("active", { mode: "boolean" }).default(true),
+});
+export const insertBroadcastSchema = createInsertSchema(broadcasts).omit({ id: true });
+export type InsertBroadcast = z.infer<typeof insertBroadcastSchema>;
+export type Broadcast = typeof broadcasts.$inferSelect;
+
 // ─── Threat Markers ───────────────────────────────────────────────────────────
 export const threats = sqliteTable("threats", {
   id: integer("id").primaryKey({ autoIncrement: true }),

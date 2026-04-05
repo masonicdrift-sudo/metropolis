@@ -17,6 +17,15 @@ import Messaging from "./pages/Messaging";
 import CommoCardPage from "./pages/CommoCard";
 import IsofacPage from "./pages/Isofac";
 import ChangePassword from "./pages/ChangePassword";
+import PerstatPage from "./pages/Perstat";
+import AfterActionPage from "./pages/AfterAction";
+import OpTaskBoard from "./pages/OpTaskBoard";
+import AwardsPage from "./pages/Awards";
+import TrainingPage from "./pages/Training";
+import FileVault from "./pages/FileVault";
+import GridTool from "./pages/GridTool";
+import BroadcastsPage from "./pages/Broadcasts";
+import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +35,8 @@ import {
   LayoutDashboard, Radio, Target, ShieldAlert,
   Crosshair, Package, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, Signal, BookOpen,
-  Settings, Menu, X, ChevronRight
+  Settings, Menu, X, ChevronRight, UserCheck, FileText,
+  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Bell
 } from "lucide-react";
 
 // All nav items
@@ -37,10 +47,17 @@ const NAV = [
   { path: "/comms",       label: "COMMS",        icon: Radio,           short: "Comms" },
   { path: "/commo-card",  label: "COMMO CARD",   icon: Signal,          short: "Radio" },
   { path: "/isofac",      label: "ISOFAC",       icon: BookOpen,        short: "ISOFAC" },
+  { path: "/file-vault",  label: "FILE VAULT",   icon: FolderOpen,      short: "Vault" },
   { path: "/assets",      label: "ASSETS",       icon: Package,         short: "Assets" },
   { path: "/threats",     label: "THREAT BOARD", icon: Target,          short: "Threats" },
   { path: "/units",       label: "UNITS",        icon: Users,           short: "Units" },
+  { path: "/perstat",     label: "PERSTAT",      icon: UserCheck,       short: "PERSTAT" },
   { path: "/messages",    label: "MESSAGES",     icon: MessageSquare,   short: "Msgs" },
+  { path: "/aar",         label: "AFTER ACTION", icon: FileText,        short: "AAR" },
+  { path: "/task-board",  label: "TASK BOARD",   icon: Kanban,          short: "Tasks" },
+  { path: "/awards",      label: "AWARDS",       icon: Star,            short: "Awards" },
+  { path: "/training",    label: "TRAINING",     icon: GraduationCap,   short: "Train" },
+  { path: "/grid-tool",   label: "GRID TOOL",    icon: MapPin,          short: "Grid" },
 ];
 
 // Mobile bottom tab — show 5 most important + "More" drawer
@@ -48,7 +65,7 @@ const BOTTOM_TABS = [
   { path: "/",           label: "Home",    icon: LayoutDashboard },
   { path: "/operations", label: "Ops",     icon: Crosshair },
   { path: "/messages",   label: "Msgs",    icon: MessageSquare },
-  { path: "/comms",      label: "Comms",   icon: Radio },
+  { path: "/perstat",    label: "PERSTAT", icon: UserCheck },
   { path: "/isofac",     label: "ISOFAC",  icon: BookOpen },
 ];
 
@@ -119,6 +136,13 @@ function Sidebar() {
             location === "/access-codes" ? "bg-orange-950/60 text-orange-400 border border-orange-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
             <KeyRound size={13} /> ACCESS CODES
+          </Link>
+        )}
+        {(user?.role === "admin" || user?.role === "owner") && (
+          <Link href="/broadcasts" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
+            location === "/broadcasts" ? "bg-red-950/60 text-red-400 border border-red-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`}>
+            <Zap size={13} /> BROADCASTS
           </Link>
         )}
       </nav>
@@ -212,6 +236,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     ...NAV,
     ...(user?.role === "admin" || user?.role === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
     ...(user?.role === "owner" ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
+    ...((user?.role === "admin" || user?.role === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
     { path: "/settings", label: "SETTINGS", icon: Settings, short: "Settings" },
   ];
 
@@ -343,6 +368,7 @@ function AppRoutes() {
 
   return (
     <Layout>
+      <BroadcastOverlay />
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/operations" component={Operations} />
@@ -355,6 +381,14 @@ function AppRoutes() {
         <Route path="/commo-card" component={CommoCardPage} />
         <Route path="/isofac" component={IsofacPage} />
         <Route path="/settings" component={ChangePassword} />
+        <Route path="/perstat" component={PerstatPage} />
+        <Route path="/aar" component={AfterActionPage} />
+        <Route path="/task-board" component={OpTaskBoard} />
+        <Route path="/awards" component={AwardsPage} />
+        <Route path="/training" component={TrainingPage} />
+        <Route path="/file-vault" component={FileVault} />
+        <Route path="/grid-tool" component={GridTool} />
+        <Route path="/broadcasts" component={(user.role === "admin" || user.role === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />

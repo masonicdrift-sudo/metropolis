@@ -532,4 +532,120 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     storage.deleteTheat(Number(req.params.id));
     res.status(204).send();
   });
+
+  // ── PERSTAT ───────────────────────────────────────────────────────────────────
+  app.get("/api/perstat", requireAuth, (_, res) => res.json(storage.getPerstat()));
+  app.post("/api/perstat", requireAuth, (req, res) => {
+    const { username, dutyStatus, notes } = req.body;
+    const target = username || req.session.username!;
+    // Only admin+ can set other users; normal user can only set themselves
+    if (target !== req.session.username && (require("@shared/schema").ROLE_RANK[req.session.role || ""] ?? 0) < 2)
+      return res.status(403).json({ error: "Forbidden" });
+    res.json(storage.upsertPerstat(target, dutyStatus || "active", notes || ""));
+  });
+
+  // ── After Action Reports ──────────────────────────────────────────────────────
+  app.get("/api/aar", requireAuth, (_, res) => res.json(storage.getAars()));
+  app.get("/api/aar/:id", requireAuth, (req, res) => {
+    const doc = storage.getAar(Number(req.params.id));
+    if (!doc) return res.status(404).json({ error: "Not found" });
+    res.json(doc);
+  });
+  app.post("/api/aar", requireAuth, (req, res) => {
+    const now = new Date().toISOString();
+    const aar = storage.createAar({ ...req.body, submittedBy: req.session.username!, createdAt: now });
+    res.status(201).json(aar);
+  });
+  app.patch("/api/aar/:id", requireAuth, (req, res) => {
+    const aar = storage.updateAar(Number(req.params.id), req.body);
+    if (!aar) return res.status(404).json({ error: "Not found" });
+    res.json(aar);
+  });
+  app.delete("/api/aar/:id", requireAdmin, (req, res) => {
+    storage.deleteAar(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Op Tasks (Kanban per Operation) ──────────────────────────────────────────
+  app.get("/api/operations/:id/tasks", requireAuth, (req, res) => {
+    res.json(storage.getOpTasks(Number(req.params.id)));
+  });
+  app.post("/api/operations/:id/tasks", requireAuth, (req, res) => {
+    const task = storage.createOpTask({
+      ...req.body,
+      operationId: Number(req.params.id),
+      createdAt: new Date().toISOString(),
+    });
+    res.status(201).json(task);
+  });
+  app.patch("/api/tasks/:id", requireAuth, (req, res) => {
+    const task = storage.updateOpTask(Number(req.params.id), req.body);
+    if (!task) return res.status(404).json({ error: "Not found" });
+    res.json(task);
+  });
+  app.delete("/api/tasks/:id", requireAdmin, (req, res) => {
+    storage.deleteOpTask(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Awards ────────────────────────────────────────────────────────────────────
+  app.get("/api/awards", requireAuth, (req, res) => {
+    const username = req.query.username as string | undefined;
+    res.json(storage.getAwards(username));
+  });
+  app.post("/api/awards", requireAdmin, (req, res) => {
+    const award = storage.createAward({ ...req.body, awardedBy: req.session.username!, awardedAt: new Date().toISOString() });
+    res.status(201).json(award);
+  });
+  app.delete("/api/awards/:id", requireAdmin, (req, res) => {
+    storage.deleteAward(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Training Records ──────────────────────────────────────────────────────────
+  app.get("/api/training", requireAuth, (req, res) => {
+    const username = req.query.username as string | undefined;
+    res.json(storage.getTrainingRecords(username));
+  });
+  app.post("/api/training", requireAdmin, (req, res) => {
+    const rec = storage.createTrainingRecord({ ...req.body, createdAt: new Date().toISOString() });
+    res.status(201).json(rec);
+  });
+  app.patch("/api/training/:id", requireAdmin, (req, res) => {
+    const rec = storage.updateTrainingRecord(Number(req.params.id), req.body);
+    if (!rec) return res.status(404).json({ error: "Not found" });
+    res.json(rec);
+  });
+  app.delete("/api/training/:id", requireAdmin, (req, res) => {
+    storage.deleteTrainingRecord(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Broadcasts (FLASH) ────────────────────────────────────────────────────────
+  app.get("/api/broadcasts", requireAuth, (_, res) => res.json(storage.getActiveBroadcasts()));
+  app.get("/api/broadcasts/all", requireAdmin, (_, res) => res.json(storage.getBroadcasts()));
+  app.post("/api/broadcasts", requireAdmin, (req, res) => {
+    const b = storage.createBroadcast({ ...req.body, sentBy: req.session.username!, sentAt: new Date().toISOString() });
+    // Push to all connected users via WebSocket
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "BROADCAST", broadcast: b });
+    res.status(201).json(b);
+  });
+  app.patch("/api/broadcasts/:id/dismiss", requireAuth, (req, res) => {
+    storage.dismissBroadcast(Number(req.params.id));
+    res.json({ ok: true });
+  });
+  app.delete("/api/broadcasts/:id", requireAdmin, (req, res) => {
+    storage.deleteBroadcast(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Notifications (aggregate unread counts) ───────────────────────────────────
+  app.get("/api/notifications", requireAuth, (req, res) => {
+    const me = req.session.username!;
+    const broadcasts = storage.getActiveBroadcasts().length;
+    const dms = storage.getUnreadDMCount(me);
+    const general = storage.getUnreadGeneralCount(me);
+    res.json({ broadcasts, dms, general, total: broadcasts + dms + general });
+  });
 }

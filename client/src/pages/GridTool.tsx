@@ -77,7 +77,7 @@ export default function GridTool() {
           <div className="bg-card border border-border rounded p-3">
             <div className="text-[10px] text-muted-foreground tracking-widest mb-3">ADD GRID MARKER</div>
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2"> {/* 2-col is fine here — short labels */}
                 <div>
                   <Label className="text-[10px] tracking-wider">LABEL *</Label>
                   <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value.toUpperCase() }))}

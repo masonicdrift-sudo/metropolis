@@ -59,26 +59,28 @@ function AarForm({ aar, ops, onClose }: { aar?: AfterActionReport; ops: Operatio
 
   return (
     <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
+      <div className="space-y-3">
+        <div>
           <Label className="text-[10px] tracking-wider">REPORT TITLE *</Label>
           <Input value={form.title} onChange={e => set("title")(e.target.value)} placeholder="AAR - OP NAME - DATE" className="text-xs" />
         </div>
-        <div>
-          <Label className="text-[10px] tracking-wider">LINKED OPERATION</Label>
-          <Select value={String(form.operationId)} onValueChange={handleOpSelect}>
-            <SelectTrigger className="text-xs"><SelectValue placeholder="None" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">— NONE —</SelectItem>
-              {ops.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-[10px] tracking-wider">LINKED OPERATION</Label>
+            <Select value={String(form.operationId)} onValueChange={handleOpSelect}>
+              <SelectTrigger className="text-xs"><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">— NONE —</SelectItem>
+                {ops.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-wider">DATE</Label>
+            <Input type="date" value={form.date} onChange={e => set("date")(e.target.value)} className="text-xs" />
+          </div>
         </div>
         <div>
-          <Label className="text-[10px] tracking-wider">DATE</Label>
-          <Input type="date" value={form.date} onChange={e => set("date")(e.target.value)} className="text-xs" />
-        </div>
-        <div className="col-span-2">
           <Label className="text-[10px] tracking-wider">CLASSIFICATION</Label>
           <Select value={form.classification} onValueChange={set("classification")}>
             <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>

@@ -40,7 +40,7 @@ function AwardForm({ onClose, users, ops }: { onClose: () => void; users: any[];
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-[10px] tracking-wider">RECIPIENT *</Label>
           <Select value={form.username} onValueChange={set("username")}>
@@ -57,11 +57,11 @@ function AwardForm({ onClose, users, ops }: { onClose: () => void; users: any[];
             </SelectContent>
           </Select>
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Label className="text-[10px] tracking-wider">AWARD NAME *</Label>
           <Input value={form.awardName} onChange={e => set("awardName")(e.target.value)} placeholder="e.g. Valor Under Fire" className="text-xs" />
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Label className="text-[10px] tracking-wider">LINKED OPERATION</Label>
           <Select value={String(form.relatedOpId)} onValueChange={handleOp}>
             <SelectTrigger className="text-xs"><SelectValue placeholder="None" /></SelectTrigger>
@@ -71,7 +71,7 @@ function AwardForm({ onClose, users, ops }: { onClose: () => void; users: any[];
             </SelectContent>
           </Select>
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Label className="text-[10px] tracking-wider">REASON / CITATION</Label>
           <Textarea value={form.reason} onChange={e => set("reason")(e.target.value)} className="text-xs h-20" placeholder="Describe the action or achievement..." />
         </div>

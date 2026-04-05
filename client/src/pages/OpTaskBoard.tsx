@@ -208,10 +208,12 @@ export default function OpTaskBoard() {
             </div>
           </div>
 
-          {/* Kanban columns */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+          {/* Kanban columns — horizontal scroll on mobile, grid on desktop */}
+          <div className="flex md:grid md:grid-cols-5 gap-2 overflow-x-auto pb-2 md:overflow-visible"
+            style={{ scrollSnapType: 'x mandatory' }}>
             {PHASES.map(phase => (
-              <div key={phase} className={`rounded border ${PHASE_COLOR[phase]} p-2`}>
+              <div key={phase} className={`rounded border ${PHASE_COLOR[phase]} p-2 shrink-0 w-[220px] md:w-auto`}
+                style={{ scrollSnapAlign: 'start' }}>
                 <div className={`text-[10px] font-bold tracking-widest mb-2 ${PHASE_HEADER[phase]}`}>
                   {phase} <span className="text-muted-foreground font-normal">({phaseTasks(phase).length})</span>
                 </div>

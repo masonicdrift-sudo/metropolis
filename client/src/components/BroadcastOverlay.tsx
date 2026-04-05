@@ -55,11 +55,11 @@ export function BroadcastOverlay() {
   const Icon = cfg.icon;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      {/* Modal */}
-      <div className={`relative w-full max-w-md rounded-lg border-2 ${cfg.bg} ${cfg.border} p-6 shadow-2xl scanlines`}>
+      {/* Modal — slides up from bottom on mobile, centered on desktop */}
+      <div className={`relative w-full md:max-w-md rounded-t-xl md:rounded-lg border-2 ${cfg.bg} ${cfg.border} p-5 md:p-6 shadow-2xl scanlines safe-bottom`}>
         {/* Flashing top bar */}
         <div className={`absolute top-0 left-0 right-0 h-1 ${cfg.border.replace("border-","bg-")} animate-pulse rounded-t-lg`} />
 

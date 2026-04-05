@@ -87,33 +87,35 @@ export default function FileVault() {
       </div>
 
       {/* Search + filters */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        <div className="relative flex-1 min-w-[180px]">
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="relative w-full">
           <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search title, type, op name, tags..." className="pl-7 text-xs h-8" />
+            placeholder="Search title, type, op name, tags..." className="pl-7 text-xs h-8 w-full" />
         </div>
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="text-xs h-8 w-36"><SelectValue placeholder="All types" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ALL TYPES</SelectItem>
-            {allTypes.map(t => <SelectItem key={t} value={t}>{t.replace("_"," ")}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterClass} onValueChange={setFilterClass}>
-          <SelectTrigger className="text-xs h-8 w-32"><SelectValue placeholder="Classification" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ALL CLASS</SelectItem>
-            {["UNCLASS","CUI","SECRET","TS"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="text-xs h-8 w-32"><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">ALL STATUS</SelectItem>
-            {["DRAFT","ACTIVE","SUPERSEDED","ARCHIVED"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="text-xs h-8 flex-1 min-w-[110px]"><SelectValue placeholder="All types" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ALL TYPES</SelectItem>
+              {allTypes.map(t => <SelectItem key={t} value={t}>{t.replace("_"," ")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterClass} onValueChange={setFilterClass}>
+            <SelectTrigger className="text-xs h-8 flex-1 min-w-[100px]"><SelectValue placeholder="Classification" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ALL CLASS</SelectItem>
+              {["UNCLASS","CUI","SECRET","TS"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="text-xs h-8 flex-1 min-w-[100px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ALL STATUS</SelectItem>
+              {["DRAFT","ACTIVE","SUPERSEDED","ARCHIVED"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {filtered.length === 0 && (

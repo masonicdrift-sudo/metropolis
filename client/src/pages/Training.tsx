@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import type { TrainingRecord } from "@shared/schema";
 import { useState } from "react";
-import { Plus, Trash2, GraduationCap, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,51 +38,55 @@ function TrainingForm({ onClose, users }: { onClose: () => void; users: any[] })
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-[10px] tracking-wider">OPERATOR *</Label>
-          <Select value={form.username} onValueChange={set("username")}>
-            <SelectTrigger className="text-xs"><SelectValue placeholder="Select operator" /></SelectTrigger>
-            <SelectContent>{users.map((u: any) => <SelectItem key={u.username} value={u.username}>{u.username}</SelectItem>)}</SelectContent>
-          </Select>
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-[10px] tracking-wider">OPERATOR *</Label>
+            <Select value={form.username} onValueChange={set("username")}>
+              <SelectTrigger className="text-xs"><SelectValue placeholder="Select operator" /></SelectTrigger>
+              <SelectContent>{users.map((u: any) => <SelectItem key={u.username} value={u.username}>{u.username}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-wider">CATEGORY</Label>
+            <Select value={form.category} onValueChange={set("category")}>
+              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["general","weapons","medical","comms","leadership","special"].map(c => (
+                  <SelectItem key={c} value={c}>{c.toUpperCase()}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div>
-          <Label className="text-[10px] tracking-wider">CATEGORY</Label>
-          <Select value={form.category} onValueChange={set("category")}>
-            <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["general","weapons","medical","comms","leadership","special"].map(c => (
-                <SelectItem key={c} value={c}>{c.toUpperCase()}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="col-span-2">
           <Label className="text-[10px] tracking-wider">EVENT / QUALIFICATION NAME *</Label>
           <Input value={form.eventName} onChange={e => set("eventName")(e.target.value)} placeholder="e.g. CQB Qualification, TCCC, JTAC Cert" className="text-xs" />
         </div>
-        <div>
-          <Label className="text-[10px] tracking-wider">DATE</Label>
-          <Input type="date" value={form.date} onChange={e => set("date")(e.target.value)} className="text-xs" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-[10px] tracking-wider">DATE</Label>
+            <Input type="date" value={form.date} onChange={e => set("date")(e.target.value)} className="text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-wider">RESULT</Label>
+            <Select value={form.result} onValueChange={set("result")}>
+              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["pass","fail","qualified","expired"].map(r => <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-wider">INSTRUCTOR</Label>
+            <Input value={form.instructor} onChange={e => set("instructor")(e.target.value)} placeholder="Username / callsign" className="text-xs" />
+          </div>
+          <div>
+            <Label className="text-[10px] tracking-wider">EXPIRES (OPTIONAL)</Label>
+            <Input type="date" value={form.expiresAt} onChange={e => set("expiresAt")(e.target.value)} className="text-xs" />
+          </div>
         </div>
         <div>
-          <Label className="text-[10px] tracking-wider">RESULT</Label>
-          <Select value={form.result} onValueChange={set("result")}>
-            <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {["pass","fail","qualified","expired"].map(r => <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-[10px] tracking-wider">INSTRUCTOR</Label>
-          <Input value={form.instructor} onChange={e => set("instructor")(e.target.value)} placeholder="Username / callsign" className="text-xs" />
-        </div>
-        <div>
-          <Label className="text-[10px] tracking-wider">EXPIRES (OPTIONAL)</Label>
-          <Input type="date" value={form.expiresAt} onChange={e => set("expiresAt")(e.target.value)} className="text-xs" />
-        </div>
-        <div className="col-span-2">
           <Label className="text-[10px] tracking-wider">NOTES</Label>
           <Textarea value={form.notes} onChange={e => set("notes")(e.target.value)} className="text-xs h-14" />
         </div>
@@ -183,59 +187,47 @@ export default function TrainingPage() {
         ))}
       </div>
 
-      {/* Records table */}
-      <div className="bg-card border border-border rounded">
-        <table className="w-full text-xs mobile-card-table">
-          <thead>
-            <tr className="border-b border-border text-[10px] text-muted-foreground tracking-[0.12em]">
-              <th className="text-left px-3 py-2">OPERATOR</th>
-              <th className="text-left px-3 py-2">EVENT</th>
-              <th className="text-left px-3 py-2">CATEGORY</th>
-              <th className="text-left px-3 py-2">DATE</th>
-              <th className="text-left px-3 py-2">RESULT</th>
-              <th className="text-left px-3 py-2">EXPIRES</th>
-              <th className="text-left px-3 py-2">NOTES</th>
-              {canAdmin && <th className="text-left px-3 py-2"></th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.map(r => {
-              const isExpiringSoon = r.expiresAt && (() => {
-                const exp = new Date(r.expiresAt!); const soon = new Date(); soon.setDate(soon.getDate() + 30);
-                return exp <= soon && exp >= new Date();
-              })();
-              return (
-                <tr key={r.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="px-3 py-2 font-bold font-mono" data-label="OPERATOR">{r.username}</td>
-                  <td className="px-3 py-2" data-label="EVENT">{r.eventName}</td>
-                  <td className="px-3 py-2" data-label="CATEGORY">
-                    <span className={`text-[10px] font-bold tracking-wider ${CAT_COLOR[r.category] || ""}`}>{r.category.toUpperCase()}</span>
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground" data-label="DATE">{fmt(r.date)}</td>
-                  <td className="px-3 py-2" data-label="RESULT">
-                    <span className={`text-[10px] font-bold tracking-wider ${RESULT_COLOR[r.result] || ""}`}>{r.result.toUpperCase()}</span>
-                  </td>
-                  <td className="px-3 py-2" data-label="EXPIRES">
-                    {r.expiresAt ? (
-                      <span className={isExpiringSoon ? "text-orange-400 font-bold" : "text-muted-foreground"}>
-                        {fmt(r.expiresAt)}{isExpiringSoon && " ⚠"}
+      {/* Records — card list (works on all screen sizes) */}
+      {filtered.length === 0 && (
+        <div className="bg-card border border-border rounded p-8 text-center text-muted-foreground text-xs">NO TRAINING RECORDS</div>
+      )}
+      <div className="space-y-2">
+        {filtered.map(r => {
+          const isExpiringSoon = r.expiresAt && (() => {
+            const exp = new Date(r.expiresAt!); const soon = new Date(); soon.setDate(soon.getDate() + 30);
+            return exp <= soon && exp >= new Date();
+          })();
+          return (
+            <div key={r.id} className="bg-card border border-border rounded px-3 py-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-[9px] font-bold tracking-widest ${CAT_COLOR[r.category] || ""}`}>{r.category.toUpperCase()}</span>
+                    <span className="text-xs font-bold">{r.eventName}</span>
+                    <span className={`text-[9px] font-bold tracking-wider ${RESULT_COLOR[r.result] || ""}`}>{r.result.toUpperCase()}</span>
+                    {isExpiringSoon && <span className="text-[9px] text-orange-400 font-bold">⚠ EXPIRING</span>}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-2">
+                    <span>OPR: <span className="text-foreground font-bold font-mono">{r.username}</span></span>
+                    <span>▪ {fmt(r.date)}</span>
+                    {r.instructor && <span>▪ INSTR: {r.instructor}</span>}
+                    {r.expiresAt && (
+                      <span className={isExpiringSoon ? "text-orange-400" : ""}>
+                        ▪ EXP: {fmt(r.expiresAt)}
                       </span>
-                    ) : <span className="text-muted-foreground/40">—</span>}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground text-[10px] max-w-[120px] truncate" data-label="NOTES">{r.notes || "—"}</td>
-                  {canAdmin && (
-                    <td className="px-3 py-2">
-                      <button onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400"><Trash2 size={11} /></button>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr><td colSpan={canAdmin ? 8 : 7} className="px-3 py-8 text-center text-muted-foreground">NO TRAINING RECORDS</td></tr>
-            )}
-          </tbody>
-        </table>
+                    )}
+                  </div>
+                  {r.notes && <div className="text-[10px] text-muted-foreground/60 mt-0.5">{r.notes}</div>}
+                </div>
+                {canAdmin && (
+                  <button onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400 shrink-0">
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(session({
   store: new (SQLiteStore as any)({
     db: "sessions.db",
-    dir: process.env.NODE_ENV === "production" ? "/var/data" : ".",
+    dir: (process.env.NODE_ENV === "production" && require("fs").existsSync("/var/data")) ? "/var/data" : ".",
   }),
   secret: process.env.SESSION_SECRET || "tacedge-fallback-dev-only",
   resave: false,

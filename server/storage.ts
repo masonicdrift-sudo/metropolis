@@ -18,9 +18,11 @@ import type {
   GroupChat,
 } from "@shared/schema";
 
-// Use persistent disk path on Render, fallback to local for dev
-const DB_PATH = process.env.NODE_ENV === "production"
-  ? "/var/data/tacedge.db"
+// Use persistent disk path on Render if it exists, fallback to local
+import { existsSync, mkdirSync } from "fs";
+const RENDER_DISK = "/var/data";
+const DB_PATH = process.env.NODE_ENV === "production" && existsSync(RENDER_DISK)
+  ? `${RENDER_DISK}/tacedge.db`
   : "tacedge.db";
 const sqlite = new Database(DB_PATH);
 const db = drizzle(sqlite, { schema });

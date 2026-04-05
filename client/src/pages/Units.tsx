@@ -129,7 +129,7 @@ export default function Units() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>UNIT ROSTER</h1>
@@ -151,7 +151,7 @@ export default function Units() {
       </div>
 
       {/* Status summary */}
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
           { s: "active", label: "ACTIVE", color: "text-green-400" },
           { s: "standby", label: "STANDBY", color: "text-yellow-400" },
@@ -177,7 +177,7 @@ export default function Units() {
 
       {/* Units table */}
       <div className="bg-card border border-border rounded">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs mobile-card-table">
           <thead>
             <tr className="border-b border-border text-[10px] text-muted-foreground tracking-[0.12em]">
               <th className="text-left px-3 py-2">TYPE</th>
@@ -193,15 +193,15 @@ export default function Units() {
           <tbody className="divide-y divide-border">
             {filtered.map(u => (
               <tr key={u.id} className="hover:bg-secondary/20 transition-colors" data-testid={`unit-row-${u.id}`}>
-                <td className="px-3 py-2 text-base">{typeIcon[u.type] || "■"}</td>
-                <td className="px-3 py-2 font-bold font-mono tracking-wider">{u.callsign}</td>
+                <td className="px-3 py-2 text-base" data-label="TYPE">{typeIcon[u.type] || "■"}</td>
+                <td className="px-3 py-2 font-bold font-mono tracking-wider" data-label="CALLSIGN">{u.callsign}</td>
                 <td className="px-3 py-2">
                   <StatusCycler unit={u} canEdit={canEditStatus} onCycle={s => setStatus.mutate({ id: u.id, status: s })} />
                 </td>
-                <td className="px-3 py-2 text-muted-foreground">{u.commander}</td>
-                <td className="px-3 py-2 kpi-value text-sm">{u.pax}</td>
-                <td className="px-3 py-2 grid-coord">{u.grid}</td>
-                <td className="px-3 py-2 text-muted-foreground text-[10px] max-w-[150px] truncate">{u.notes}</td>
+                <td className="px-3 py-2 text-muted-foreground" data-label="COMMANDER">{u.commander}</td>
+                <td className="px-3 py-2 kpi-value text-sm" data-label="PAX">{u.pax}</td>
+                <td className="px-3 py-2 grid-coord" data-label="GRID">{u.grid}</td>
+                <td className="px-3 py-2 text-muted-foreground text-[10px] max-w-[150px] truncate" data-label="NOTES">{u.notes}</td>
                 <td className="px-3 py-2">
                   <div className="flex gap-1">
                     <button onClick={() => { setEditUnit(u); setOpen(true); }} className="p-1 text-muted-foreground hover:text-foreground" data-testid={`edit-unit-${u.id}`}><Edit size={11} /></button>

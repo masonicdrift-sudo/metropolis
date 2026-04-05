@@ -90,7 +90,7 @@ export default function Threats() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>THREAT BOARD</h1>
@@ -118,7 +118,7 @@ export default function Threats() {
       </div>
 
       {/* Threat summary KPIs */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
         {["IED","enemy_force","sniper","drone"].map(cat => {
           const c = threats.filter(t => t.category === cat && t.active).length;
           return (
@@ -131,7 +131,7 @@ export default function Threats() {
       </div>
 
       {/* Threat list */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {displayed.map(t => (
           <div key={t.id} className={`bg-card border rounded p-3 ${confBorder[t.confidence]} ${!t.active ? "opacity-50" : ""}`} data-testid={`threat-card-${t.id}`}>
             <div className="flex items-start justify-between mb-2">

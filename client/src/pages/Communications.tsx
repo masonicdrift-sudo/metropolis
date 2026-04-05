@@ -350,10 +350,10 @@ export default function Communications() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
 
         {/* Compose */}
-        <div className="col-span-5 bg-card border border-border rounded">
+        <div className="md:col-span-5 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Radio size={11} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMPOSE MESSAGE</span>
@@ -426,7 +426,7 @@ export default function Communications() {
         </div>
 
         {/* Log */}
-        <div className="col-span-7 bg-card border border-border rounded">
+        <div className="md:col-span-7 bg-card border border-border rounded">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">MESSAGE LOG</span>
             <div className="flex items-center gap-2">

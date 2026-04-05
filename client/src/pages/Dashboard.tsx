@@ -84,7 +84,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-3 md:p-4 space-y-3 md:space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
@@ -97,7 +97,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-2 xl:grid-cols-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
         <KPICard label="ACTIVE OPS" value={activeOps} sub={`${ops.length} total`} color={activeOps > 0 ? "text-green-400" : "text-muted-foreground"} />
         <KPICard label="ACTIVE UNITS" value={activeUnits} sub={`${totalPax} PAX`} />
         <KPICard label="CRIT INTEL" value={criticalIntel} color={criticalIntel > 0 ? "text-red-400" : "text-green-400"} alert={criticalIntel > 0} sub="unverified rpts" />
@@ -109,10 +109,10 @@ export default function Dashboard() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-12 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
 
         {/* Ops Status */}
-        <div className="col-span-5 bg-card border border-border rounded">
+        <div className="md:col-span-5 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Activity size={11} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">OPERATIONS STATUS</span>
@@ -141,7 +141,7 @@ export default function Dashboard() {
         </div>
 
         {/* Units Board */}
-        <div className="col-span-4 bg-card border border-border rounded">
+        <div className="md:col-span-4 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Shield size={11} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">UNIT STATUS BOARD</span>
@@ -166,7 +166,7 @@ export default function Dashboard() {
         </div>
 
         {/* Active Threats */}
-        <div className="col-span-3 bg-card border border-border rounded">
+        <div className="md:col-span-3 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <AlertTriangle size={11} className="text-red-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-red-400">THREAT BOARD</span>
@@ -189,7 +189,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Comms */}
-        <div className="col-span-6 bg-card border border-border rounded">
+        <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Radio size={11} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMMS LOG — RECENT</span>
@@ -212,7 +212,7 @@ export default function Dashboard() {
         </div>
 
         {/* Intel Summary */}
-        <div className="col-span-6 bg-card border border-border rounded">
+        <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <TrendingUp size={11} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">INTEL SUMMARY</span>

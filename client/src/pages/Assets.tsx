@@ -123,7 +123,7 @@ export default function Assets() {
   const mntCount = assets.filter(a => a.status === "maintenance").length;
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>ASSET TRACKING</h1>
@@ -143,7 +143,7 @@ export default function Assets() {
       </div>
 
       {/* Status summary */}
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
           { label: "OPERATIONAL", val: opCount, color: "text-green-400" },
           { label: "DEGRADED", val: degCount, color: "text-orange-400" },
@@ -168,7 +168,7 @@ export default function Assets() {
       </div>
 
       {/* Assets grid */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {filtered.map(a => (
           <div key={a.id} className="bg-card border border-border rounded p-3" data-testid={`asset-card-${a.id}`}>
             <div className="flex items-start justify-between mb-2">

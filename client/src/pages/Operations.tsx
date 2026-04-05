@@ -102,7 +102,7 @@ export default function Operations() {
   const priorityBg: Record<string, string> = { critical: "border-l-2 border-l-red-600", high: "border-l-2 border-l-orange-600", medium: "border-l-2 border-l-yellow-600", low: "border-l-2 border-l-green-800" };
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>OPERATIONS PLANNING</h1>
@@ -138,7 +138,7 @@ export default function Operations() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-xs text-muted-foreground">NO OPERATIONS IN QUEUE</div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full text-xs mobile-card-table">
             <thead>
               <tr className="border-b border-border text-[10px] text-muted-foreground tracking-[0.12em]">
                 <th className="text-left px-3 py-2">OP NAME</th>
@@ -153,12 +153,12 @@ export default function Operations() {
             <tbody className="divide-y divide-border">
               {filtered.map(op => (
                 <tr key={op.id} className={`hover:bg-secondary/20 transition-colors ${priorityBg[op.priority] || ""}`} data-testid={`op-row-${op.id}`}>
-                  <td className="px-3 py-2 font-bold tracking-wider">{op.name}</td>
-                  <td className="px-3 py-2"><span className="text-[10px] text-muted-foreground uppercase">{op.type}</span></td>
-                  <td className="px-3 py-2"><span className={`badge-${op.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{op.status}</span></td>
-                  <td className="px-3 py-2"><span className={`badge-${op.priority} text-[9px] px-2 py-0.5 rounded tracking-wider uppercase`}>{op.priority}</span></td>
-                  <td className="px-3 py-2 grid-coord">{op.grid}</td>
-                  <td className="px-3 py-2 text-muted-foreground max-w-[200px] truncate">{op.objective}</td>
+                  <td className="px-3 py-2 font-bold tracking-wider" data-label="OP NAME">{op.name}</td>
+                  <td className="px-3 py-2" data-label="TYPE"><span className="text-[10px] text-muted-foreground uppercase">{op.type}</span></td>
+                  <td className="px-3 py-2" data-label="STATUS"><span className={`badge-${op.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{op.status}</span></td>
+                  <td className="px-3 py-2" data-label="PRIORITY"><span className={`badge-${op.priority} text-[9px] px-2 py-0.5 rounded tracking-wider uppercase`}>{op.priority}</span></td>
+                  <td className="px-3 py-2 grid-coord" data-label="GRID">{op.grid}</td>
+                  <td className="px-3 py-2 text-muted-foreground max-w-[200px] truncate" data-label="OBJECTIVE">{op.objective}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">
                       {op.status === "planning" && (

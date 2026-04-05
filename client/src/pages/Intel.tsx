@@ -93,7 +93,7 @@ export default function Intel() {
   });
 
   return (
-    <div className="p-4">
+    <div className="p-3 md:p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>INTELLIGENCE COLLECTION</h1>
@@ -113,7 +113,7 @@ export default function Intel() {
       </div>
 
       {/* KPI mini row */}
-      <div className="grid grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
         {Object.entries(counts).slice(0, 5).map(([cat, c]) => (
           <div key={cat} className="bg-card border border-border rounded px-3 py-2">
             <div className="text-[9px] text-muted-foreground tracking-wider">{cat}</div>
@@ -133,7 +133,7 @@ export default function Intel() {
       </div>
 
       {/* Reports */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {filtered.map(r => (
           <div key={r.id} className={`bg-card border rounded p-3 ${r.threat === "critical" && !r.verified ? "border-red-800/60 tactical-active" : "border-border"}`} data-testid={`intel-row-${r.id}`}>
             <div className="flex items-start justify-between gap-2 mb-1.5">

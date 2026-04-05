@@ -17,7 +17,11 @@ import type {
   CommoCard, InsertCommoCard,
 } from "@shared/schema";
 
-const sqlite = new Database("tacedge.db");
+// Use persistent disk path on Render, fallback to local for dev
+const DB_PATH = process.env.NODE_ENV === "production"
+  ? "/var/data/tacedge.db"
+  : "tacedge.db";
+const sqlite = new Database(DB_PATH);
 const db = drizzle(sqlite, { schema });
 
 // Initialize tables

@@ -67,7 +67,10 @@ app.use(express.urlencoded({ extended: false }));
 
 // Session middleware — secret loaded from environment variable, never hardcoded
 app.use(session({
-  store: new (SQLiteStore as any)({ db: "sessions.db", dir: "." }),
+  store: new (SQLiteStore as any)({
+    db: "sessions.db",
+    dir: process.env.NODE_ENV === "production" ? "/var/data" : ".",
+  }),
   secret: process.env.SESSION_SECRET || "tacedge-fallback-dev-only",
   resave: false,
   saveUninitialized: false,

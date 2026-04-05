@@ -28,6 +28,12 @@ function safeUser(user: any) {
   return safe;
 }
 
+// Helper: push a WS event to all connected clients
+function wsPush(type: string, extra?: object) {
+  const broadcast = (global as any).__wsBroadcast;
+  if (broadcast) broadcast({ type, ...extra });
+}
+
 // Middleware: require logged-in session
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
@@ -166,7 +172,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       updates.passwordHash = bcrypt.hashSync(password, 10);
     }
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: "Nothing to update" });
-    const updated = storage.updateUserById(id, updates);
+    const updated = storage.updateUserById(id, updates); wsPush("USER");
     const { passwordHash, ...safe } = updated as any;
     res.json(safe);
   });
@@ -206,7 +212,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
   app.post("/api/isofac", requireAuth, (req, res) => {
     const now = new Date().toISOString();
-    const doc = storage.createIsofacDoc({
+    const idoc2 = storage.createIsofacDoc({
       ...req.body,
       createdBy: req.session.username!,
       createdAt: now,
@@ -214,15 +220,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       attachments: req.body.attachments || "[]",
       tags: req.body.tags || "[]",
     });
-    res.status(201).json(doc);
+    wsPush("ISOFAC");
+    res.status(201).json(idoc2);
   });
   app.patch("/api/isofac/:id", requireAuth, (req, res) => {
     const doc = storage.updateIsofacDoc(Number(req.params.id), req.body);
     if (!doc) return res.status(404).json({ error: "Not found" });
-    res.json(doc);
+    wsPush("ISOFAC"); res.json(doc);
   });
   app.delete("/api/isofac/:id", requireAdmin, (req, res) => {
-    storage.deleteIsofacDoc(Number(req.params.id));
+    storage.deleteIsofacDoc(Number(req.params.id)); wsPush("ISOFAC");
     res.status(204).send();
   });
 
@@ -413,15 +420,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/units", requireAdmin, (req, res) => {
     const parsed = insertUnitSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createUnit(parsed.data));
+    const unit = storage.createUnit(parsed.data); wsPush("UNIT"); res.status(201).json(unit);
   });
   app.patch("/api/units/:id", requireAdmin, (req, res) => {
     const unit = storage.updateUnit(Number(req.params.id), req.body);
     if (!unit) return res.status(404).json({ error: "Not found" });
-    res.json(unit);
+    wsPush("UNIT"); res.json(unit);
   });
   app.delete("/api/units/:id", requireAdmin, (req, res) => {
-    storage.deleteUnit(Number(req.params.id));
+    storage.deleteUnit(Number(req.params.id)); wsPush("UNIT");
     res.status(204).send();
   });
 
@@ -430,15 +437,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/operations", requireAuth, (req, res) => {
     const parsed = insertOperationSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createOperation(parsed.data));
+    const op = storage.createOperation(parsed.data); wsPush("OPERATION"); res.status(201).json(op);
   });
   app.patch("/api/operations/:id", requireAuth, (req, res) => {
     const op = storage.updateOperation(Number(req.params.id), req.body);
     if (!op) return res.status(404).json({ error: "Not found" });
-    res.json(op);
+    wsPush("OPERATION"); res.json(op);
   });
   app.delete("/api/operations/:id", requireAuth, (req, res) => {
-    storage.deleteOperation(Number(req.params.id));
+    storage.deleteOperation(Number(req.params.id)); wsPush("OPERATION");
     res.status(204).send();
   });
 
@@ -447,12 +454,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/intel", requireAuth, (req, res) => {
     const parsed = insertIntelReportSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createIntelReport(parsed.data));
+    const ir = storage.createIntelReport(parsed.data); wsPush("INTEL"); res.status(201).json(ir);
   });
   app.patch("/api/intel/:id", requireAuth, (req, res) => {
     const report = storage.updateIntelReport(Number(req.params.id), req.body);
     if (!report) return res.status(404).json({ error: "Not found" });
-    res.json(report);
+    wsPush("INTEL"); res.json(report);
   });
   // Add image to intel report
   app.post("/api/intel/:id/images", requireAuth, (req, res) => {
@@ -474,7 +481,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(updated);
   });
   app.delete("/api/intel/:id", requireAuth, (req, res) => {
-    storage.deleteIntelReport(Number(req.params.id));
+    storage.deleteIntelReport(Number(req.params.id)); wsPush("INTEL");
     res.status(204).send();
   });
 
@@ -483,7 +490,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/comms", requireAuth, (req, res) => {
     const parsed = insertCommsLogSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createCommsEntry(parsed.data));
+    const cl = storage.createCommsEntry(parsed.data); wsPush("COMMS"); res.status(201).json(cl);
   });
   app.patch("/api/comms/:id/ack", requireAuth, (req, res) => {
     const entry = storage.acknowledgeComms(Number(req.params.id));
@@ -504,15 +511,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/assets", requireAuth, (req, res) => {
     const parsed = insertAssetSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createAsset(parsed.data));
+    const asset = storage.createAsset(parsed.data); wsPush("ASSET"); res.status(201).json(asset);
   });
   app.patch("/api/assets/:id", requireAuth, (req, res) => {
     const asset = storage.updateAsset(Number(req.params.id), req.body);
     if (!asset) return res.status(404).json({ error: "Not found" });
-    res.json(asset);
+    wsPush("ASSET"); res.json(asset);
   });
   app.delete("/api/assets/:id", requireAuth, (req, res) => {
-    storage.deleteAsset(Number(req.params.id));
+    storage.deleteAsset(Number(req.params.id)); wsPush("ASSET");
     res.status(204).send();
   });
 
@@ -521,15 +528,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/threats", requireAuth, (req, res) => {
     const parsed = insertThreatSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    res.status(201).json(storage.createThreat(parsed.data));
+    const threat = storage.createThreat(parsed.data); wsPush("THREAT"); res.status(201).json(threat);
   });
   app.patch("/api/threats/:id", requireAuth, (req, res) => {
     const t = storage.updateThreat(Number(req.params.id), req.body);
     if (!t) return res.status(404).json({ error: "Not found" });
-    res.json(t);
+    wsPush("THREAT"); res.json(t);
   });
   app.delete("/api/threats/:id", requireAuth, (req, res) => {
-    storage.deleteTheat(Number(req.params.id));
+    storage.deleteTheat(Number(req.params.id)); wsPush("THREAT");
     res.status(204).send();
   });
 
@@ -541,7 +548,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     // Only admin+ can set other users; normal user can only set themselves
     if (target !== req.session.username && (require("@shared/schema").ROLE_RANK[req.session.role || ""] ?? 0) < 2)
       return res.status(403).json({ error: "Forbidden" });
-    res.json(storage.upsertPerstat(target, dutyStatus || "active", notes || ""));
+    const ps = storage.upsertPerstat(target, dutyStatus || "active", notes || ""); wsPush("PERSTAT"); res.json(ps);
   });
 
   // ── After Action Reports ──────────────────────────────────────────────────────
@@ -553,16 +560,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
   app.post("/api/aar", requireAuth, (req, res) => {
     const now = new Date().toISOString();
-    const aar = storage.createAar({ ...req.body, submittedBy: req.session.username!, createdAt: now });
+    const aar = storage.createAar({ ...req.body, submittedBy: req.session.username!, createdAt: now }); wsPush("AAR");
     res.status(201).json(aar);
   });
   app.patch("/api/aar/:id", requireAuth, (req, res) => {
     const aar = storage.updateAar(Number(req.params.id), req.body);
     if (!aar) return res.status(404).json({ error: "Not found" });
-    res.json(aar);
+    wsPush("AAR"); res.json(aar);
   });
   app.delete("/api/aar/:id", requireAdmin, (req, res) => {
-    storage.deleteAar(Number(req.params.id));
+    storage.deleteAar(Number(req.params.id)); wsPush("AAR");
     res.status(204).send();
   });
 
@@ -576,15 +583,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       operationId: Number(req.params.id),
       createdAt: new Date().toISOString(),
     });
-    res.status(201).json(task);
+    wsPush("OP_TASK", { operationId: Number(req.params.id) }); res.status(201).json(task);
   });
   app.patch("/api/tasks/:id", requireAuth, (req, res) => {
     const task = storage.updateOpTask(Number(req.params.id), req.body);
     if (!task) return res.status(404).json({ error: "Not found" });
-    res.json(task);
+    wsPush("OP_TASK", { operationId: task.operationId }); res.json(task);
   });
   app.delete("/api/tasks/:id", requireAdmin, (req, res) => {
-    storage.deleteOpTask(Number(req.params.id));
+    storage.deleteOpTask(Number(req.params.id)); wsPush("OP_TASK");
     res.status(204).send();
   });
 
@@ -594,11 +601,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(storage.getAwards(username));
   });
   app.post("/api/awards", requireAdmin, (req, res) => {
-    const award = storage.createAward({ ...req.body, awardedBy: req.session.username!, awardedAt: new Date().toISOString() });
+    const award = storage.createAward({ ...req.body, awardedBy: req.session.username!, awardedAt: new Date().toISOString() }); wsPush("AWARD");
     res.status(201).json(award);
   });
   app.delete("/api/awards/:id", requireAdmin, (req, res) => {
-    storage.deleteAward(Number(req.params.id));
+    storage.deleteAward(Number(req.params.id)); wsPush("AWARD");
     res.status(204).send();
   });
 
@@ -608,16 +615,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(storage.getTrainingRecords(username));
   });
   app.post("/api/training", requireAdmin, (req, res) => {
-    const rec = storage.createTrainingRecord({ ...req.body, createdAt: new Date().toISOString() });
+    const rec = storage.createTrainingRecord({ ...req.body, createdAt: new Date().toISOString() }); wsPush("TRAINING");
     res.status(201).json(rec);
   });
   app.patch("/api/training/:id", requireAdmin, (req, res) => {
     const rec = storage.updateTrainingRecord(Number(req.params.id), req.body);
     if (!rec) return res.status(404).json({ error: "Not found" });
-    res.json(rec);
+    wsPush("TRAINING"); res.json(rec);
   });
   app.delete("/api/training/:id", requireAdmin, (req, res) => {
-    storage.deleteTrainingRecord(Number(req.params.id));
+    storage.deleteTrainingRecord(Number(req.params.id)); wsPush("TRAINING");
     res.status(204).send();
   });
 

@@ -66,7 +66,7 @@ export default function PerstatPage() {
   const { data: entries = [] } = useQuery<Perstat[]>({
     queryKey: ["/api/perstat"],
     queryFn: () => apiRequest("GET", "/api/perstat"),
-    refetchInterval: 30000,
+    
   });
 
   const { data: allUsers = [] } = useQuery<any[]>({

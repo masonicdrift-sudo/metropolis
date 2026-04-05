@@ -3,6 +3,7 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { WSProvider } from "./lib/ws";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "./pages/Dashboard";
 import Operations from "./pages/Operations";
@@ -77,7 +78,7 @@ function Sidebar() {
   const { data: unread } = useQuery<{ dms: number; general: number }>({
     queryKey: ["/api/messages/unread"],
     queryFn: () => apiRequest("GET", "/api/messages/unread"),
-    refetchInterval: 15000,
+    
     enabled: !!user,
   });
   const totalUnread = (unread?.dms || 0) + (unread?.general || 0);
@@ -190,7 +191,7 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   const { data: unread } = useQuery<{ dms: number; general: number }>({
     queryKey: ["/api/messages/unread"],
     queryFn: () => apiRequest("GET", "/api/messages/unread"),
-    refetchInterval: 15000,
+    
     enabled: !!user,
   });
   const totalUnread = (unread?.dms || 0) + (unread?.general || 0);
@@ -300,7 +301,7 @@ function BottomTabBar() {
   const { user } = useQuery<{ dms: number; general: number }>({
     queryKey: ["/api/messages/unread"],
     queryFn: () => apiRequest("GET", "/api/messages/unread"),
-    refetchInterval: 15000,
+    
   }) as any;
 
   // Suppress ts errors — just use data inline
@@ -401,10 +402,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router hook={useHashLocation}>
-          <AppRoutes />
-        </Router>
-        <Toaster />
+        <WSProvider>
+          <Router hook={useHashLocation}>
+            <AppRoutes />
+          </Router>
+          <Toaster />
+        </WSProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

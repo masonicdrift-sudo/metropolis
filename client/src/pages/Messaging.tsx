@@ -1,16 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download } from "lucide-react";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 const GENERAL = "GENERAL";
-const WS_URL = typeof window !== "undefined"
-  ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws`
-  : "";
 
 // ── Role icon helper ────────────────────────────────────────────
 function RoleIcon({ role }: { role?: string }) {
@@ -315,7 +312,6 @@ export default function Messaging() {
   const [activeChannel, setActiveChannel] = useState<string>(GENERAL);
   const [dmSearch, setDmSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
 
   const isGroup = activeChannel.startsWith("GROUP:");
   const isDM = activeChannel.startsWith("DM:") || (!activeChannel.startsWith("GROUP:") && activeChannel !== GENERAL);
@@ -377,31 +373,8 @@ export default function Messaging() {
     refetchInterval: 10000,
   });
 
-  // WebSocket connection for real-time updates
-  useEffect(() => {
-    if (!user) return;
-    const ws = new WebSocket(WS_URL);
-    wsRef.current = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ type: "AUTH", username: user.username }));
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === "GENERAL_MESSAGE") {
-          refetchGeneral(); refetchUnread();
-        } else if (msg.type === "DM") {
-          refetchDM(); refetchDMList(); refetchUnread();
-        } else if (msg.type === "GROUP_MESSAGE") {
-          refetchGroupMsgs(); refetchGroups();
-        } else if (msg.type === "GROUP_CREATED" || msg.type === "GROUP_UPDATED") {
-          refetchGroups();
-        } else if (msg.type === "MESSAGE_DELETED") {
-          refetchGeneral(); refetchDM(); refetchGroupMsgs();
-        }
-      } catch {}
-    };
-    ws.onerror = () => {};
-    return () => { ws.close(); };
-  }, [user]);
+  // Real-time updates are handled by the global WSProvider in App.tsx.
+  // No local WebSocket connection needed here.
 
   // Auto-scroll to bottom
   useEffect(() => {

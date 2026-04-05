@@ -26,6 +26,29 @@ function roleColor(role?: string) {
 }
 
 // ── Single message bubble ────────────────────────────────────────
+// ── Delete confirm button ────────────────────────────────────────
+function DeleteConfirmBtn({ onConfirm, isOwnMessage }: { onConfirm: () => void; isOwnMessage: boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  if (confirming) {
+    return (
+      <div className="absolute -top-7 -right-1 flex items-center gap-1 bg-card border border-red-800/60 rounded px-2 py-1 shadow-xl z-50">
+        <span className="text-[9px] text-red-400 tracking-wider whitespace-nowrap">DELETE?</span>
+        <button onClick={() => { onConfirm(); setConfirming(false); }}
+          className="text-[9px] bg-red-900 hover:bg-red-800 text-red-200 px-1.5 py-0.5 rounded tracking-wider">YES</button>
+        <button onClick={() => setConfirming(false)}
+          className="text-[9px] text-muted-foreground hover:text-foreground px-1">NO</button>
+      </div>
+    );
+  }
+  return (
+    <button onClick={() => setConfirming(true)}
+      title={isOwnMessage ? "Delete your message" : "Delete message (moderator)"}
+      className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-900/70 border border-red-700/40 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-800">
+      <Trash2 size={8} className="text-red-300" />
+    </button>
+  );
+}
+
 function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
   msg: Message; isMe: boolean; onDelete: (id: number) => void;
   canDelete: boolean; userMap: Record<string, string>;
@@ -82,12 +105,9 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
               );
             } catch { return null; }
           })()}
-          {/* Delete button */}
+          {/* Delete button — requires second click to confirm */}
           {!deleted && canDelete && hovered && (
-            <button onClick={() => onDelete(msg.id)}
-              className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-900/80 border border-red-700/50 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-800">
-              <Trash2 size={8} className="text-red-300" />
-            </button>
+            <DeleteConfirmBtn onConfirm={() => onDelete(msg.id)} isOwnMessage={isMe} />
           )}
         </div>
       </div>
@@ -439,7 +459,7 @@ export default function Messaging() {
 
   const canDelete = (msg: Message) =>
     msg.fromUsername === user?.username ||
-    user?.role === "admin" || user?.role === "owner";
+    (user?.role === "admin" || user?.role === "owner");
 
   const otherUsers = allUsers.filter(u => u.username !== user?.username);
   const filteredUsers = dmSearch

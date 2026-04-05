@@ -29,7 +29,7 @@ function rankColor(abbr: string) {
 }
 
 // ── Create User form ─────────────────────────────────────────────────────────
-function CreateUserForm({ onClose, units }: { onClose: () => void; units: Unit[] }) {
+function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; units: Unit[]; callerRole: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState({ username: "", password: "", confirm: "", role: "user", rank: "", assignedUnit: "" });
@@ -83,10 +83,20 @@ function CreateUserForm({ onClose, units }: { onClose: () => void; units: Unit[]
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
         <select value={form.role} onChange={e => set("role")(e.target.value)}
-          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+          className={`w-full bg-secondary border border-border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
+            form.role === "owner" ? "text-orange-400" : form.role === "admin" ? "text-yellow-400" : "text-green-400"
+          }`}>
           <option value="user">OPERATOR — Standard access</option>
-          <option value="admin">ADMIN — Can manage users and content</option>
+          {(callerRole === "admin" || callerRole === "owner") && (
+            <option value="admin">ADMIN — Can manage users and content</option>
+          )}
+          {callerRole === "owner" && (
+            <option value="owner">OWNER — Full system control</option>
+          )}
         </select>
+        {form.role === "owner" && (
+          <div className="text-[9px] text-orange-400/70 mt-1 tracking-wider">⚠ Granting Owner role gives full system control.</div>
+        )}
       </div>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
@@ -250,7 +260,7 @@ export default function UserManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-sm">
             <DialogHeader><DialogTitle className="text-sm tracking-widest">CREATE NEW USER</DialogTitle></DialogHeader>
-            <CreateUserForm onClose={() => setOpen(false)} units={units} />
+            <CreateUserForm onClose={() => setOpen(false)} units={units} callerRole={me?.role || "user"} />
           </DialogContent>
         </Dialog>
       </div>

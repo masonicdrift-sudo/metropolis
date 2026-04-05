@@ -125,10 +125,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/users", requireAdmin, (req, res) => {
     const { username, password, role } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
-    // Admins cannot create owner-level accounts
+    // Role creation rules:
+    //  - Owner (rank 3): can create Owner, Admin, Operator
+    //  - Admin (rank 2): can create Admin and Operator, NOT Owner
+    //  - Operator (rank 1): cannot create anyone (blocked by requireAdmin above)
     const requestedRole = role || "user";
     const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    if (ROLE_RANK[requestedRole] >= callerRank) return res.status(403).json({ error: "Cannot create a user with equal or higher role than your own" });
+    const targetRank = ROLE_RANK[requestedRole] ?? 0;
+    if (targetRank > callerRank) return res.status(403).json({ error: "Cannot create a user with a role higher than your own" });
     const exists = storage.getUserByUsername(username);
     if (exists) return res.status(409).json({ error: "Username already exists" });
     const user = storage.createUser(username, password, requestedRole);

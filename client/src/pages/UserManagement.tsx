@@ -82,14 +82,11 @@ function CreateUserForm({ onClose, units }: { onClose: () => void; units: Unit[]
       </div>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
-        <div className="flex gap-2">
-          {["user", "admin"].map(r => (
-            <button key={r} onClick={() => set("role")(r)}
-              className={`flex-1 py-2 rounded text-[10px] font-bold tracking-widest uppercase transition-all border ${form.role === r ? "bg-green-900 text-green-400 border-green-700" : "bg-secondary text-muted-foreground border-border"}`}>
-              {r === "admin" ? "ADMIN" : "OPERATOR"}
-            </button>
-          ))}
-        </div>
+        <select value={form.role} onChange={e => set("role")(e.target.value)}
+          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+          <option value="user">OPERATOR — Standard access</option>
+          <option value="admin">ADMIN — Can manage users and content</option>
+        </select>
       </div>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
@@ -174,18 +171,17 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
       </div>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
-        <div className="flex gap-2">
-          {["user","admin","owner"].map(r => (
-            <button key={r} onClick={() => set("role")(r)}
-              className={`flex-1 py-1.5 rounded text-[10px] font-bold tracking-widest uppercase border transition-all ${
-                form.role === r
-                  ? r === "owner" ? "bg-orange-900/50 text-orange-400 border-orange-700"
-                  : r === "admin" ? "bg-yellow-900/50 text-yellow-400 border-yellow-700"
-                  : "bg-green-900/50 text-green-400 border-green-700"
-                  : "bg-secondary text-muted-foreground border-border"
-              }`}>{r === "owner" ? "OWNER" : r === "admin" ? "ADMIN" : "OPR"}</button>
-          ))}
-        </div>
+        <select value={form.role} onChange={e => set("role")(e.target.value)}
+          className={`w-full bg-secondary border border-border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
+            form.role === "owner" ? "text-orange-400" : form.role === "admin" ? "text-yellow-400" : "text-green-400"
+          }`}>
+          <option value="user">OPERATOR — Standard access</option>
+          <option value="admin">ADMIN — Can manage users and content</option>
+          <option value="owner">OWNER — Full system control</option>
+        </select>
+        {form.role === "owner" && (
+          <div className="text-[9px] text-orange-400/70 mt-1 tracking-wider">⚠ Granting Owner role gives full system control— cannot be undone except by another Owner.</div>
+        )}
       </div>
       <div className="border-t border-border pt-3">
         <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep)</div>

@@ -138,11 +138,13 @@ export default function Units() {
           </div>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
+          {canEditStatus && (
           <DialogTrigger asChild>
             <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-new-unit">
               <Plus size={12} /> ADD UNIT
             </Button>
           </DialogTrigger>
+          )}
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle className="text-sm tracking-widest">ADD UNIT</DialogTitle></DialogHeader>
             <UnitForm onClose={() => setOpen(false)} />
@@ -203,10 +205,12 @@ export default function Units() {
                 <td className="px-3 py-2 grid-coord" data-label="GRID">{u.grid}</td>
                 <td className="px-3 py-2 text-muted-foreground text-[10px] max-w-[150px] truncate" data-label="NOTES">{u.notes}</td>
                 <td className="px-3 py-2">
+                  {canEditStatus && (
                   <div className="flex gap-1">
                     <button onClick={() => { setEditUnit(u); setOpen(true); }} className="p-1 text-muted-foreground hover:text-foreground" data-testid={`edit-unit-${u.id}`}><Edit size={11} /></button>
                     <button onClick={() => del.mutate(u.id)} className="p-1 text-muted-foreground hover:text-red-400" data-testid={`delete-unit-${u.id}`}><Trash2 size={11} /></button>
                   </div>
+                  )}
                 </td>
               </tr>
             ))}

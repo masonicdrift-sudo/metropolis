@@ -406,17 +406,17 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   // ── Units ────────────────────────────────────────────────────────────────────
   app.get("/api/units", requireAuth, (_, res) => res.json(storage.getUnits()));
-  app.post("/api/units", requireAuth, (req, res) => {
+  app.post("/api/units", requireAdmin, (req, res) => {
     const parsed = insertUnitSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
     res.status(201).json(storage.createUnit(parsed.data));
   });
-  app.patch("/api/units/:id", requireAuth, (req, res) => {
+  app.patch("/api/units/:id", requireAdmin, (req, res) => {
     const unit = storage.updateUnit(Number(req.params.id), req.body);
     if (!unit) return res.status(404).json({ error: "Not found" });
     res.json(unit);
   });
-  app.delete("/api/units/:id", requireAuth, (req, res) => {
+  app.delete("/api/units/:id", requireAdmin, (req, res) => {
     storage.deleteUnit(Number(req.params.id));
     res.status(204).send();
   });

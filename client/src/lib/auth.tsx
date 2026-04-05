@@ -5,6 +5,8 @@ interface AuthUser {
   id: number;
   username: string;
   role: string;
+  rank: string;
+  assignedUnit: string;
 }
 
 interface AuthContextType {

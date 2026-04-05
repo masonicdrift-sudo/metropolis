@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { IntelReport, InsertIntelReport } from "@shared/schema";
 import { useState } from "react";
-import { Plus, ShieldAlert, Trash2, CheckCircle, Eye } from "lucide-react";
+import { Plus, ShieldAlert, Trash2, CheckCircle, Eye, Image as ImageIcon, Upload, X } from "lucide-react";
+import { useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,47 @@ function IntelForm({ onClose }: { onClose: () => void }) {
         <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" data-testid="button-submit-intel">FILE REPORT</Button>
       </div>
     </div>
+  );
+}
+
+// ── Intel image uploader ─────────────────────────────────────────────────────
+interface IntelImage { filename: string; originalName: string; url: string; mimeType: string; }
+
+function IntelImageUploader({ reportId, onUploaded }: { reportId: number; onUploaded: () => void }) {
+  const { toast } = useToast();
+  const ref = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const qc = useQueryClient();
+
+  const handleFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) { toast({ title: "Images only", variant: "destructive" }); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      const data: IntelImage = await res.json();
+      await apiRequest("POST", `/api/intel/${reportId}/images`, data);
+      qc.invalidateQueries({ queryKey: ["/api/intel"] });
+      onUploaded();
+      toast({ title: "Image attached" });
+    } catch (e: any) {
+      toast({ title: e?.message || "Upload failed", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (ref.current) ref.current.value = "";
+    }
+  };
+
+  return (
+    <label className={`flex items-center gap-1 cursor-pointer px-2 py-1 rounded border text-[9px] tracking-wider transition-colors ${
+      uploading ? "text-muted-foreground border-border" : "text-blue-400/70 border-blue-900/40 hover:text-blue-400 hover:border-blue-800/60"
+    }`}>
+      <Upload size={9} />{uploading ? "UPLOADING..." : "ADD IMAGE"}
+      <input ref={ref} type="file" accept="image/*" className="hidden"
+        onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+    </label>
   );
 }
 
@@ -143,7 +185,8 @@ export default function Intel() {
                 <span className="text-[9px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{r.category}</span>
                 {r.verified && <span className="text-[9px] text-green-400 flex items-center gap-0.5"><CheckCircle size={9} /> VERIFIED</span>}
               </div>
-              <div className="flex gap-1 shrink-0">
+              <div className="flex gap-1 shrink-0 flex-wrap">
+                <IntelImageUploader reportId={r.id} onUploaded={() => {}} />
                 <button onClick={() => setViewing(r)} className="p-1 text-muted-foreground hover:text-foreground" data-testid={`view-intel-${r.id}`}><Eye size={11} /></button>
                 {!r.verified && <button onClick={() => verify.mutate(r.id)} className="p-1 text-muted-foreground hover:text-green-400" data-testid={`verify-intel-${r.id}`}><CheckCircle size={11} /></button>}
                 <button onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400" data-testid={`delete-intel-${r.id}`}><Trash2 size={11} /></button>
@@ -151,6 +194,25 @@ export default function Intel() {
             </div>
             <div className="text-xs font-bold text-foreground leading-tight mb-1">{r.title}</div>
             <div className="text-[11px] text-muted-foreground line-clamp-2 mb-1.5">{r.summary}</div>
+            {/* Image thumbnails */}
+            {(() => {
+              try {
+                const imgs: IntelImage[] = JSON.parse(r.images || "[]");
+                if (!imgs.length) return null;
+                return (
+                  <div className="flex gap-1.5 flex-wrap mb-1.5">
+                    {imgs.map((img, i) => (
+                      <a key={i} href={img.url} target="_blank" rel="noreferrer">
+                        <img src={img.url} alt={img.originalName} className="h-14 w-20 object-cover rounded border border-blue-900/40 hover:opacity-80 transition-opacity" />
+                      </a>
+                    ))}
+                    <div className="flex items-center self-end text-[9px] text-blue-400/70">
+                      <ImageIcon size={9} className="mr-0.5" />{imgs.length}
+                    </div>
+                  </div>
+                );
+              } catch { return null; }
+            })()}
             <div className="flex items-center justify-between text-[9px] text-muted-foreground">
               <span>SRC: {r.source}</span>
               {r.grid && <span className="grid-coord">{r.grid}</span>}
@@ -182,6 +244,29 @@ export default function Intel() {
               {viewing.grid && <div><div className="text-[9px] text-muted-foreground tracking-wider mb-1">GRID</div><div className="grid-coord">{viewing.grid}</div></div>}
               <div><div className="text-[9px] text-muted-foreground tracking-wider mb-1">SUMMARY</div>
                 <div className="bg-secondary/50 rounded p-2 leading-relaxed">{viewing.summary}</div></div>
+              {/* Full-size images */}
+              {(() => {
+                try {
+                  const imgs: IntelImage[] = JSON.parse(viewing.images || "[]");
+                  if (!imgs.length) return null;
+                  return (
+                    <div>
+                      <div className="text-[9px] text-muted-foreground tracking-wider mb-1.5 flex items-center gap-1">
+                        <ImageIcon size={9} /> IMAGERY ({imgs.length})
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {imgs.map((img, i) => (
+                          <a key={i} href={img.url} target="_blank" rel="noreferrer" className="block">
+                            <img src={img.url} alt={img.originalName}
+                              className="w-full rounded border border-blue-900/40 object-cover hover:opacity-90 transition-opacity" />
+                            <div className="text-[9px] text-muted-foreground/60 mt-0.5 truncate">{img.originalName}</div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                } catch { return null; }
+              })()}
             </div>
           </DialogContent>
         </Dialog>

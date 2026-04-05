@@ -85,7 +85,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   app.get("/api/auth/me", (req, res) => {
     if (!req.session?.userId) return res.status(401).json({ error: "Not logged in" });
-    res.json({ id: req.session.userId, username: req.session.username, role: req.session.role });
+    const user = storage.getUserById(req.session.userId);
+    if (!user) return res.status(401).json({ error: "Not logged in" });
+    res.json({ id: user.id, username: user.username, role: user.role, rank: user.rank || "", assignedUnit: user.assignedUnit || "" });
   });
 
   // ── Public registration with access code ─────────────────────────────────
@@ -147,6 +149,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     }
     if (role && ROLE_RANK[role] !== undefined) {
       updates.role = role;
+    }
+    if (typeof req.body.rank !== "undefined") {
+      updates.rank = req.body.rank;
+    }
+    if (typeof req.body.assignedUnit !== "undefined") {
+      updates.assignedUnit = req.body.assignedUnit;
     }
     if (password) {
       if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
@@ -441,6 +449,25 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const report = storage.updateIntelReport(Number(req.params.id), req.body);
     if (!report) return res.status(404).json({ error: "Not found" });
     res.json(report);
+  });
+  // Add image to intel report
+  app.post("/api/intel/:id/images", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const report = storage.getIntelReport(id);
+    if (!report) return res.status(404).json({ error: "Not found" });
+    const images = JSON.parse(report.images || "[]");
+    images.push(req.body);
+    const updated = storage.updateIntelReport(id, { images: JSON.stringify(images) });
+    res.json(updated);
+  });
+  app.delete("/api/intel/:id/images/:idx", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const idx = Number(req.params.idx);
+    const report = storage.getIntelReport(id);
+    if (!report) return res.status(404).json({ error: "Not found" });
+    const images = JSON.parse(report.images || "[]").filter((_: any, i: number) => i !== idx);
+    const updated = storage.updateIntelReport(id, { images: JSON.stringify(images) });
+    res.json(updated);
   });
   app.delete("/api/intel/:id", requireAuth, (req, res) => {
     storage.deleteIntelReport(Number(req.params.id));

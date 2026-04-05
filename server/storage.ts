@@ -84,6 +84,9 @@ sqlite.exec(`
 
 // Add columns that may not exist on older DBs
 try { sqlite.exec(`ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN rank TEXT DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN assigned_unit TEXT DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN images TEXT NOT NULL DEFAULT '[]'`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS access_codes (
@@ -555,6 +558,8 @@ export class Storage implements IStorage {
       id: schema.users.id,
       username: schema.users.username,
       role: schema.users.role,
+      rank: schema.users.rank,
+      assignedUnit: schema.users.assignedUnit,
       createdAt: schema.users.createdAt,
       lastLogin: schema.users.lastLogin,
     }).from(schema.users).all();

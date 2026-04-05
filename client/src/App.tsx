@@ -134,10 +134,15 @@ function Sidebar() {
              <Users size={11} className="text-green-400" />}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">{user?.username}</div>
-            <div className={`text-[9px] tracking-wider uppercase ${
+            <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">
+              {(user as any)?.rank && <span className="text-yellow-400 mr-1">{(user as any).rank}</span>}{user?.username}
+            </div>
+            <div className={`text-[9px] tracking-wider flex items-center gap-1 ${
               user?.role === "owner" ? "text-orange-400" : user?.role === "admin" ? "text-yellow-400" : "text-muted-foreground"
-            }`}>{user?.role === "owner" ? "OWNER" : user?.role === "admin" ? "ADMINISTRATOR" : "OPERATOR"}</div>
+            }`}>
+              <span className="uppercase">{user?.role === "owner" ? "OWNER" : user?.role === "admin" ? "ADMIN" : "OPR"}</span>
+              {(user as any)?.assignedUnit && <span className="text-muted-foreground/50 text-[8px]">▪ {(user as any).assignedUnit}</span>}
+            </div>
           </div>
         </div>
         <div className="flex gap-1">

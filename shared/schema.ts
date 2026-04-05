@@ -7,10 +7,58 @@ export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().default("user"), // admin | user
+  role: text("role").notNull().default("user"), // owner | admin | user
+  rank: text("rank").default(""),              // Military rank e.g. SGT, CPT, LTC
+  assignedUnit: text("assigned_unit").default(""), // Callsign of assigned unit
   createdAt: text("created_at").notNull(),
   lastLogin: text("last_login").default(""),
 });
+
+// Military rank presets
+export const ARMY_RANKS = [
+  // Enlisted
+  { abbr: "PVT",  full: "Private",                  tier: "enlisted" },
+  { abbr: "PV2",  full: "Private Second Class",       tier: "enlisted" },
+  { abbr: "PFC",  full: "Private First Class",        tier: "enlisted" },
+  { abbr: "SPC",  full: "Specialist",                 tier: "enlisted" },
+  { abbr: "CPL",  full: "Corporal",                   tier: "enlisted" },
+  { abbr: "SGT",  full: "Sergeant",                   tier: "NCO" },
+  { abbr: "SSG",  full: "Staff Sergeant",             tier: "NCO" },
+  { abbr: "SFC",  full: "Sergeant First Class",       tier: "NCO" },
+  { abbr: "MSG",  full: "Master Sergeant",            tier: "NCO" },
+  { abbr: "1SG",  full: "First Sergeant",             tier: "NCO" },
+  { abbr: "SGM",  full: "Sergeant Major",             tier: "NCO" },
+  { abbr: "CSM",  full: "Command Sergeant Major",     tier: "NCO" },
+  { abbr: "SMA",  full: "Sergeant Major of the Army", tier: "NCO" },
+  // Warrant Officers
+  { abbr: "WO1",  full: "Warrant Officer 1",          tier: "WO" },
+  { abbr: "CW2",  full: "Chief Warrant Officer 2",    tier: "WO" },
+  { abbr: "CW3",  full: "Chief Warrant Officer 3",    tier: "WO" },
+  { abbr: "CW4",  full: "Chief Warrant Officer 4",    tier: "WO" },
+  { abbr: "CW5",  full: "Chief Warrant Officer 5",    tier: "WO" },
+  // Officers
+  { abbr: "2LT",  full: "Second Lieutenant",          tier: "officer" },
+  { abbr: "1LT",  full: "First Lieutenant",           tier: "officer" },
+  { abbr: "CPT",  full: "Captain",                    tier: "officer" },
+  { abbr: "MAJ",  full: "Major",                      tier: "officer" },
+  { abbr: "LTC",  full: "Lieutenant Colonel",         tier: "officer" },
+  { abbr: "COL",  full: "Colonel",                    tier: "officer" },
+  { abbr: "BG",   full: "Brigadier General",          tier: "officer" },
+  { abbr: "MG",   full: "Major General",              tier: "officer" },
+  { abbr: "LTG",  full: "Lieutenant General",         tier: "officer" },
+  { abbr: "GEN",  full: "General",                    tier: "officer" },
+  // Special / Other
+  { abbr: "RTO",  full: "Radio Telephone Operator",   tier: "MOS" },
+  { abbr: "GFC",  full: "Ground Force Commander",     tier: "MOS" },
+  { abbr: "JTAC", full: "Joint Terminal Attack Controller", tier: "MOS" },
+  { abbr: "18A",  full: "Special Forces Officer",     tier: "MOS" },
+  { abbr: "18B",  full: "SF Weapons Sergeant",        tier: "MOS" },
+  { abbr: "18C",  full: "SF Engineer Sergeant",       tier: "MOS" },
+  { abbr: "18D",  full: "SF Medical Sergeant",        tier: "MOS" },
+  { abbr: "18E",  full: "SF Communications Sergeant", tier: "MOS" },
+  { abbr: "18F",  full: "SF Intelligence Sergeant",   tier: "MOS" },
+  { abbr: "68W",  full: "Combat Medic",               tier: "MOS" },
+];
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -160,6 +208,8 @@ export const intelReports = sqliteTable("intel_reports", {
   timestamp: text("timestamp").notNull(),
   verified: integer("verified", { mode: "boolean" }).default(false),
   relatedOpId: integer("related_op_id").default(0),
+  // JSON array of {filename, originalName, url, mimeType}
+  images: text("images").notNull().default("[]"),
 });
 export const insertIntelReportSchema = createInsertSchema(intelReports).omit({ id: true });
 export type InsertIntelReport = z.infer<typeof insertIntelReportSchema>;

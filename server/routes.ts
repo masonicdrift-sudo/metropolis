@@ -184,6 +184,77 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  // ── Group Chats ────────────────────────────────────────────────────────────
+  // Get groups the current user is a member of
+  app.get("/api/groups", requireAuth, (req, res) => {
+    res.json(storage.getGroupsForUser(req.session.username!));
+  });
+  // Create a new group
+  app.post("/api/groups", requireAuth, (req, res) => {
+    const { name, members } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: "Group name required" });
+    if (!Array.isArray(members) || members.length < 1)
+      return res.status(400).json({ error: "At least one other member required" });
+    const group = storage.createGroup(name.trim(), req.session.username!, members);
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "GROUP_CREATED", group }, JSON.parse(group.members));
+    res.status(201).json(group);
+  });
+  // Get group messages
+  app.get("/api/groups/:id/messages", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const group = storage.getGroup(id);
+    if (!group) return res.status(404).json({ error: "Not found" });
+    const members = JSON.parse(group.members || "[]");
+    if (!members.includes(req.session.username!)) return res.status(403).json({ error: "Not a member" });
+    res.json(storage.getGroupMessages(id));
+  });
+  // Send a group message
+  app.post("/api/groups/:id/messages", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const group = storage.getGroup(id);
+    if (!group) return res.status(404).json({ error: "Not found" });
+    const members = JSON.parse(group.members || "[]");
+    if (!members.includes(req.session.username!)) return res.status(403).json({ error: "Not a member" });
+    const { content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+    const msg = storage.sendMessage(req.session.username!, `GROUP:${id}`, content.trim());
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "GROUP_MESSAGE", groupId: id, message: msg }, members);
+    res.status(201).json(msg);
+  });
+  // Add member to group (creator or admin+)
+  app.post("/api/groups/:id/members", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const group = storage.getGroup(id);
+    if (!group) return res.status(404).json({ error: "Not found" });
+    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
+    if (group.createdBy !== req.session.username && callerRank < ROLE_RANK.admin)
+      return res.status(403).json({ error: "Only group creator or admin can add members" });
+    const { username } = req.body;
+    const updated = storage.addGroupMember(id, username);
+    const broadcast = (global as any).__wsBroadcast;
+    if (broadcast) broadcast({ type: "GROUP_UPDATED", group: updated }, JSON.parse(updated!.members));
+    res.json(updated);
+  });
+  // Leave a group
+  app.delete("/api/groups/:id/members/me", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const updated = storage.removeGroupMember(id, req.session.username!);
+    res.json(updated);
+  });
+  // Delete a group (creator or admin+)
+  app.delete("/api/groups/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    const group = storage.getGroup(id);
+    if (!group) return res.status(404).json({ error: "Not found" });
+    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
+    if (group.createdBy !== req.session.username && callerRank < ROLE_RANK.admin)
+      return res.status(403).json({ error: "Only group creator or admin can delete" });
+    storage.deleteGroup(id);
+    res.status(204).send();
+  });
+
   // ── Messaging ────────────────────────────────────────────────────────────────
   // General channel
   app.get("/api/messages/general", requireAuth, (req, res) => {

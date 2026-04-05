@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search } from "lucide-react";
-import type { Message } from "@shared/schema";
+import { useState, useEffect, useRef } from "react";
+import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X } from "lucide-react";
+import type { Message, GroupChat } from "@shared/schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const GENERAL = "GENERAL";
 const WS_URL = typeof window !== "undefined"
@@ -101,14 +103,144 @@ function MessageInput({ onSend, placeholder }: { onSend: (text: string) => void;
   );
 }
 
+// ── Create Group Dialog ─────────────────────────────────────────
+function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
+  allUsers: { id: number; username: string; role: string }[];
+  currentUser: string;
+  onCreated: (group: GroupChat) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const { toast } = (window as any).__toastRef || { toast: () => {} };
+  const qc = useQueryClient();
+
+  const create = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/groups", { name: name.trim(), members: selected }),
+    onSuccess: (group: GroupChat) => {
+      qc.invalidateQueries({ queryKey: ["/api/groups"] });
+      setOpen(false); setName(""); setSelected([]);
+      onCreated(group);
+    },
+  });
+
+  const toggle = (u: string) =>
+    setSelected(s => s.includes(u) ? s.filter(x => x !== u) : [...s, u]);
+
+  const others = allUsers.filter(u => u.username !== currentUser);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors">
+          <Plus size={9} /> NEW GROUP
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle className="text-sm tracking-widest">CREATE GROUP CHAT</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">GROUP NAME</label>
+            <input value={name} onChange={e => setName(e.target.value)}
+              placeholder="e.g. Assault Team Alpha"
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+          </div>
+          <div>
+            <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-2">ADD MEMBERS ({selected.length} selected)</label>
+            <div className="space-y-1 max-h-48 overflow-y-auto">
+              {others.map(u => (
+                <button key={u.username} onClick={() => toggle(u.username)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all ${
+                    selected.includes(u.username)
+                      ? "bg-green-950/60 border border-green-800/50"
+                      : "hover:bg-secondary"
+                  }`}>
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center text-[8px] ${
+                    selected.includes(u.username) ? "bg-green-700 border-green-600" : "border-border"
+                  }`}>
+                    {selected.includes(u.username) && "✓"}
+                  </div>
+                  <div className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold border ${
+                    u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
+                    u.role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
+                    "bg-green-900/40 border-green-800/50 text-green-400"
+                  }`}>{u.username[0].toUpperCase()}</div>
+                  <span className={`font-mono font-bold text-[10px] ${roleColor(u.role)}`}>{u.username}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="text-xs">CANCEL</Button>
+            <Button size="sm" onClick={() => create.mutate()}
+              disabled={!name.trim() || selected.length === 0 || create.isPending}
+              className="text-xs bg-green-800 hover:bg-green-700">CREATE</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Add member to existing group ─────────────────────────────────
+function AddMemberDialog({ group, allUsers, currentUser }: {
+  group: GroupChat;
+  allUsers: { id: number; username: string; role: string }[];
+  currentUser: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const qc = useQueryClient();
+  const members = JSON.parse(group.members || "[]");
+  const nonMembers = allUsers.filter(u => !members.includes(u.username));
+
+  const add = useMutation({
+    mutationFn: (username: string) => apiRequest("POST", `/api/groups/${group.id}/members`, { username }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/groups"] }); setOpen(false); },
+  });
+
+  if (nonMembers.length === 0) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Add member">
+          <UserPlus size={10} />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-xs">
+        <DialogHeader><DialogTitle className="text-xs tracking-widest">ADD TO {group.name.toUpperCase()}</DialogTitle></DialogHeader>
+        <div className="space-y-1">
+          {nonMembers.map(u => (
+            <button key={u.username} onClick={() => add.mutate(u.username)}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-secondary text-left transition-colors">
+              <div className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold border ${
+                u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
+                u.role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
+                "bg-green-900/40 border-green-800/50 text-green-400"
+              }`}>{u.username[0].toUpperCase()}</div>
+              <span className={`font-mono font-bold text-[10px] ${roleColor(u.role)}`}>{u.username}</span>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Main Messaging page ──────────────────────────────────────────
 export default function Messaging() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [activeChannel, setActiveChannel] = useState<string>(GENERAL); // "GENERAL" or a username for DMs
+  // activeChannel: "GENERAL" | "DM:username" | "GROUP:id"
+  const [activeChannel, setActiveChannel] = useState<string>(GENERAL);
   const [dmSearch, setDmSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+
+  const isGroup = activeChannel.startsWith("GROUP:");
+  const isDM = activeChannel.startsWith("DM:") || (!activeChannel.startsWith("GROUP:") && activeChannel !== GENERAL);
+  const activeGroupId = isGroup ? Number(activeChannel.split(":")[1]) : null;
+  const activeDMUser = isDM ? activeChannel.replace("DM:", "") : null;
 
   // Fetch all users for DM list and role lookup
   const { data: allUsers = [] } = useQuery<{ id: number; username: string; role: string }[]>({
@@ -129,11 +261,26 @@ export default function Messaging() {
     refetchInterval: false,
   });
 
+  // Groups
+  const { data: groups = [], refetch: refetchGroups } = useQuery<GroupChat[]>({
+    queryKey: ["/api/groups"],
+    queryFn: () => apiRequest("GET", "/api/groups"),
+  });
+  const activeGroup = groups.find(g => g.id === activeGroupId) ?? null;
+
   // DM messages
   const { data: dmMsgs = [], refetch: refetchDM } = useQuery<Message[]>({
-    queryKey: ["/api/messages/dm", activeChannel],
-    queryFn: () => apiRequest("GET", `/api/messages/dm/${activeChannel}`),
-    enabled: activeChannel !== GENERAL,
+    queryKey: ["/api/messages/dm", activeDMUser],
+    queryFn: () => apiRequest("GET", `/api/messages/dm/${activeDMUser}`),
+    enabled: !!activeDMUser,
+    refetchInterval: false,
+  });
+
+  // Group messages
+  const { data: groupMsgs = [], refetch: refetchGroupMsgs } = useQuery<Message[]>({
+    queryKey: ["/api/groups", activeGroupId, "messages"],
+    queryFn: () => apiRequest("GET", `/api/groups/${activeGroupId}/messages`),
+    enabled: !!activeGroupId,
     refetchInterval: false,
   });
 
@@ -160,15 +307,15 @@ export default function Messaging() {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "GENERAL_MESSAGE") {
-          refetchGeneral();
-          refetchUnread();
+          refetchGeneral(); refetchUnread();
         } else if (msg.type === "DM") {
-          refetchDM();
-          refetchDMList();
-          refetchUnread();
+          refetchDM(); refetchDMList(); refetchUnread();
+        } else if (msg.type === "GROUP_MESSAGE") {
+          refetchGroupMsgs(); refetchGroups();
+        } else if (msg.type === "GROUP_CREATED" || msg.type === "GROUP_UPDATED") {
+          refetchGroups();
         } else if (msg.type === "MESSAGE_DELETED") {
-          refetchGeneral();
-          refetchDM();
+          refetchGeneral(); refetchDM(); refetchGroupMsgs();
         }
       } catch {}
     };
@@ -186,17 +333,30 @@ export default function Messaging() {
     mutationFn: (content: string) => apiRequest("POST", "/api/messages/general", { content }),
     onSuccess: () => refetchGeneral(),
   });
-
   // Send DM
   const sendDM = useMutation({
-    mutationFn: (content: string) => apiRequest("POST", `/api/messages/dm/${activeChannel}`, { content }),
+    mutationFn: (content: string) => apiRequest("POST", `/api/messages/dm/${activeDMUser}`, { content }),
     onSuccess: () => { refetchDM(); refetchDMList(); },
   });
-
-  // Delete
+  // Send group message
+  const sendGroup = useMutation({
+    mutationFn: (content: string) => apiRequest("POST", `/api/groups/${activeGroupId}/messages`, { content }),
+    onSuccess: () => refetchGroupMsgs(),
+  });
+  // Leave group
+  const leaveGroup = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/groups/${id}/members/me`),
+    onSuccess: () => { refetchGroups(); setActiveChannel(GENERAL); },
+  });
+  // Delete group
+  const deleteGroup = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/groups/${id}`),
+    onSuccess: () => { refetchGroups(); setActiveChannel(GENERAL); },
+  });
+  // Delete message
   const deleteMsg = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/messages/${id}`),
-    onSuccess: () => { refetchGeneral(); refetchDM(); },
+    onSuccess: () => { refetchGeneral(); refetchDM(); refetchGroupMsgs(); },
   });
 
   // Mark general read when switching to it
@@ -206,15 +366,16 @@ export default function Messaging() {
     }
   }, [activeChannel]);
 
-  const activeMsgs = activeChannel === GENERAL ? generalMsgs : dmMsgs;
+  const activeMsgs = isGroup ? groupMsgs : activeChannel === GENERAL ? generalMsgs : dmMsgs;
   const handleSend = (text: string) => {
     if (activeChannel === GENERAL) sendGeneral.mutate(text);
+    else if (isGroup) sendGroup.mutate(text);
     else sendDM.mutate(text);
   };
 
   const canDelete = (msg: Message) =>
     msg.fromUsername === user?.username ||
-    (user?.role === "admin" || user?.role === "owner");
+    user?.role === "admin" || user?.role === "owner";
 
   const otherUsers = allUsers.filter(u => u.username !== user?.username);
   const filteredUsers = dmSearch
@@ -223,6 +384,9 @@ export default function Messaging() {
 
   const getDMUnread = (username: string) =>
     dmList.find(d => d.username === username)?.unread || 0;
+
+  const openDM = (username: string) => setActiveChannel(`DM:${username}`);
+  const openGroup = (id: number) => setActiveChannel(`GROUP:${id}`);
 
   return (
     <div className="flex h-full" style={{ height: "calc(100vh)" }}>
@@ -261,6 +425,35 @@ export default function Messaging() {
           </button>
         </div>
 
+        {/* Groups */}
+        <div className="px-2 pt-2 pb-1">
+          <div className="text-[9px] text-muted-foreground/50 tracking-widest px-2 mb-1.5 flex items-center justify-between">
+            <span>GROUP CHATS</span>
+            <CreateGroupDialog allUsers={allUsers} currentUser={user?.username || ""} onCreated={g => openGroup(g.id)} />
+          </div>
+          {groups.map(g => {
+            const isActive = activeChannel === `GROUP:${g.id}`;
+            const memberList = JSON.parse(g.members || "[]") as string[];
+            return (
+              <button key={g.id} onClick={() => openGroup(g.id)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all mb-0.5 ${
+                  isActive ? "bg-green-950/60 border border-green-900/50" : "hover:bg-secondary"
+                }`}>
+                <div className="w-5 h-5 rounded bg-green-900/40 border border-green-800/50 flex items-center justify-center shrink-0">
+                  <Users size={9} className="text-green-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-bold font-mono truncate tracking-wider text-foreground">{g.name}</div>
+                  <div className="text-[9px] text-muted-foreground/50">{memberList.length} members</div>
+                </div>
+              </button>
+            );
+          })}
+          {groups.length === 0 && (
+            <div className="text-[9px] text-muted-foreground/40 px-2 py-1">No groups yet</div>
+          )}
+        </div>
+
         {/* DMs */}
         <div className="px-2 pt-2 flex-1 overflow-hidden flex flex-col">
           <div className="text-[9px] text-muted-foreground/50 tracking-widest px-2 mb-1.5 flex items-center justify-between">
@@ -280,11 +473,11 @@ export default function Messaging() {
           <div className="overflow-y-auto flex-1 space-y-0.5">
             {filteredUsers.map(u => {
               const unreadCount = getDMUnread(u.username);
-              const isActive = activeChannel === u.username;
+              const isActive = activeChannel === `DM:${u.username}` || activeChannel === u.username;
               const lastDM = dmList.find(d => d.username === u.username);
               return (
                 <button key={u.id}
-                  onClick={() => setActiveChannel(u.username)}
+                  onClick={() => openDM(u.username)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all ${
                     isActive ? "bg-green-950/60 border border-green-900/50" : "hover:bg-secondary"
                   }`}
@@ -326,15 +519,34 @@ export default function Messaging() {
               <span className="text-sm font-bold tracking-wider text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>general</span>
               <span className="text-[10px] text-muted-foreground ml-2">— All members can see this channel</span>
             </>
+          ) : isGroup && activeGroup ? (
+            <>
+              <Users size={14} className="text-green-400" />
+              <span className="text-sm font-bold tracking-wider text-green-400 font-mono" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
+              <span className="text-[10px] text-muted-foreground ml-1">— {JSON.parse(activeGroup.members || "[]").join(", ")}</span>
+              <div className="ml-auto flex items-center gap-1">
+                <AddMemberDialog group={activeGroup} allUsers={allUsers} currentUser={user?.username || ""} />
+                <button onClick={() => leaveGroup.mutate(activeGroup.id)}
+                  className="p-1 text-muted-foreground hover:text-yellow-400 transition-colors" title="Leave group">
+                  <LogOut size={11} />
+                </button>
+                {(activeGroup.createdBy === user?.username || user?.role === "admin" || user?.role === "owner") && (
+                  <button onClick={() => deleteGroup.mutate(activeGroup.id)}
+                    className="p-1 text-muted-foreground hover:text-red-400 transition-colors" title="Delete group">
+                    <Trash2 size={11} />
+                  </button>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold border ${
-                userMap[activeChannel] === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
-                userMap[activeChannel] === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
+                userMap[activeDMUser || ""] === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
+                userMap[activeDMUser || ""] === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
                 "bg-green-900/40 border-green-800/50 text-green-400"
-              }`}>{activeChannel[0].toUpperCase()}</div>
-              <span className={`text-sm font-bold tracking-wider font-mono ${roleColor(userMap[activeChannel])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-                {activeChannel}
+              }`}>{(activeDMUser || "?")[0].toUpperCase()}</div>
+              <span className={`text-sm font-bold tracking-wider font-mono ${roleColor(userMap[activeDMUser || ""])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+                {activeDMUser}
               </span>
               <span className="text-[10px] text-muted-foreground ml-1">— Direct Message</span>
             </>
@@ -345,12 +557,16 @@ export default function Messaging() {
         <div className="flex-1 overflow-y-auto py-2">
           {activeMsgs.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="text-[40px] mb-2">{activeChannel === GENERAL ? "#" : "💬"}</div>
+              <div className="text-[40px] mb-2">{activeChannel === GENERAL ? "#" : isGroup ? "👥" : "💬"}</div>
               <div className="text-sm font-bold text-muted-foreground tracking-wider">
-                {activeChannel === GENERAL ? "Welcome to #general" : `Start a conversation with ${activeChannel}`}
+                {activeChannel === GENERAL ? "Welcome to #general"
+                  : isGroup ? `Welcome to ${activeGroup?.name}`
+                  : `Start a conversation with ${activeDMUser}`}
               </div>
               <div className="text-[10px] text-muted-foreground/50 mt-1">
-                {activeChannel === GENERAL ? "This is the beginning of all team comms." : "Your messages are private."}
+                {activeChannel === GENERAL ? "This is the beginning of all team comms."
+                  : isGroup ? `${JSON.parse(activeGroup?.members || "[]").length} members in this group.`
+                  : "Your messages are private."}
               </div>
             </div>
           )}
@@ -377,7 +593,9 @@ export default function Messaging() {
         {/* Input */}
         <MessageInput
           onSend={handleSend}
-          placeholder={activeChannel === GENERAL ? "Message #general..." : `Message ${activeChannel}...`}
+          placeholder={activeChannel === GENERAL ? "Message #general..."
+            : isGroup ? `Message ${activeGroup?.name}...`
+            : `Message ${activeDMUser}...`}
         />
       </div>
     </div>

@@ -60,6 +60,21 @@ export const insertCommoCardSchema = createInsertSchema(commoCards).omit({ id: t
 export type InsertCommoCard = z.infer<typeof insertCommoCardSchema>;
 export type CommoCard = typeof commoCards.$inferSelect;
 
+// ─── Group Chats ───────────────────────────────────────────────────────────────
+export const groupChats = sqliteTable("group_chats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  // JSON array of usernames who are members
+  members: text("members").notNull().default("[]"),
+});
+export const insertGroupChatSchema = createInsertSchema(groupChats).omit({ id: true });
+export type InsertGroupChat = z.infer<typeof insertGroupChatSchema>;
+export type GroupChat = typeof groupChats.$inferSelect;
+
+// Group messages reuse the messages table with toUsername = 'GROUP:<id>'
+
 // ─── Messages (DMs + General) ───────────────────────────────────────────────
 export const messages = sqliteTable("messages", {
   id: integer("id").primaryKey({ autoIncrement: true }),

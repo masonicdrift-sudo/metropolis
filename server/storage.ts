@@ -15,6 +15,7 @@ import type {
   AccessCode,
   Message,
   CommoCard, InsertCommoCard,
+  GroupChat,
 } from "@shared/schema";
 
 // Use persistent disk path on Render, fallback to local for dev
@@ -26,6 +27,13 @@ const db = drizzle(sqlite, { schema });
 
 // Initialize tables
 sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS group_chats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    members TEXT NOT NULL DEFAULT '[]'
+  );
   CREATE TABLE IF NOT EXISTS commo_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
@@ -293,6 +301,15 @@ if (unitCount === 0) {
 }
 
 export interface IStorage {
+  // Group Chats
+  getGroupsForUser(username: string): GroupChat[];
+  getAllGroups(): GroupChat[];
+  getGroup(id: number): GroupChat | undefined;
+  createGroup(name: string, createdBy: string, members: string[]): GroupChat;
+  addGroupMember(id: number, username: string): GroupChat | undefined;
+  removeGroupMember(id: number, username: string): GroupChat | undefined;
+  deleteGroup(id: number): void;
+  getGroupMessages(groupId: number, limit?: number): Message[];
   // Commo Cards
   getCommoCards(): CommoCard[];
   getCommoCard(id: number): CommoCard | undefined;
@@ -360,6 +377,53 @@ export interface IStorage {
 }
 
 export class Storage implements IStorage {
+  // Group Chats
+  getGroupsForUser(username: string): GroupChat[] {
+    return db.select().from(schema.groupChats).all()
+      .filter(g => JSON.parse(g.members || "[]").includes(username));
+  }
+  getAllGroups(): GroupChat[] {
+    return db.select().from(schema.groupChats).orderBy(desc(schema.groupChats.id)).all();
+  }
+  getGroup(id: number): GroupChat | undefined {
+    return db.select().from(schema.groupChats).where(eq(schema.groupChats.id, id)).get();
+  }
+  createGroup(name: string, createdBy: string, members: string[]): GroupChat {
+    // Always include creator
+    const allMembers = Array.from(new Set([createdBy, ...members]));
+    return db.insert(schema.groupChats).values({
+      name,
+      createdBy,
+      createdAt: new Date().toISOString(),
+      members: JSON.stringify(allMembers),
+    }).returning().get();
+  }
+  addGroupMember(id: number, username: string): GroupChat | undefined {
+    const g = this.getGroup(id);
+    if (!g) return undefined;
+    const members = JSON.parse(g.members || "[]");
+    if (!members.includes(username)) members.push(username);
+    return db.update(schema.groupChats).set({ members: JSON.stringify(members) })
+      .where(eq(schema.groupChats.id, id)).returning().get();
+  }
+  removeGroupMember(id: number, username: string): GroupChat | undefined {
+    const g = this.getGroup(id);
+    if (!g) return undefined;
+    const members = JSON.parse(g.members || "[]").filter((m: string) => m !== username);
+    return db.update(schema.groupChats).set({ members: JSON.stringify(members) })
+      .where(eq(schema.groupChats.id, id)).returning().get();
+  }
+  deleteGroup(id: number): void {
+    db.delete(schema.groupChats).where(eq(schema.groupChats.id, id)).run();
+  }
+  getGroupMessages(groupId: number, limit = 200): Message[] {
+    const tag = `GROUP:${groupId}`;
+    return db.select().from(schema.messages)
+      .where(eq(schema.messages.toUsername, tag))
+      .orderBy(schema.messages.id)
+      .all().slice(-limit).map(m => this.decryptMsg(m));
+  }
+
   // Commo Cards
   getCommoCards() { return db.select().from(schema.commoCards).orderBy(desc(schema.commoCards.id)).all(); }
   getCommoCard(id: number) { return db.select().from(schema.commoCards).where(eq(schema.commoCards.id, id)).get(); }

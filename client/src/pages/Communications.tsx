@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import type { CommsLog, InsertCommsLog } from "@shared/schema";
 import { useState } from "react";
-import { Radio, Send, CheckCheck, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Radio, Send, CheckCheck, ChevronDown, ChevronUp, FileText, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,12 +295,25 @@ function FormatTemplate({ type, onFill }: { type: string; onFill: (text: string)
 export default function Communications() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isOwner = user?.role === "owner";
   const [form, setForm] = useState<Partial<InsertCommsLog>>({
     channel: "PRIMARY", type: "SITREP", priority: "routine",
   });
   const [filterChan, setFilterChan] = useState("ALL");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const { data: comms = [] } = useQuery<CommsLog[]>({ queryKey: ["/api/comms"], queryFn: () => apiRequest("GET", "/api/comms") });
+
+  const deleteEntry = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/comms/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/comms"] }),
+  });
+
+  const clearLog = useMutation({
+    mutationFn: () => apiRequest("DELETE", "/api/comms"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/comms"] }); toast({ title: "Comms log cleared" }); setConfirmClear(false); },
+  });
 
   const send = useMutation({
     mutationFn: (d: InsertCommsLog) => apiRequest("POST", "/api/comms", d),
@@ -415,13 +429,29 @@ export default function Communications() {
         <div className="col-span-7 bg-card border border-border rounded">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">MESSAGE LOG</span>
-            <div className="flex gap-1">
-              {["ALL", ...CHANNELS].map(ch => (
-                <button key={ch} onClick={() => setFilterChan(ch)}
-                  className={`text-[9px] px-2 py-0.5 rounded tracking-wider transition-all ${filterChan === ch ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
-                  {ch}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                {["ALL", ...CHANNELS].map(ch => (
+                  <button key={ch} onClick={() => setFilterChan(ch)}
+                    className={`text-[9px] px-2 py-0.5 rounded tracking-wider transition-all ${filterChan === ch ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
+                    {ch}
+                  </button>
+                ))}
+              </div>
+              {isOwner && (
+                confirmClear ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] text-red-400 tracking-wider">CLEAR ALL?</span>
+                    <button onClick={() => clearLog.mutate()} className="text-[9px] bg-red-900/60 border border-red-800/50 text-red-300 px-2 py-0.5 rounded hover:bg-red-800 tracking-wider">CONFIRM</button>
+                    <button onClick={() => setConfirmClear(false)} className="text-[9px] text-muted-foreground hover:text-foreground px-1">✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmClear(true)}
+                    className="text-[9px] text-red-400/60 hover:text-red-400 flex items-center gap-1 tracking-wider transition-colors" title="Clear entire log">
+                    <Trash2 size={9} /> CLEAR LOG
+                  </button>
+                )
+              )}
             </div>
           </div>
           <div className="divide-y divide-border overflow-y-auto max-h-[calc(100vh-220px)]">
@@ -442,6 +472,12 @@ export default function Communications() {
                     </button>
                   ) : (
                     <span className="text-[9px] text-green-600 flex items-center gap-0.5 ml-1"><CheckCheck size={9} />ACK</span>
+                  )}
+                  {isOwner && (
+                    <button onClick={() => deleteEntry.mutate(msg.id)}
+                      className="ml-1 p-0.5 text-muted-foreground/40 hover:text-red-400 transition-colors" title="Delete message">
+                      <Trash2 size={9} />
+                    </button>
                   )}
                 </div>
                 <div className="text-[11px] leading-relaxed text-foreground/90 font-mono pl-1">{msg.message}</div>

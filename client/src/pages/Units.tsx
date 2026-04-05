@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import type { Unit, InsertUnit } from "@shared/schema";
 import { useState } from "react";
-import { Plus, Users, Trash2, Edit } from "lucide-react";
+import { Plus, Users, Trash2, Edit, ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,9 +69,40 @@ function UnitForm({ unit, onClose }: { unit?: Unit; onClose: () => void }) {
   );
 }
 
+const STATUS_CYCLE = ["active", "standby", "offline", "compromised"] as const;
+
+// Quick-status pill that cycles on click for Admin/Owner
+function StatusCycler({ unit, canEdit, onCycle }: { unit: Unit; canEdit: boolean; onCycle: (s: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const statuses = STATUS_CYCLE;
+  if (!canEdit) {
+    return <span className={`badge-${unit.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{unit.status}</span>;
+  }
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(o => !o)}
+        className={`badge-${unit.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase flex items-center gap-1 cursor-pointer hover:opacity-80`}>
+        {unit.status}<ChevronDown size={8} />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full left-0 mt-0.5 bg-card border border-border rounded shadow-xl overflow-hidden min-w-[120px]">
+          {statuses.map(s => (
+            <button key={s} onClick={() => { onCycle(s); setOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-[10px] tracking-wider uppercase transition-colors hover:bg-secondary ${
+                s === unit.status ? "text-green-400 font-bold" : "text-muted-foreground"
+              }`}>{s}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Units() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canEditStatus = user?.role === "admin" || user?.role === "owner";
   const [open, setOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<Unit | undefined>();
   const [filter, setFilter] = useState("all");
@@ -80,6 +112,11 @@ export default function Units() {
   const del = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/units/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/units"] }); toast({ title: "Unit removed" }); },
+  });
+
+  const setStatus = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => apiRequest("PATCH", `/api/units/${id}`, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/units"] }),
   });
 
   const statuses = ["all", "active", "standby", "compromised", "offline"];
@@ -158,7 +195,9 @@ export default function Units() {
               <tr key={u.id} className="hover:bg-secondary/20 transition-colors" data-testid={`unit-row-${u.id}`}>
                 <td className="px-3 py-2 text-base">{typeIcon[u.type] || "■"}</td>
                 <td className="px-3 py-2 font-bold font-mono tracking-wider">{u.callsign}</td>
-                <td className="px-3 py-2"><span className={`badge-${u.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{u.status}</span></td>
+                <td className="px-3 py-2">
+                  <StatusCycler unit={u} canEdit={canEditStatus} onCycle={s => setStatus.mutate({ id: u.id, status: s })} />
+                </td>
                 <td className="px-3 py-2 text-muted-foreground">{u.commander}</td>
                 <td className="px-3 py-2 kpi-value text-sm">{u.pax}</td>
                 <td className="px-3 py-2 grid-coord">{u.grid}</td>

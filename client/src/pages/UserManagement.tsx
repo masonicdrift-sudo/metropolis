@@ -85,11 +85,75 @@ function CreateUserForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+function EditUserForm({ user: target, onClose }: { user: AppUser; onClose: () => void }) {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [form, setForm] = useState({ username: target.username, role: target.role, password: "", confirm: "" });
+
+  const update = useMutation({
+    mutationFn: (data: any) => apiRequest("PATCH", `/api/users/${target.id}`, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/users"] }); toast({ title: "User updated" }); onClose(); },
+    onError: (err: any) => toast({ title: err?.message || "Update failed", variant: "destructive" }),
+  });
+
+  const submit = () => {
+    const payload: any = {};
+    if (form.username !== target.username) payload.username = form.username.trim();
+    if (form.role !== target.role) payload.role = form.role;
+    if (form.password) {
+      if (form.password !== form.confirm) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
+      if (form.password.length < 6) { toast({ title: "Password must be 6+ characters", variant: "destructive" }); return; }
+      payload.password = form.password;
+    }
+    if (Object.keys(payload).length === 0) { toast({ title: "No changes made" }); return; }
+    update.mutate(payload);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
+        <input type="text" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+      </div>
+      <div>
+        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
+        <div className="flex gap-2">
+          {["user", "admin", "owner"].map(r => (
+            <button key={r} onClick={() => setForm(f => ({ ...f, role: r }))}
+              className={`flex-1 py-1.5 rounded text-[10px] font-bold tracking-widest uppercase border transition-all ${
+                form.role === r
+                  ? r === "owner" ? "bg-orange-900/50 text-orange-400 border-orange-700" :
+                    r === "admin" ? "bg-yellow-900/50 text-yellow-400 border-yellow-700" :
+                    "bg-green-900/50 text-green-400 border-green-700"
+                  : "bg-secondary text-muted-foreground border-border hover:text-foreground"
+              }`}>{r === "owner" ? "OWNER" : r === "admin" ? "ADMIN" : "OPERATOR"}</button>
+          ))}
+        </div>
+      </div>
+      <div className="border-t border-border pt-3">
+        <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep current)</div>
+        <div className="space-y-2">
+          <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+            placeholder="New password..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+          <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
+            placeholder="Confirm password..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+        </div>
+      </div>
+      <div className="flex gap-2 justify-end pt-1">
+        <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
+        <Button size="sm" onClick={submit} disabled={update.isPending} className="text-xs bg-green-800 hover:bg-green-700">SAVE CHANGES</Button>
+      </div>
+    </div>
+  );
+}
+
 export default function UserManagement() {
   const { user: me } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [editUser, setEditUser] = useState<AppUser | null>(null);
 
   const { data: users = [] } = useQuery<AppUser[]>({
     queryKey: ["/api/users"],
@@ -182,16 +246,26 @@ export default function UserManagement() {
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(u.createdAt)}</td>
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(u.lastLogin || "")}</td>
                 <td className="px-4 py-3">
-                  {/* Can't delete yourself or anyone with equal/higher role */}
-                  {u.username !== me?.username && u.role !== "owner" && (
-                    <button onClick={() => del.mutate(u.id)}
-                      className="p-1 text-muted-foreground hover:text-red-400 transition-colors" data-testid={`delete-user-${u.id}`}>
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                  {u.role === "owner" && u.username !== me?.username && (
-                    <span className="text-[9px] text-orange-400/50 tracking-wider">PROTECTED</span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {/* Owner can edit any user */}
+                    {me?.role === "owner" && (
+                      <button onClick={() => setEditUser(u)}
+                        className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Edit user" data-testid={`edit-user-${u.id}`}>
+                        <Crown size={11} className="opacity-0 w-0" />
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    )}
+                    {/* Can't delete yourself or anyone with equal/higher role */}
+                    {u.username !== me?.username && u.role !== "owner" && (
+                      <button onClick={() => del.mutate(u.id)}
+                        className="p-1 text-muted-foreground hover:text-red-400 transition-colors" data-testid={`delete-user-${u.id}`}>
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                    {u.role === "owner" && u.username !== me?.username && (
+                      <span className="text-[9px] text-orange-400/50 tracking-wider">PROTECTED</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -201,6 +275,20 @@ export default function UserManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* Edit user dialog — Owner only */}
+      {editUser && (
+        <Dialog open={!!editUser} onOpenChange={v => !v && setEditUser(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-sm tracking-widest flex items-center gap-2">
+                EDIT USER — <span className="font-mono text-green-400">{editUser.username}</span>
+              </DialogTitle>
+            </DialogHeader>
+            <EditUserForm user={editUser} onClose={() => setEditUser(null)} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -60,7 +60,7 @@ function Sidebar() {
         </svg>
         <div>
           <div className="text-xs font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>TACEDGE</div>
-          <div className="text-[10px] text-muted-foreground tracking-widest">EDGE NODE v2.4</div>
+          <div className="text-[10px] text-muted-foreground tracking-widest">EDGE NODE v3.0</div>
         </div>
       </div>
 

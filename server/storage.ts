@@ -317,6 +317,7 @@ export interface IStorage {
   createUser(username: string, password: string, role: string): User;
   deleteUser(id: number): void;
   updateLastLogin(id: number): void;
+  updateUserById(id: number, updates: Partial<User>): User | undefined;
   // Units
   getUnits(): Unit[];
   getUnit(id: number): Unit | undefined;
@@ -339,6 +340,8 @@ export interface IStorage {
   getCommsLog(): CommsLog[];
   createCommsEntry(c: InsertCommsLog): CommsLog;
   acknowledgeComms(id: number): CommsLog | undefined;
+  deleteCommsEntry(id: number): void;
+  clearCommsLog(): void;
   // Assets
   getAssets(): Asset[];
   getAsset(id: number): Asset | undefined;
@@ -516,6 +519,9 @@ export class Storage implements IStorage {
   updateLastLogin(id: number) {
     db.update(schema.users).set({ lastLogin: new Date().toISOString() }).where(eq(schema.users.id, id)).run();
   }
+  updateUserById(id: number, updates: Partial<User>) {
+    return db.update(schema.users).set(updates).where(eq(schema.users.id, id)).returning().get();
+  }
 
   // Units
   getUnits() { return db.select().from(schema.units).all(); }
@@ -556,6 +562,12 @@ export class Storage implements IStorage {
   }
   acknowledgeComms(id: number) {
     return db.update(schema.commsLog).set({ acknowledged: true }).where(eq(schema.commsLog.id, id)).returning().get();
+  }
+  deleteCommsEntry(id: number) {
+    db.delete(schema.commsLog).where(eq(schema.commsLog.id, id)).run();
+  }
+  clearCommsLog() {
+    db.delete(schema.commsLog).run();
   }
 
   // Assets

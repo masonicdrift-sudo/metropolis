@@ -119,6 +119,33 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const user = storage.createUser(username, password, requestedRole);
     res.status(201).json(safeUser(user));
   });
+  // Owner-only: edit any user's username, role, or reset password
+  app.patch("/api/users/:id", requireOwner, (req, res) => {
+    const id = Number(req.params.id);
+    const { username, role, password } = req.body;
+    const target = storage.getUserById(id);
+    if (!target) return res.status(404).json({ error: "User not found" });
+    // Build update payload
+    const updates: Record<string, any> = {};
+    if (username && username !== target.username) {
+      const exists = storage.getUserByUsername(username);
+      if (exists) return res.status(409).json({ error: "Username already taken" });
+      updates.username = username;
+    }
+    if (role && ROLE_RANK[role] !== undefined) {
+      updates.role = role;
+    }
+    if (password) {
+      if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+      const bcrypt = require("bcryptjs");
+      updates.passwordHash = bcrypt.hashSync(password, 10);
+    }
+    if (Object.keys(updates).length === 0) return res.status(400).json({ error: "Nothing to update" });
+    const updated = storage.updateUserById(id, updates);
+    const { passwordHash, ...safe } = updated as any;
+    res.json(safe);
+  });
+
   app.delete("/api/users/:id", requireAdmin, (req, res) => {
     const id = Number(req.params.id);
     if (id === req.session.userId) return res.status(400).json({ error: "Cannot delete your own account" });
@@ -306,6 +333,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const entry = storage.acknowledgeComms(Number(req.params.id));
     if (!entry) return res.status(404).json({ error: "Not found" });
     res.json(entry);
+  });
+  app.delete("/api/comms/:id", requireOwner, (req, res) => {
+    storage.deleteCommsEntry(Number(req.params.id));
+    res.status(204).send();
+  });
+  app.delete("/api/comms", requireOwner, (_, res) => {
+    storage.clearCommsLog();
+    res.status(204).send();
   });
 
   // ── Assets ───────────────────────────────────────────────────────────────────

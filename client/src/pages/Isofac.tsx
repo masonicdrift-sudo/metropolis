@@ -1286,13 +1286,22 @@ function FileUploader({ onUploaded }: { onUploaded: (att: AttachmentInfo) => voi
 }
 
 // ── Document editor / creator ────────────────────────────────────────────────
-function DocEditor({ doc, onClose }: { doc?: IsofacDoc; onClose: () => void }) {
+function DocEditor({
+  doc,
+  onClose,
+  initialType,
+}: {
+  doc?: IsofacDoc;
+  onClose: () => void;
+  /** When creating (no `doc`), which template to open — e.g. from ISOFAC home grid shortcuts */
+  initialType?: string;
+}) {
   const qc = useQueryClient();
   const { toast } = useToast();
 
-  const defaultType = "OPORD";
+  const defaultType = doc?.type ?? initialType ?? "OPORD";
   const [form, setForm] = useState({
-    type: doc?.type || defaultType,
+    type: defaultType,
     title: doc?.title || "",
     classification: doc?.classification || "UNCLASS",
     status: doc?.status || "DRAFT",
@@ -1504,6 +1513,8 @@ export default function IsofacPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [editDoc, setEditDoc] = useState<IsofacDoc | undefined>();
+  /** Template type when creating from the home grid (not used when `editDoc` is set) */
+  const [createInitialType, setCreateInitialType] = useState<string | undefined>();
   const [search, setSearch] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
@@ -1545,7 +1556,15 @@ export default function IsofacPage() {
             : "min-h-[min(100dvh,calc(100vh-3rem))]",
         )}
       >
-        <DocEditor doc={editDoc} onClose={() => { setEditing(false); setEditDoc(undefined); }} />
+        <DocEditor
+          doc={editDoc}
+          initialType={editDoc ? undefined : createInitialType}
+          onClose={() => {
+            setEditing(false);
+            setEditDoc(undefined);
+            setCreateInitialType(undefined);
+          }}
+        />
       </div>
     );
   }
@@ -1575,8 +1594,14 @@ export default function IsofacPage() {
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">ISOFAC</span>
             <span className="text-[9px] text-muted-foreground/50 hidden sm:inline">MISSION PLANNING</span>
           </div>
-          <button onClick={() => { setEditDoc(undefined); setEditing(true); }}
-            className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors">
+          <button
+            onClick={() => {
+              setEditDoc(undefined);
+              setCreateInitialType(undefined);
+              setEditing(true);
+            }}
+            className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors"
+          >
             <Plus size={9} /> NEW
           </button>
         </div>
@@ -1625,8 +1650,14 @@ export default function IsofacPage() {
           <>
             <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/30 shrink-0">
               <div className="flex-1" />
-              <button onClick={() => { setEditDoc(selectedDoc); setEditing(true); }}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-green-400 tracking-wider transition-colors">
+              <button
+                onClick={() => {
+                  setCreateInitialType(undefined);
+                  setEditDoc(selectedDoc);
+                  setEditing(true);
+                }}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-green-400 tracking-wider transition-colors"
+              >
                 <Edit size={11} /> EDIT
               </button>
               {isAdmin && (
@@ -1652,8 +1683,15 @@ export default function IsofacPage() {
                   {DOC_TYPES.filter(t => t.group === group.key).map(t => {
                     const Icon = t.icon;
                     return (
-                      <button key={t.value} onClick={() => { setEditDoc(undefined); setEditing(true); }}
-                        className="w-full flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-secondary transition-colors text-left">
+                      <button
+                        key={t.value}
+                        onClick={() => {
+                          setEditDoc(undefined);
+                          setCreateInitialType(t.value);
+                          setEditing(true);
+                        }}
+                        className="w-full flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-secondary transition-colors text-left"
+                      >
                         <Icon size={9} className={t.color} />
                         <span className="text-[9px] text-muted-foreground hover:text-foreground truncate">{t.label}</span>
                       </button>

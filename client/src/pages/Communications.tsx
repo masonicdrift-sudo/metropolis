@@ -12,7 +12,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
-const MSG_TYPES = ["SITREP","SALUTE","FRAGO","CASEVAC","FIRE_MISSION","LOGSTAT","FLASH","CONTACT_REPORT","MEDEVAC_9LINE","SPOT_REPORT"];
+const MSG_TYPES = [
+  "SITREP",
+  "SALUTE",
+  "FRAGO",
+  "CASEVAC",
+  "FIRE_MISSION",
+  "LOGSTAT",
+  "FLASH",
+  "CONTACT_REPORT",
+  "MEDEVAC_9LINE",
+  "SPOT_REPORT",
+  "FIVE_LINE",
+  "HLZ",
+];
+
+/** Short labels in MSG TYPE dropdown (stored value stays canonical for API/DB). */
+function msgTypeSelectLabel(t: string): string {
+  if (t === "FIVE_LINE") return "5-LINE";
+  if (t === "HLZ") return "HLZ";
+  return t;
+}
 const CHANNELS = ["PRIMARY","ALTERNATE","CONTINGENCY","EMERGENCY"];
 const PRIORITIES = ["routine","priority","immediate","flash"];
 
@@ -45,6 +65,18 @@ const O = {
   fireEff: ["Suppress", "Destroy", "Neutralize", "Illuminate"],
   flashPri: ["IMMEDIATE ACTION", "BREAK BREAK", "ALL STATIONS"],
   casevac: ["0 WIA / 0 KIA", "1 WIA", "2 LITTER"],
+  avnMission: [
+    "Airlift / insert",
+    "Airlift / extract",
+    "CASEVAC escort",
+    "Aerial reconnaissance",
+    "Attack aviation (SEAD)",
+    "Resupply (internal / external)",
+    "Command & control (C2 bird)",
+  ],
+  hlzSurface: ["Grass / sod", "Dirt / clay", "Sand (brownout risk)", "PSP / matting", "Paved / concrete", "Snow / ice", "Swamp / soft"],
+  hlzSlope: ["None / level", "N 2%", "NE 5%", "E 8% — rolling", "Unknown"],
+  hlzTactical: ["Secure — friendly only", "Possible enemy — overwatch set", "Enemy NE 800m — not engaging", "Hot LZ — armed escort required"],
 };
 
 const TEMPLATES: Record<string, Template> = {
@@ -231,6 +263,177 @@ const TEMPLATES: Record<string, Template> = {
     ],
     build: (v) =>
       `SPOT REPORT: ${v.what || ""} at ${v.location || "UNK"} at ${v.time || "UNK"}${v.details ? " — " + v.details : ""}`,
+  },
+
+  /**
+   * Army rotary-wing coordination: 5-line aviation request (enemy, friendly, mission, C2/signal, remarks).
+   * Aligns with common US Army aviation briefing / helicopter request format taught at unit level.
+   */
+  FIVE_LINE: {
+    title: "5-LINE (AVIATION REQUEST)",
+    description: "Rotary-wing / aviation support — 5-line coordination (Army standard format)",
+    fields: [
+      {
+        key: "l1_enemy",
+        label: "LINE 1 — ENEMY / TARGET AREA (activity, grid)",
+        hint: "Enemy dismounted squad, grid 38T LP 4821 7334",
+        required: true,
+        multiline: true,
+        options: [
+          "No enemy observed — objective area clear",
+          "Dismounted squad 38T LP 4821 7334 — defensive",
+          "Motorized element moving east along MSR — last grid 38T LP 5300 7400",
+        ],
+      },
+      {
+        key: "l2_friendly",
+        label: "LINE 2 — FRIENDLY (location grid, disposition)",
+        hint: "Platoon BP at 38T LP 4750 7280, oriented north",
+        required: true,
+        multiline: true,
+        options: [
+          "1st Plt 38T LP 4750 7280 — BP ORIENT N",
+          "TOC 38T LP 4700 7200 — all elements accounted for",
+          "Team in overwatch 38T LP 4800 7310 — 200m offset from LZ",
+        ],
+      },
+      {
+        key: "l3_mission",
+        label: "LINE 3 — MISSION / REQUESTED ACTION",
+        hint: "Insert 2nd Squad HLZ FALCON / extract casualty / resupply Class V",
+        required: true,
+        multiline: true,
+        options: O.avnMission.map((m) => `${m} — details on freq`),
+      },
+      {
+        key: "l4_c2",
+        label: "LINE 4 — COMMAND & SIGNAL (freq, callsigns, graphics)",
+        hint: "PRIMARY 34.75 — ALPHA-6; BP/LD as per OPORD; no fires east of PL RED",
+        required: true,
+        multiline: true,
+        options: [
+          "PRIMARY 34.75 / ALT 58.0 — ALPHA-6 / EAGLE-2 — follow ACA",
+          "TAC 32.10 — JTAC SNAKE-1 — restricted fires N of PL BLUE",
+        ],
+      },
+      {
+        key: "l5_remarks",
+        label: "LINE 5 — REMARKS (weather, danger close, time, special equip)",
+        hint: "Winds 270/12kt; danger close 400m approved; NVD only",
+        multiline: true,
+        options: [
+          "Weather: clear, winds 270/10G15 — no icing",
+          "Danger close 400m — CO approved — SEAD on station",
+          "NVD only — blackout HLZ — VS-17 panel on release",
+        ],
+      },
+    ],
+    build: (v) =>
+      [
+        "5-LINE AVIATION REQUEST (US ARMY FORMAT)",
+        "LINE 1 (ENEMY / TARGET AREA):",
+        v.l1_enemy || "N/A",
+        "",
+        "LINE 2 (FRIENDLY):",
+        v.l2_friendly || "N/A",
+        "",
+        "LINE 3 (MISSION / REQUEST):",
+        v.l3_mission || "N/A",
+        "",
+        "LINE 4 (COMMAND & SIGNAL):",
+        v.l4_c2 || "N/A",
+        "",
+        "LINE 5 (REMARKS):",
+        v.l5_remarks || "N/A",
+      ].join("\n"),
+  },
+
+  /**
+   * HLZ / LZ-PZ report: 8-line format used for helicopter landing zone / PZ assessment (Army aviation / air assault).
+   */
+  HLZ: {
+    title: "HLZ — 8-LINE LZ/PZ REPORT",
+    description: "Helicopter landing zone / pickup zone — standard 8-line report (Army)",
+    fields: [
+      {
+        key: "l1_loc",
+        label: "LINE 1 — LOCATION (8-digit grid MGRS) & ELEVATION (MSL)",
+        hint: "38T LP 48217 73340 — elev 1250 ft MSL",
+        required: true,
+        options: O.grid.map((g) => `${g} — elev ____ ft MSL`),
+      },
+      {
+        key: "l2_heading",
+        label: "LINE 2 — LANDING DIRECTION (mag heading) & USABLE LENGTH (meters)",
+        hint: "Landing heading 270° mag — usable length 250m",
+        required: true,
+        options: ["270° mag — 250m usable", "090° mag — 180m usable", "360° mag — 300m — dual-axis possible"],
+      },
+      {
+        key: "l3_dims",
+        label: "LINE 3 — DIMENSIONS (length x width, meters)",
+        hint: "250m x 80m",
+        required: true,
+        options: ["250 x 80", "180 x 60", "300 x 100 — overshoot clear"],
+      },
+      {
+        key: "l4_slope",
+        label: "LINE 4 — SLOPE (direction & approximate %)",
+        hint: "Slope to N approx 3%",
+        required: true,
+        options: O.hlzSlope,
+      },
+      {
+        key: "l5_surface",
+        label: "LINE 5 — SURFACE TYPE & CONDITIONS (FOD, dust, wet)",
+        hint: "Short grass, dry, moderate brownout risk",
+        required: true,
+        options: O.hlzSurface,
+      },
+      {
+        key: "l6_obstacles",
+        label: "LINE 6 — OBSTACLES (wires, trees, poles — height AGL if known)",
+        hint: "Single wire crossing N end — est 40ft AGL; trees clear of approach",
+        required: true,
+        multiline: true,
+        options: [
+          "None significant — surveyed on foot",
+          "Power line N edge — ~12m AGL — marked with chem light",
+          "Trees S approach — tops clear by 50m — no wires",
+        ],
+      },
+      {
+        key: "l7_tactical",
+        label: "LINE 7 — TACTICAL (enemy, friendly, PZ/LZ security)",
+        hint: "Friendly security 360°, no enemy within 1km",
+        required: true,
+        multiline: true,
+        options: O.hlzTactical,
+      },
+      {
+        key: "l8_remarks",
+        label: "LINE 8 — REMARKS (marking, PAX, loads, fuel, time on deck)",
+        hint: "VS-17 panel; smoke green on cleared; 12 PAX + 4 litters",
+        multiline: true,
+        options: [
+          "Marking: VS-17 panel center / smoke on signal",
+          "12 PAX, 0 litter — internal load only",
+          "Hot refuel N/A — 15 min time on zone max",
+        ],
+      },
+    ],
+    build: (v) =>
+      [
+        "HLZ / LZ-PZ REPORT — 8-LINE (US ARMY FORMAT)",
+        `LINE 1 (LOCATION / ELEV): ${v.l1_loc || "N/A"}`,
+        `LINE 2 (MAG HEADING / LENGTH): ${v.l2_heading || "N/A"}`,
+        `LINE 3 (DIMENSIONS L x W): ${v.l3_dims || "N/A"}`,
+        `LINE 4 (SLOPE): ${v.l4_slope || "N/A"}`,
+        `LINE 5 (SURFACE): ${v.l5_surface || "N/A"}`,
+        `LINE 6 (OBSTACLES): ${v.l6_obstacles || "N/A"}`,
+        `LINE 7 (TACTICAL): ${v.l7_tactical || "N/A"}`,
+        `LINE 8 (REMARKS): ${v.l8_remarks || "N/A"}`,
+      ].join("\n"),
   },
 };
 
@@ -469,7 +672,13 @@ export default function Communications() {
                 <Label className="text-[9px] tracking-wider text-muted-foreground">MSG TYPE</Label>
                 <Select value={form.type} onValueChange={v => { set("type")(v); setForm(f => ({ ...f, message: "" })); }}>
                   <SelectTrigger className="text-xs h-7"><SelectValue /></SelectTrigger>
-                  <SelectContent>{MSG_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {MSG_TYPES.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {msgTypeSelectLabel(t)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div>
@@ -548,7 +757,7 @@ export default function Communications() {
                   <span className="text-[10px] font-bold text-green-400">{msg.fromCallsign}</span>
                   <span className="text-[9px] text-muted-foreground">▶</span>
                   <span className="text-[10px] font-bold">{msg.toCallsign}</span>
-                  <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{msg.type}</span>
+                  <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{msgTypeSelectLabel(msg.type)}</span>
                   <span className="text-[9px] text-muted-foreground">[{msg.channel}]</span>
                   <span className="text-[9px] text-muted-foreground ml-auto">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                   {!msg.acknowledged ? (

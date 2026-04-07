@@ -225,7 +225,7 @@ export const commsLog = sqliteTable("comms_log", {
   fromCallsign: text("from_callsign").notNull(),
   toCallsign: text("to_callsign").notNull(),
   channel: text("channel").notNull(), // PRIMARY, ALTERNATE, CONTINGENCY, EMERGENCY
-  type: text("type").notNull(), // SITREP, SALUTE, FRAGO, CASEVAC, FIRE_MISSION, LOGSTAT, FLASH
+  type: text("type").notNull(), // SITREP, SALUTE, … FIVE_LINE, HLZ, etc.
   message: text("message").notNull(),
   timestamp: text("timestamp").notNull(),
   acknowledged: integer("acknowledged", { mode: "boolean" }).default(false),

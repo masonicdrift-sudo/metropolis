@@ -1,0 +1,1973 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8976.04, 9397.31, 125.07]
+      },
+      "properties": {
+        "name": "Herati",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8958.85, 9398.26, 126.92]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [483.456, 9364.9, 150.263]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [470, 9356, 148.032]
+      },
+      "properties": {
+        "name": "Dehqobad",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2931.99, 9166.23, 145.646]
+      },
+      "properties": {
+        "name": "Rangrezan",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4664, 9124, 146.844]
+      },
+      "properties": {
+        "name": "Zarifkheyl",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2914.7, 9132.51, 146.519]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2382.18, 9046.94, 147.3]
+      },
+      "properties": {
+        "name": "Barekzi_east",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8270.98, 8850.72, 217.661]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8330.92, 8824.14, 218.127]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4602.94, 8974.51, 146.034]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2048.52, 8936.51, 146.594]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2025.58, 8930.44, 146.345]
+      },
+      "properties": {
+        "name": "Barekzi",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8271.27, 8788.76, 218.195]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4936.45, 8622.12, 145.116]
+      },
+      "properties": {
+        "name": "Deraz_north",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6864.33, 8360.56, 127.48]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6802.75, 8371.72, 130.945]
+      },
+      "properties": {
+        "name": "Tebbi",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4939.34, 8232.29, 141.324]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4984, 8224, 142.406]
+      },
+      "properties": {
+        "name": "Deraz",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3146.58, 8526.32, 145.213]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3130.06, 8419.4, 144.219]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3163.85, 8400.85, 145.411]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3162.53, 8450.72, 144.708]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3059.26, 8626.34, 143.468]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3070.25, 8518.15, 143.778]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3027.08, 8531.85, 143.508]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2989.65, 8534.07, 143.591]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3035.14, 8537.65, 143.634]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3076, 8451, 142.796]
+      },
+      "properties": {
+        "name": "FobObeh",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3019.78, 8467.03, 143.35]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3117.39, 8393.84, 144.596]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3072.26, 8411.39, 141.754]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2419.3, 8628.9, 144.095]
+      },
+      "properties": {
+        "name": "Hameed",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1561.85, 8654.87, 143.218]
+      },
+      "properties": {
+        "name": "Barekzi_oil",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [804.57, 8600.68, 145.243]
+      },
+      "properties": {
+        "name": "Mahajerin",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [810.183, 8481.82, 144.316]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [700.683, 8200.39, 144.392]
+      },
+      "properties": {
+        "name": "Mahajerin_south",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8684.2, 8039.26, 104.884]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4148.51, 8040.59, 144.306]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4147.82, 8038.1, 144.254]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4085, 8006, 145.313]
+      },
+      "properties": {
+        "name": "Anizay_",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8529.5, 7789.73, 111.53]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2730.58, 7968.08, 142.027]
+      },
+      "properties": {
+        "name": "Angama",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2252.87, 7829.84, 140.2]
+      },
+      "properties": {
+        "name": "Siltou",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1777.05, 7750.55, 140.815]
+      },
+      "properties": {
+        "name": "Abka",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [605.676, 7747.49, 140.81]
+      },
+      "properties": {
+        "name": "Mezenti",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8654.45, 7596.83, 112.187]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4620.81, 7484.23, 138.403]
+      },
+      "properties": {
+        "name": "Musakhan_north",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8533.52, 7316, 111.531]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3865.62, 7371.56, 138.951]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1734.5, 7312.04, 139.594]
+      },
+      "properties": {
+        "name": "Sufian_east",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8444.58, 7170.14, 111.924]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8283.53, 7193.55, 111.375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8377.34, 7199.05, 111.532]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3959.57, 7206.93, 137.25]
+      },
+      "properties": {
+        "name": "bigmosque",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1486, 7284, 137.344]
+      },
+      "properties": {
+        "name": "Sufian",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1327.26, 7178.25, 141.261]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8655.36, 7152.22, 112.922]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8478.64, 7141.87, 111.377]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8512.54, 7140.14, 111.36]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8448.72, 7055.96, 111.764]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8442, 7043, 111.5]
+      },
+      "properties": {
+        "name": "Landayairfield",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6175.85, 7024.37, 103.542]
+      },
+      "properties": {
+        "name": "Zaranj",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4902.95, 7031.35, 142.369]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3006.75, 7040.8, 139.361]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2990, 7145, 137.531]
+      },
+      "properties": {
+        "name": "Seyyedan",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [505.042, 7099.53, 137.224]
+      },
+      "properties": {
+        "name": "Baluchan",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [472.172, 7130.52, 137.116]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8364.63, 6933.99, 111.531]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8290.51, 6981.35, 111.375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7180.72, 7008.57, 109.348]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6094.1, 7011.73, 105.006]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4976.56, 6986.74, 139.405]
+      },
+      "properties": {
+        "name": "Musakhan",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3999.56, 7008.69, 137.219]
+      },
+      "properties": {
+        "name": "Khas",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8655.48, 6798.5, 111.47]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8376.44, 6778.78, 111.672]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8324.94, 6853.06, 111.818]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7371.6, 6885.19, 90.613]
+      },
+      "properties": {
+        "name": "Landay",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3719.65, 6904.34, 138.208]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3719.61, 6906.92, 138.167]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [731.623, 6807.83, 133.888]
+      },
+      "properties": {
+        "name": "Sabka",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8495.91, 6689.62, 108.989]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8496.22, 6635.23, 108.989]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8495.72, 6724.29, 108.989]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2554.5, 6681, 135.554]
+      },
+      "properties": {
+        "name": "Domi",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1344.05, 6621.04, 135.111]
+      },
+      "properties": {
+        "name": "Sufian_oil",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8660.31, 6529.32, 110.849]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8496.43, 6595.98, 108.989]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8457.89, 6521.11, 111.531]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1935.74, 6543.63, 133.501]
+      },
+      "properties": {
+        "name": "Sekab",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8668.69, 6239.75, 113.979]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3645.27, 6258.41, 136.738]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8536.65, 6149.06, 112.469]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4709.96, 6082.8, 137.787]
+      },
+      "properties": {
+        "name": "Kelinga",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3658.79, 6197.47, 133.956]
+      },
+      "properties": {
+        "name": "Salam",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4561.19, 5891.31, 134.875]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4487.06, 5889.88, 133.844]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6869, 5575, 119.859]
+      },
+      "properties": {
+        "name": "Maku",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6767.54, 5559.33, 119.661]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4537.06, 5869.84, 135.344]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4535.1, 5775.6, 132.322]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4511, 5829, 134.531]
+      },
+      "properties": {
+        "name": "FobNauzad",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4489.22, 5758.28, 134.875]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5531.04, 5652.95, 123.219]
+      },
+      "properties": {
+        "name": "Alis_oil",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1809.09, 5762.88, 124.618]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1764, 5788, 123.375]
+      },
+      "properties": {
+        "name": "Gholam",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1382.31, 5724.08, 132.016]
+      },
+      "properties": {
+        "name": "Qattar",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [230.684, 5417.05, 128.88]
+      },
+      "properties": {
+        "name": "Didar",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7394.47, 5222.3, 116.238]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7338, 5277, 121.746]
+      },
+      "properties": {
+        "name": "Naw",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3282.63, 5359.45, 129.841]
+      },
+      "properties": {
+        "name": "Erkou",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1535.31, 5301.68, 129.994]
+      },
+      "properties": {
+        "name": "Baris",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [348.781, 5361.1, 130.02]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8399, 5168, 77.844]
+      },
+      "properties": {
+        "name": "Naudeh",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8295.83, 5094.04, 78.1311]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6785.19, 5098.06, 143.531]
+      },
+      "properties": {
+        "name": "MakuOilfield",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5204.2, 5076.37, 170.356]
+      },
+      "properties": {
+        "name": "Idak",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5240.83, 5041.9, 171.334]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2291.45, 5193.83, 123.11]
+      },
+      "properties": {
+        "name": "Gabir",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6363.57, 4640.68, 166.105]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6336.67, 4662.65, 165.542]
+      },
+      "properties": {
+        "name": "Dola",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1996.56, 4583.55, 137.812]
+      },
+      "properties": {
+        "name": "Camel_race_track",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1424.77, 4611.39, 132.493]
+      },
+      "properties": {
+        "name": "Kakoran",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3548.31, 4531.37, 158.107]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3439.06, 4433.35, 153.744]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3441.18, 4431.2, 153.744]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3457.33, 4520.75, 155.101]
+      },
+      "properties": {
+        "name": "makan_aljamal",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2689.7, 3936, 64.547]
+      },
+      "properties": {
+        "name": "Cleopatras_cave",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1850.02, 3766.61, 136.031]
+      },
+      "properties": {
+        "name": "Hotel_construction_site",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7131.31, 3620.75, 341.362]
+      },
+      "properties": {
+        "name": "Arnay",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5276.52, 3520.23, 228.499]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5188.5, 3571.33, 231.98]
+      },
+      "properties": {
+        "name": "Janur",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7905.7, 2994.92, 144.769]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7910, 3003, 145.109]
+      },
+      "properties": {
+        "name": "Mian",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1855.62, 3050.8, 143.436]
+      },
+      "properties": {
+        "name": "Akhund_North",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3611.18, 2909.16, 168.938]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3608.61, 2907.59, 168.938]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3544.69, 2874.87, 170.377]
+      },
+      "properties": {
+        "name": "Qalandar",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2582, 2555, 157.406]
+      },
+      "properties": {
+        "name": "AkhundOilfield",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6424.69, 2419.85, 215.98]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6450.71, 2384.69, 214.253]
+      },
+      "properties": {
+        "name": "Gorqan",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2192.24, 2215.8, 157.347]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1986.11, 2202.53, 152.174]
+      },
+      "properties": {
+        "name": "Akhund",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5118.23, 1799.06, 207.699]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5145.73, 1818.27, 209.493]
+      },
+      "properties": {
+        "name": "Fob_thirty_palms",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3147, 1772.4, 121.312]
+      },
+      "properties": {
+        "name": "Amaro",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [917.895, 1896.04, 158.217]
+      },
+      "properties": {
+        "name": "Giza",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5202.5, 1760.68, 204.654]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3637.02, 1619.24, 190.545]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9495.72, 1495.96, 35.9506]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3672.79, 1538.48, 190.569]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3592.1, 1526.28, 190.375]
+      },
+      "properties": {
+        "name": "Riqay_airfield",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3540.82, 1471.25, 191.665]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9546, 1442, 38.188]
+      },
+      "properties": {
+        "name": "Murabat",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3573.94, 1439.73, 190.922]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1730.12, 1388.89, 160.625]
+      },
+      "properties": {
+        "name": "Asadisoil",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [969.023, 1356.15, 167.379]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2369.51, 1141.86, 169.625]
+      },
+      "properties": {
+        "name": "Akhund_South",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1264.38, 1075.58, 160.062]
+      },
+      "properties": {
+        "name": "Abu_Simbel",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1056, 1198, 168.781]
+      },
+      "properties": {
+        "name": "Kaza",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5819.7, 911.48, 270.337]
+      },
+      "properties": {
+        "name": "Bum",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3569.83, 618.524, 208.462]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3572.22, 618.226, 208.547]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3569.94, 692.229, 207.859]
+      },
+      "properties": {
+        "name": "Riqay",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    }
+  ]
+}

@@ -1,14 +1,80 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer } from "http";
+import path from "path";
+import fs from "fs";
 import { storage } from "./storage";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { upload } from "./upload";
+import { z } from "zod";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
   ROLE_RANK,
 } from "@shared/schema";
+import { sidcForMarker } from "@shared/natoSidc";
+
+const TERRAIN_DIR = path.resolve(process.cwd(), "TDL_TerrainExport", "TDL_TerrainExport");
+
+/** Any of these suffixes identifies a TDL terrain export file; the stem is the map id (e.g. Everon_water.geojson → Everon). */
+const TERRAIN_FILE_SUFFIXES = [
+  "_metadata.json",
+  "_water.geojson",
+  "_roads.geojson",
+  "_pois.geojson",
+  "_structures.geojson",
+  "_contours.geojson",
+  "_vegetation.json",
+  "_heightmap.asc",
+  "_heightmap.json",
+] as const;
+
+function discoverTerrainMapIds(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const files = fs.readdirSync(dir);
+  const ids = new Set<string>();
+  for (const f of files) {
+    const lower = f.toLowerCase();
+    for (const suf of TERRAIN_FILE_SUFFIXES) {
+      if (lower.endsWith(suf.toLowerCase())) {
+        const id = f.slice(0, f.length - suf.length);
+        if (id.length > 0) ids.add(id);
+        break;
+      }
+    }
+  }
+  return Array.from(ids).sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }),
+  );
+}
+
+function terrainMapLabel(dir: string, id: string): string {
+  const metaPath = path.join(dir, `${id}_metadata.json`);
+  try {
+    if (fs.existsSync(metaPath)) {
+      const raw = fs.readFileSync(metaPath, "utf-8");
+      const j = JSON.parse(raw) as { name?: string };
+      if (j.name && typeof j.name === "string" && j.name.trim()) {
+        return j.name
+          .trim()
+          .replace(/^GM_/i, "")
+          .replace(/_/g, " ");
+      }
+    }
+  } catch {
+    /* ignore bad metadata */
+  }
+  return id.replace(/_/g, " ");
+}
+
+const tacticalMarkerPostSchema = z.object({
+  mapKey: z.string().min(1).max(120),
+  gameX: z.number(),
+  gameZ: z.number(),
+  markerType: z.enum(["unit", "vehicle", "building", "equipment"]),
+  affiliation: z.enum(["friendly", "hostile", "neutral", "unknown"]),
+  label: z.string().max(200).optional().default(""),
+});
 
 // Rate limiter: max 10 login attempts per 15 minutes per IP
 const loginLimiter = rateLimit({
@@ -34,6 +100,47 @@ function wsPush(type: string, extra?: object) {
   if (broadcast) broadcast({ type, ...extra });
 }
 
+/** @username tokens in message text (matches client parsing). */
+function extractMentionUsernames(content: string): string[] {
+  const re = /@([A-Za-z0-9_-]{2,48})/g;
+  const found = new Set<string>();
+  let m;
+  while ((m = re.exec(content)) !== null) {
+    found.add(m[1]);
+  }
+  return Array.from(found);
+}
+
+/** WebSocket ping to each mentioned user (general / group). */
+function pushMentionPings(
+  content: string,
+  fromUsername: string,
+  scope: "general" | "group",
+  allowedUsernames: string[],
+  extra: { groupId?: number; groupName?: string },
+) {
+  const broadcast = (global as any).__wsBroadcast as
+    | ((msg: object, toUsernames?: string[]) => void)
+    | undefined;
+  if (!broadcast || !content.trim()) return;
+  const allow = new Set(allowedUsernames.filter((u) => u !== fromUsername));
+  const mentioned = extractMentionUsernames(content).filter((u) => allow.has(u));
+  const uniq = Array.from(new Set(mentioned));
+  const snippet = content.trim().slice(0, 160);
+  for (const target of uniq) {
+    broadcast(
+      {
+        type: "MENTION",
+        scope,
+        fromUsername,
+        snippet,
+        ...extra,
+      },
+      [target],
+    );
+  }
+}
+
 // Middleware: require logged-in session
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
@@ -55,6 +162,11 @@ function requireOwner(req: Request, res: Response, next: NextFunction) {
 }
 
 export function registerRoutes(httpServer: ReturnType<typeof createServer>, app: Express) {
+  // TDL terrain GeoJSON (Workbench exporter — see AG0_TDLTerrainExporterPlugin.c at repo root)
+  if (fs.existsSync(TERRAIN_DIR)) {
+    app.use("/terrain-data", express.static(TERRAIN_DIR, { index: false, maxAge: "2h" }));
+  }
+
   // ── Auth ────────────────────────────────────────────────────────────────────
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     const { username, password } = req.body;
@@ -152,6 +264,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   // ── User management (admin+ can list/create, only owner can delete admins) ───
   app.get("/api/users", requireAdmin, (_, res) => res.json(storage.getUsers()));
+  /** Roster for any logged-in user — DMs, @mentions (no admin required). */
+  app.get("/api/users/directory", requireAuth, (_, res) => {
+    res.json(
+      storage.getUsers().map((u) => ({
+        id: u.id,
+        username: u.username,
+        role: u.role,
+      })),
+    );
+  });
   app.post("/api/users", requireAdmin, (req, res) => {
     const { username, password, role } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
@@ -317,9 +439,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const { content } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: "Content required" });
     const { attachment } = req.body;
-    const msg = storage.sendMessage(req.session.username!, `GROUP:${id}`, content.trim(), attachment || "");
+    const text = content.trim();
+    const msg = storage.sendMessage(req.session.username!, `GROUP:${id}`, text, attachment || "");
     const broadcast = (global as any).__wsBroadcast;
     if (broadcast) broadcast({ type: "GROUP_MESSAGE", groupId: id, message: msg }, members);
+    pushMentionPings(text, req.session.username!, "group", members, {
+      groupId: id,
+      groupName: group.name,
+    });
     res.status(201).json(msg);
   });
   // Add member to group (creator or admin+)
@@ -375,9 +502,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/messages/general", requireAuth, (req, res) => {
     const { content, attachment } = req.body;
     if (!content?.trim() && !attachment) return res.status(400).json({ error: "Content or attachment required" });
-    const msg = storage.sendMessage(req.session.username!, "GENERAL", content?.trim() || "", attachment || "");
+    const text = content?.trim() || "";
+    const msg = storage.sendMessage(req.session.username!, "GENERAL", text, attachment || "");
     const broadcast = (global as any).__wsBroadcast;
     if (broadcast) broadcast({ type: "GENERAL_MESSAGE", message: msg });
+    if (text) {
+      const allNames = storage.getUsers().map((u) => u.username);
+      pushMentionPings(text, req.session.username!, "general", allNames, {});
+    }
     res.status(201).json(msg);
   });
 
@@ -389,7 +521,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   // DM conversation with a specific user
   app.get("/api/messages/dm/:username", requireAuth, (req, res) => {
     const me = req.session.username!;
-    const other = req.params.username;
+    const other = String(Array.isArray(req.params.username) ? req.params.username[0] : req.params.username);
     const msgs = storage.getDMConversation(me, other);
     // Mark as read
     storage.markRead(other, me, me);
@@ -400,7 +532,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const { content, attachment } = req.body;
     if (!content?.trim() && !attachment) return res.status(400).json({ error: "Content or attachment required" });
     const me = req.session.username!;
-    const to = req.params.username;
+    const to = String(Array.isArray(req.params.username) ? req.params.username[0] : req.params.username);
     if (me === to) return res.status(400).json({ error: "Cannot DM yourself" });
     const msg = storage.sendMessage(me, to, content?.trim() || "", attachment || "");
     const broadcast = (global as any).__wsBroadcast;
@@ -683,7 +815,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
     const isStaff = callerRank >= ROLE_RANK.admin;
     const rawU = req.query.username;
-    const qUser = typeof rawU === "string" ? rawU : Array.isArray(rawU) ? rawU[0] : undefined;
+    const qUser =
+      typeof rawU === "string"
+        ? rawU
+        : Array.isArray(rawU) && typeof rawU[0] === "string"
+          ? rawU[0]
+          : undefined;
     // Operators only see their own records; admins/owners can filter by ?username= or see all
     if (!isStaff) {
       return res.json(storage.getTrainingRecords(me));
@@ -720,6 +857,65 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
   app.delete("/api/broadcasts/:id", requireAdmin, (req, res) => {
     storage.deleteBroadcast(Number(req.params.id));
+    res.status(204).send();
+  });
+
+  // ── Tactical terrain (TDL export + NATO markers) ─────────────────────────────
+  app.get("/api/terrain/maps", requireAuth, (_req, res) => {
+    if (!fs.existsSync(TERRAIN_DIR)) {
+      return res.json({ maps: [] as { id: string; label: string }[] });
+    }
+    const ids = discoverTerrainMapIds(TERRAIN_DIR);
+    const maps = ids.map((id) => ({
+      id,
+      label: terrainMapLabel(TERRAIN_DIR, id),
+    }));
+    res.json({ maps });
+  });
+
+  app.get("/api/tactical-markers", requireAuth, (req, res) => {
+    const raw = req.query.mapKey;
+    const mapKey =
+      typeof raw === "string"
+        ? raw
+        : Array.isArray(raw) && typeof raw[0] === "string"
+          ? raw[0]
+          : "";
+    if (!mapKey) return res.status(400).json({ error: "mapKey query required" });
+    res.json(storage.getTacticalMarkers(mapKey));
+  });
+
+  app.post("/api/tactical-markers", requireAuth, (req, res) => {
+    const parsed = tacticalMarkerPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const b = parsed.data;
+    const sidc = sidcForMarker(b.affiliation, b.markerType);
+    const row = storage.createTacticalMarker({
+      mapKey: b.mapKey,
+      gameX: b.gameX,
+      gameZ: b.gameZ,
+      sidc,
+      markerType: b.markerType,
+      affiliation: b.affiliation,
+      label: b.label.trim(),
+      createdBy: req.session.username!,
+      createdAt: new Date().toISOString(),
+    });
+    wsPush("TACTICAL_MARKERS", { mapKey: b.mapKey });
+    res.status(201).json(row);
+  });
+
+  app.delete("/api/tactical-markers/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const result = storage.tryDeleteTacticalMarker(id, req.session.username!, req.session.role || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the placer or an admin/owner can remove this marker" });
+      }
+      return res.status(404).json({ error: "Marker not found" });
+    }
+    wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });
     res.status(204).send();
   });
 

@@ -25,6 +25,7 @@ import AwardsPage from "./pages/Awards";
 import TrainingPage from "./pages/Training";
 import FileVault from "./pages/FileVault";
 import GridTool from "./pages/GridTool";
+import TacticalTerrainMap from "./pages/TacticalTerrainMap";
 import BroadcastsPage from "./pages/Broadcasts";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import Login from "./pages/Login";
@@ -39,7 +40,7 @@ import {
   Crosshair, Package, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, Signal, BookOpen,
   Settings, Menu, X, ChevronRight, UserCheck, FileText,
-  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap
+  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map
 } from "lucide-react";
 
 // All nav items
@@ -61,6 +62,7 @@ const NAV = [
   { path: "/awards",      label: "AWARDS",       icon: Star,            short: "Awards" },
   { path: "/training",    label: "TRAINING",     icon: GraduationCap,   short: "Train" },
   { path: "/grid-tool",   label: "GRID TOOL",    icon: MapPin,          short: "Grid" },
+  { path: "/terrain",     label: "TAC MAP",      icon: Map,             short: "Map" },
 ];
 
 // Mobile bottom tab — primary destinations + "More" opens full nav (Discord-style rail)
@@ -432,6 +434,7 @@ function AppRoutes() {
         <Route path="/training" component={TrainingPage} />
         <Route path="/file-vault" component={FileVault} />
         <Route path="/grid-tool" component={GridTool} />
+        <Route path="/terrain" component={TacticalTerrainMap} />
         <Route path="/broadcasts" component={(user.role === "admin" || user.role === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />

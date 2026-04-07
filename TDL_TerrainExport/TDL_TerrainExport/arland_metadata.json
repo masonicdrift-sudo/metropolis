@@ -1,0 +1,22 @@
+{
+  "name": "Arland",
+  "exportVersion": "1.0.0",
+  "exportTimestamp": 1767571642,
+  "bounds": {
+    "min": [0, -163, 0],
+    "max": [4096, 148.375, 4096]
+  },
+  "size": {
+    "x": 4096,
+    "y": 311.375,
+    "z": 4096
+  },
+  "oceanHeight": 0,
+  "coordinateSystem": {
+    "type": "cartesian",
+    "xAxis": "east",
+    "yAxis": "up",
+    "zAxis": "north",
+    "units": "meters"
+  }
+}

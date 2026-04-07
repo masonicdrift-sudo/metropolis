@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download, ChevronLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,35 @@ function roleColor(role?: string) {
   if (role === "owner") return "text-orange-400";
   if (role === "admin") return "text-yellow-400";
   return "text-green-400";
+}
+
+/** Highlight @username for known roster members (matches server ping parsing). */
+function formatMessageContent(raw: string, knownUsers: Set<string>): ReactNode {
+  if (!raw || raw === "[message deleted]") return raw;
+  const re = /@([A-Za-z0-9_-]{2,48})/g;
+  const parts: ReactNode[] = [];
+  let last = 0;
+  let m;
+  while ((m = re.exec(raw)) !== null) {
+    if (m.index > last) parts.push(raw.slice(last, m.index));
+    const name = m[1];
+    const known = knownUsers.has(name);
+    parts.push(
+      <span
+        key={`${m.index}-${name}`}
+        className={
+          known
+            ? "font-semibold text-amber-400/95 bg-amber-500/15 rounded px-0.5"
+            : "text-muted-foreground"
+        }
+      >
+        @{name}
+      </span>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) parts.push(raw.slice(last));
+  return parts.length > 0 ? <>{parts}</> : raw;
 }
 
 // ── Single message bubble ────────────────────────────────────────
@@ -48,9 +77,10 @@ function DeleteConfirmBtn({ onConfirm, isOwnMessage }: { onConfirm: () => void; 
   );
 }
 
-function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
+function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
   msg: Message; isMe: boolean; onDelete: (id: number) => void;
   canDelete: boolean; userMap: Record<string, string>;
+  knownUsers: Set<string>;
 }) {
   const [hovered, setHovered] = useState(false);
   const deleted = msg.content === "[message deleted]";
@@ -84,7 +114,7 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
           isMe ? "bg-green-900/40 border border-green-800/30 text-foreground" :
           "bg-secondary border border-border text-foreground"
         }`}>
-          {msg.content}
+          {deleted ? msg.content : formatMessageContent(msg.content, knownUsers)}
             {/* Attachment */}
           {msg.attachment && (() => {
             try {
@@ -117,14 +147,36 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
 // ── Message input ────────────────────────────────────────────────
 interface Attachment { url: string; originalName: string; mimeType: string; }
 
-function MessageInput({ onSend, placeholder }: {
+function MessageInput({ onSend, placeholder, mentionCandidates = [] }: {
   onSend: (text: string, attachment?: Attachment) => void;
   placeholder: string;
+  /** Usernames for @ autocomplete + ping */
+  mentionCandidates?: string[];
 }) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState<Attachment | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [mentionHighlight, setMentionHighlight] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const mentionMatch = text.match(/@([\w-]*)$/);
+  const mentionPrefix = mentionMatch ? mentionMatch[1].toLowerCase() : "";
+  const mentionSuggestions = useMemo(() => {
+    if (!mentionMatch || mentionCandidates.length === 0) return [];
+    return mentionCandidates
+      .filter((u) => u.toLowerCase().startsWith(mentionPrefix))
+      .slice(0, 8);
+  }, [mentionMatch, mentionPrefix, mentionCandidates]);
+
+  useEffect(() => {
+    setMentionHighlight(0);
+  }, [mentionPrefix, mentionSuggestions.length]);
+
+  const insertMention = (username: string) => {
+    setText((t) => t.replace(/@([\w-]*)$/, `@${username} `));
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,8 +197,44 @@ function MessageInput({ onSend, placeholder }: {
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
   };
 
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!mentionSuggestions.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setMentionHighlight((i) => (i + 1) % mentionSuggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setMentionHighlight((i) => (i - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+    } else if (e.key === "Tab" && mentionSuggestions.length > 0 && mentionMatch) {
+      e.preventDefault();
+      insertMention(mentionSuggestions[mentionHighlight]!);
+    } else if (e.key === "Escape" && mentionMatch) {
+      setText((t) => t.replace(/@([\w-]*)$/, ""));
+    }
+  };
+
   return (
-    <div className="border-t border-border bg-card/50">
+    <div className="border-t border-border bg-card/50 relative">
+      {mentionSuggestions.length > 0 && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 max-h-36 overflow-y-auto rounded border border-border bg-card shadow-lg z-50 py-1">
+          <div className="text-[8px] text-muted-foreground px-2 py-0.5 tracking-wider">@ PING USER</div>
+          {mentionSuggestions.map((u, i) => (
+            <button
+              key={u}
+              type="button"
+              className={`w-full text-left px-2 py-1.5 text-xs font-mono touch-manipulation ${
+                i === mentionHighlight ? "bg-green-950/70 text-green-300" : "hover:bg-secondary"
+              }`}
+              onMouseDown={(ev) => {
+                ev.preventDefault();
+                insertMention(u);
+              }}
+            >
+              @{u}
+            </button>
+          ))}
+        </div>
+      )}
       {pending && (
         <div className="flex items-center gap-2 px-4 pt-2">
           {pending.mimeType?.startsWith("image/") ? (
@@ -169,15 +257,26 @@ function MessageInput({ onSend, placeholder }: {
           <input ref={fileRef} type="file" className="hidden" disabled={uploading}
             onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </label>
-        <input value={text} onChange={e => setText(e.target.value)} placeholder={placeholder}
+        <input
+          ref={inputRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder}
           className="flex-1 bg-secondary border border-border rounded px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
-          data-testid="input-message-text" />
+          data-testid="input-message-text"
+          autoComplete="off"
+          autoCorrect="off"
+        />
         <button type="submit" disabled={!text.trim() && !pending}
-          className="px-3 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-green-100 text-xs transition-colors flex items-center gap-1"
+          className="px-3 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-green-100 text-xs transition-colors flex items-center gap-1 touch-manipulation"
           data-testid="button-send-message">
           <Send size={11} />
         </button>
       </form>
+      <div className="px-4 pb-2 text-[9px] text-muted-foreground/60 tracking-wide">
+        <span className="font-mono text-amber-500/80">@User</span> pings them (toast + live unread). <span className="text-muted-foreground/80">Tab</span> inserts highlighted name.
+      </div>
     </div>
   );
 }
@@ -330,16 +429,21 @@ export default function Messaging() {
   const activeGroupId = isGroup ? Number(activeChannel.split(":")[1]) : null;
   const activeDMUser = isDM ? activeChannel.replace("DM:", "") : null;
 
-  // Fetch all users for DM list and role lookup
+  // Roster for DMs, roles, @mentions (any logged-in user — not admin-only /api/users)
   const { data: allUsers = [] } = useQuery<{ id: number; username: string; role: string }[]>({
-    queryKey: ["/api/users"],
-    queryFn: () => apiRequest("GET", "/api/users"),
+    queryKey: ["/api/users/directory"],
+    queryFn: () => apiRequest("GET", "/api/users/directory"),
   });
 
   // Build username->role map
   const userMap = Object.fromEntries(allUsers.map(u => [u.username, u.role]));
   // Add self
   if (user) userMap[user.username] = user.role;
+
+  const knownUsernames = useMemo(
+    () => new Set(allUsers.map((u) => u.username)),
+    [allUsers],
+  );
 
   // General messages
   const { data: generalMsgs = [], refetch: refetchGeneral } = useQuery<Message[]>({
@@ -709,6 +813,7 @@ export default function Messaging() {
                   onDelete={(id) => deleteMsg.mutate(id)}
                   canDelete={canDelete(msg)}
                   userMap={userMap}
+                  knownUsers={knownUsernames}
                 />
               </div>
             );
@@ -719,9 +824,14 @@ export default function Messaging() {
         {/* Input */}
         <MessageInput
           onSend={handleSend}
-          placeholder={activeChannel === GENERAL ? "Message #general..."
-            : isGroup ? `Message ${activeGroup?.name}...`
-            : `Message ${activeDMUser}...`}
+          mentionCandidates={allUsers.map((u) => u.username)}
+          placeholder={
+            activeChannel === GENERAL
+              ? "Message #general… (@User to ping)"
+              : isGroup
+                ? `Message ${activeGroup?.name}… (@User to ping)`
+                : `Message ${activeDMUser}…`
+          }
         />
       </div>
     </div>

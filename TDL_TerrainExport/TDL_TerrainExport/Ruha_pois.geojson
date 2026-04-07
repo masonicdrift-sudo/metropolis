@@ -1,0 +1,1193 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5878.92, 7922.08, 56.031]
+      },
+      "properties": {
+        "name": "Kortesoja",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7936.35, 7806.7, 85.926]
+      },
+      "properties": {
+        "name": "Joutkallio",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5244.61, 7824.4, 68.85]
+      },
+      "properties": {
+        "name": "Tervasmaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4126.02, 7674.54, 96.7575]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3854.98, 7634.84, 96.8322]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3849.78, 7632.49, 96.99]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7038.36, 7362.92, 56.287]
+      },
+      "properties": {
+        "name": "Kumuri",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6740.72, 7089.43, 55.685]
+      },
+      "properties": {
+        "name": "Muurimaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5987.63, 7528.83, 56.424]
+      },
+      "properties": {
+        "name": "Kelloja",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3431, 7095, 82.672]
+      },
+      "properties": {
+        "name": "Lansikylasawmill",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6117.05, 7004.73, 56.625]
+      },
+      "properties": {
+        "name": "Kaaranmannikko",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2282.3, 6940.6, 69.75]
+      },
+      "properties": {
+        "name": "Pihlajamaa",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6175.4, 6830.46, 57.3573]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6180.47, 6840.11, 57.3573]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6135.95, 6856.2, 57.2982]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7724.79, 6570.01, 77.9155]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7729.47, 6573.91, 77.9]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7662.75, 6528.93, 79.06]
+      },
+      "properties": {
+        "name": "Kivimaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2918.66, 6538.81, 71.294]
+      },
+      "properties": {
+        "name": "Huhtamaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3456.25, 6189.08, 68.798]
+      },
+      "properties": {
+        "name": "Pihlajamaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2961.98, 6188.15, 65.5738]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1679.88, 6252.99, 57.1945]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5348.44, 6131.67, 64.276]
+      },
+      "properties": {
+        "name": "Ulvila",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5326.65, 6080.02, 63.4513]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_FOUNTAIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2223.94, 6073.28, 65.006]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1733.88, 5942.76, 59.0679]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6176.78, 5729.57, 58.593]
+      },
+      "properties": {
+        "name": "Hietala",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1063.97, 5597.46, 72.1697]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4542.43, 5491.55, 66.366]
+      },
+      "properties": {
+        "name": "Isomaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2145.91, 5385.44, 61.0611]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5261, 5180.55, 62.031]
+      },
+      "properties": {
+        "name": "Nyrhilanmaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3204.8, 5128.28, 61.167]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [723.713, 5110.34, 68.58]
+      },
+      "properties": {
+        "name": "Mikinneva",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6129.3, 5027.59, 57.994]
+      },
+      "properties": {
+        "name": "Ruhanpera",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1006.9, 4994.76, 69.1284]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [994.553, 4994.56, 69.058]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5084.12, 4788.7, 53.439]
+      },
+      "properties": {
+        "name": "Ruhan_lava",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7016, 4533.85, 62.848]
+      },
+      "properties": {
+        "name": "Valimaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6033.9, 4205.84, 59.5]
+      },
+      "properties": {
+        "name": "Horse_track",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1400.49, 4857.1, 68.978]
+      },
+      "properties": {
+        "name": "Marjasalo",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [350.125, 4943.91, 65.0642]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4462.2, 4439.53, 54.232]
+      },
+      "properties": {
+        "name": "Ruha_location",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [912.719, 4487.34, 64.1305]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4418.63, 4391.73, 55.0611]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4482.07, 4326.49, 54.1365]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4488.72, 4318.46, 54.1365]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2694.5, 4300.39, 60.975]
+      },
+      "properties": {
+        "name": "Hyyppa",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3452.92, 4093.2, 59.906]
+      },
+      "properties": {
+        "name": "Ohmenluoma",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7380.7, 3830.77, 77.2848]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5078.54, 4074.85, 57.349]
+      },
+      "properties": {
+        "name": "Muilunkyla",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6717.91, 3711.01, 65.641]
+      },
+      "properties": {
+        "name": "Lehto",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1961.77, 3668.39, 73.5049]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1823.48, 3770.26, 72.7131]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1548.45, 3689.4, 75.9812]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1764.23, 3611.87, 64.3739]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1723.82, 3608.28, 64.3438]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1737.18, 3611.16, 64.3447]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7550.59, 3513.72, 87.192]
+      },
+      "properties": {
+        "name": "Shooting_range",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6278.23, 3232.72, 68.412]
+      },
+      "properties": {
+        "name": "Kontolanmaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5577.66, 3239.8, 66.301]
+      },
+      "properties": {
+        "name": "Latvamuilu",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1812.19, 3519.61, 64.344]
+      },
+      "properties": {
+        "name": "Power_plant",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1804.39, 3444.2, 100.305]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1058.64, 3464.36, 66.8644]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3181, 3359, 64.438]
+      },
+      "properties": {
+        "name": "Hietalanmaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1937.49, 3276.9, 66.7644]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1575.65, 3352.69, 76.4596]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [810.327, 3242.41, 71.139]
+      },
+      "properties": {
+        "name": "Vuorenmaanloukko",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1720.72, 2929.48, 69.7183]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5568.3, 2663.19, 71.1875]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5566.62, 2657.54, 71.188]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2312.26, 2711.38, 68.064]
+      },
+      "properties": {
+        "name": "Ojalankyla",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7460.3, 2311.64, 104.906]
+      },
+      "properties": {
+        "name": "Urhola",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5195.65, 2199.58, 65.588]
+      },
+      "properties": {
+        "name": "Virpimaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4676.51, 2109.26, 61.263]
+      },
+      "properties": {
+        "name": "construction_area",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2252.87, 2447.71, 68.419]
+      },
+      "properties": {
+        "name": "Takala",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [842.312, 2524.18, 73.0448]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3483.17, 2033.36, 56.1038]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6639.32, 1627.33, 96.25]
+      },
+      "properties": {
+        "name": "Metsala_office",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7668.02, 1385.7, 110.846]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6667.64, 1221.38, 96.656]
+      },
+      "properties": {
+        "name": "Metsala",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6456.19, 1181.01, 96.7947]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6397.4, 1200.98, 97.0117]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6337.06, 1217.45, 96.8167]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4877.04, 1244.94, 68.595]
+      },
+      "properties": {
+        "name": "Korvenoja",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3503.03, 1958.16, 56.406]
+      },
+      "properties": {
+        "name": "Koskelankyla",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3482.33, 1975.8, 56.5656]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [796.684, 1868.64, 76.511]
+      },
+      "properties": {
+        "name": "Makela",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2212.24, 1587.32, 61.944]
+      },
+      "properties": {
+        "name": "Jarvela",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [715.875, 1618.42, 81.386]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4044.71, 1464.78, 59.917]
+      },
+      "properties": {
+        "name": "Pauhu",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5018.42, 1007.34, 71.559]
+      },
+      "properties": {
+        "name": "Korpi",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4375.16, 855.509, 70.942]
+      },
+      "properties": {
+        "name": "Jouttiluoma",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2897.61, 900.58, 67.564]
+      },
+      "properties": {
+        "name": "Hipinmaki",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1835.91, 870.637, 63.458]
+      },
+      "properties": {
+        "name": "Kantola",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4547.25, 471.894, 72.3708]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [110.016, 524.137, 70.4204]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3590.09, 436.842, 84.183]
+      },
+      "properties": {
+        "name": "ruha_camping",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6482.71, 260.544, 95.9646]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1316.37, 217.293, 61.077]
+      },
+      "properties": {
+        "name": "Martikkalankyla",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    }
+  ]
+}

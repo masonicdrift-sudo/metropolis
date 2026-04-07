@@ -1,0 +1,1493 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8097.46, 7233.66, 3.755]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPAWNPOINT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8104.42, 7288.74, 11.689]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8097.71, 7310.24, 4.222]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPAWNPOINT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7495.67, 5399.35, 31.081]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7515.98, 461.319, 205.423]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7539.23, 323.197, 213.947]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7557.15, 301.614, 214.75]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7529.72, 318.996, 213.104]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7491.72, 303.871, 217.376]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7473.41, 414.686, 205.544]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6786.87, 7276.83, 37.9509]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6753.19, 7276.1, 35.49]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6854.82, 510.024, 96.146]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LANDMARK"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6509.25, 2452.9, 45.069]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6501.06, 909.32, 142.125]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6381.18, 5352.79, 10.705]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6360.13, 870.025, 142.126]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6418.13, 935.672, 143.183]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6429.02, 929.515, 143.183]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6429.44, 941.253, 148.082]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6400.95, 817.792, 142.411]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6383.77, 819.091, 142.411]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6401.35, 925.814, 148.071]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6275.59, 913.926, 135.166]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6301.96, 945.518, 137.626]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5290.57, 5601.85, 33.281]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5105.13, 4517.54, 12.3855]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5091.21, 4532.17, 12.3925]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5054.96, 4571.5, 12.3295]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5015.59, 4613.92, 12.3285]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5043.65, 4545.7, 12.357]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5003.41, 4626.88, 12.4252]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4852.1, 7344.78, 209.025]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4462.75, 5304.19, 41.125]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3906.41, 7827.1, 370.979]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3957.94, 7786.49, 361.25]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3903.8, 7750.12, 358.931]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3865.29, 7770.04, 365.378]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3905.42, 7721.81, 356.524]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3895.74, 7767.89, 362.037]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3929.13, 7738.05, 352.281]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3877.28, 7714.29, 360.395]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3902.81, 7744.92, 358.661]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3892.86, 7743.48, 360.871]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3920.92, 7768.28, 358.93]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3934.83, 7765.14, 356.596]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3875.21, 7782.4, 365.231]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3918.6, 7789.26, 365.15]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3845.72, 7787.11, 366.581]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3822.75, 7787.2, 365.581]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3909.25, 7710.11, 355.557]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3891.07, 7695.14, 356.197]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3910.14, 7671.42, 346.49]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3577.59, 5836.53, 32.655]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3681.48, 5819.62, 32.562]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4488.52, 876.518, 48.141]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4454.38, 871.173, 49.755]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4485.53, 820.246, 49.737]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4241.31, 1040.83, 89.211]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CAVE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3582.68, 6131.31, 43.956]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3556.41, 5822.23, 32.605]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3535.58, 5807.57, 32.637]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3531.94, 5881.82, 32.375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3477.08, 5844.98, 32.378]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3505.16, 5804.84, 32.555]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3513.26, 5792.89, 32.555]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3515.8, 5812.07, 32.563]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3494.87, 5797.85, 32.576]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3502.97, 5785.9, 32.576]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3523.9, 5800.12, 32.563]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3532.51, 5787.49, 32.562]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3531.08, 5828.63, 32.6365]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3561.99, 5849.98, 32.5625]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3547.59, 5840.4, 32.5622]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3511.58, 5773.27, 32.575]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3521.88, 5780.26, 32.554]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3260.44, 7279.63, 276.904]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3160.89, 5162.51, 33.361]
+      },
+      "properties": {
+        "name": "",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3094.18, 5345.17, 31.3636]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3071.93, 5371.99, 29.8393]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3093.16, 5110.13, 31.5734]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2800.08, 5197.7, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2771.96, 5185.16, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2747.34, 5088.61, 31.52]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2722.36, 5116.83, 30.2296]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2757.6, 5180.73, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2716.69, 5158.54, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2561.31, 6987.93, 50.8645]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2520.04, 7052.19, 50.6875]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2528.78, 7012.62, 50.6885]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2413.63, 7076.67, 50.6875]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2434.47, 7053.97, 50.688]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2627.68, 5382.18, 29.906]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2575.68, 5369.11, 29.906]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2605.28, 5377.16, 29.906]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2643.45, 5287.22, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2680.22, 5222.56, 29.9062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1145.47, 7735.05, 137.14]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [858.759, 6360.6, 32.037]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1145.94, 4969.05, 23.335]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2901, 4057.84, 29.182]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1787.23, 3469.75, 34.475]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1715.5, 3016.47, 57.3337]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1717.3, 3039.22, 57.0475]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2065.43, 2818.34, 97.3126]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2048.34, 2791.6, 95.9129]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2022.77, 2767.67, 97.5594]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2002.15, 2744.34, 98.1053]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1956.61, 2685.74, 103.699]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1924.12, 2664.39, 103.241]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1895.94, 2637.38, 103.107]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1871.61, 2594.99, 107.639]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2972.03, 1927.73, 311.837]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TARGET"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3054.11, 1876.64, 300.311]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_FOUNTAIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3346.47, 243.261, 89.18]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3290.99, 269.216, 167.746]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2088.38, 602.59, 63.692]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2156.2, 610.69, 64.375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1274.17, 1619.32, 48.416]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [968.7, 1032.69, 42.773]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [955.079, 1026, 41.894]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1018.47, 1047.4, 43.534]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1823.27, 887.995, 64.705]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [725.234, 607.194, 63.938]
+      },
+      "properties": {
+        "name": "",
+        "category": "military",
+        "type": "MDT_BASE"
+      }
+    }
+  ]
+}

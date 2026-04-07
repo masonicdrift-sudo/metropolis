@@ -360,3 +360,22 @@ export const threats = sqliteTable("threats", {
 export const insertThreatSchema = createInsertSchema(threats).omit({ id: true });
 export type InsertThreat = z.infer<typeof insertThreatSchema>;
 export type Threat = typeof threats.$inferSelect;
+
+// ─── Tactical terrain map markers (NATO symbology, game X/Z per export) ───────
+export const tacticalMapMarkers = sqliteTable("tactical_map_markers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapKey: text("map_key").notNull(),
+  gameX: real("game_x").notNull(),
+  gameZ: real("game_z").notNull(),
+  sidc: text("sidc").notNull(),
+  markerType: text("marker_type").notNull(),
+  affiliation: text("affiliation").notNull().default("unknown"),
+  label: text("label").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export const insertTacticalMapMarkerSchema = createInsertSchema(
+  tacticalMapMarkers,
+).omit({ id: true, createdAt: true, createdBy: true, sidc: true });
+export type InsertTacticalMapMarker = z.infer<typeof insertTacticalMapMarkerSchema>;
+export type TacticalMapMarker = typeof tacticalMapMarkers.$inferSelect;

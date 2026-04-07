@@ -1,0 +1,22 @@
+{
+  "name": "$JungleFavela:Caracas",
+  "exportVersion": "1.0.0",
+  "exportTimestamp": 1770502608,
+  "bounds": {
+    "min": [0, -204.781, 0],
+    "max": [8192, 1179.84, 8192]
+  },
+  "size": {
+    "x": 8192,
+    "y": 1384.62,
+    "z": 8192
+  },
+  "oceanHeight": 0,
+  "coordinateSystem": {
+    "type": "cartesian",
+    "xAxis": "east",
+    "yAxis": "up",
+    "zAxis": "north",
+    "units": "meters"
+  }
+}

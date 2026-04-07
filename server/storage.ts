@@ -23,6 +23,7 @@ import type {
   Award, InsertAward,
   TrainingRecord, InsertTraining,
   Broadcast, InsertBroadcast,
+  TacticalMapMarker,
 } from "@shared/schema";
 
 // Use persistent disk path on Render if it exists, fallback to local
@@ -93,6 +94,23 @@ try { sqlite.exec(`ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT ''`);
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN rank TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN assigned_unit TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN images TEXT NOT NULL DEFAULT '[]'`); } catch {}
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS tactical_map_markers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_key TEXT NOT NULL,
+    game_x REAL NOT NULL,
+    game_z REAL NOT NULL,
+    sidc TEXT NOT NULL,
+    marker_type TEXT NOT NULL,
+    affiliation TEXT NOT NULL DEFAULT 'unknown',
+    label TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_tacmarkers_map ON tactical_map_markers(map_key);
+`);
+try { sqlite.exec(`ALTER TABLE tactical_map_markers ADD COLUMN affiliation TEXT NOT NULL DEFAULT 'unknown'`); } catch {}
 
 // New feature tables
 sqlite.exec(`
@@ -476,6 +494,14 @@ export interface IStorage {
   // Key-value settings (dashboard threat level, etc.)
   getSiteSetting(key: string): string | undefined;
   setSiteSetting(key: string, value: string): void;
+  // Tactical terrain map (NATO markers)
+  getTacticalMarkers(mapKey: string): TacticalMapMarker[];
+  createTacticalMarker(row: Omit<TacticalMapMarker, "id">): TacticalMapMarker;
+  tryDeleteTacticalMarker(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" };
 }
 
 export class Storage implements IStorage {
@@ -882,6 +908,30 @@ export class Storage implements IStorage {
     sqlite.prepare(
       "INSERT INTO site_settings (setting_key, value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET value = excluded.value",
     ).run(key, value);
+  }
+
+  getTacticalMarkers(mapKey: string) {
+    return db.select().from(schema.tacticalMapMarkers)
+      .where(eq(schema.tacticalMapMarkers.mapKey, mapKey))
+      .orderBy(desc(schema.tacticalMapMarkers.id))
+      .all();
+  }
+  createTacticalMarker(row: Omit<TacticalMapMarker, "id">) {
+    return db.insert(schema.tacticalMapMarkers).values(row).returning().get()!;
+  }
+  tryDeleteTacticalMarker(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.tacticalMapMarkers).where(eq(schema.tacticalMapMarkers.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    db.delete(schema.tacticalMapMarkers).where(eq(schema.tacticalMapMarkers.id, id)).run();
+    return { ok: true, mapKey: row.mapKey };
   }
 }
 

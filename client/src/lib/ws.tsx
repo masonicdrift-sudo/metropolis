@@ -6,6 +6,7 @@
 import { createContext, useContext, useEffect, useRef, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./auth";
+import { toast } from "@/hooks/use-toast";
 
 const WS_URL =
   typeof window !== "undefined"
@@ -15,13 +16,12 @@ const WS_URL =
 // Map of WS event type → query keys to invalidate
 const EVENT_KEY_MAP: Record<string, string[][]> = {
   // Messaging
-  GENERAL_MESSAGE:  [["/api/messages/general"], ["/api/unread"]],
-  DM:               [["/api/messages/dms"],     ["/api/unread"], ["/api/dm-list"]],
-  GROUP_MESSAGE:    [["/api/messages/groups"],  ["/api/unread"]],
+  GENERAL_MESSAGE:  [["/api/messages/general"], ["/api/messages/unread"]],
+  DM:               [["/api/messages/dms"],     ["/api/messages/unread"]],
   GROUP_CREATED:    [["/api/groups"]],
   GROUP_UPDATED:    [["/api/groups"]],
   GROUP_LEFT:       [["/api/groups"]],
-  MESSAGE_DELETED:  [["/api/messages/general"], ["/api/messages/dms"], ["/api/messages/groups"]],
+  MESSAGE_DELETED:  [["/api/messages/general"], ["/api/messages/dms"], ["/api/messages/unread"]],
   // Operations & tasks
   OPERATION:        [["/api/operations"]],
   OP_TASK:          [["/api/tasks"]],
@@ -33,8 +33,8 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   UNIT:             [["/api/units"]],
   // Assets
   ASSET:            [["/api/assets"]],
-  // Threats
-  THREAT:           [["/api/threats"]],
+  // Threats + dashboard threat level (manual/auto) stay in sync for everyone
+  THREAT:           [["/api/threats"], ["/api/dashboard/threat-level"]],
   // PERSTAT
   PERSTAT:          [["/api/perstat"]],
   // AAR
@@ -88,6 +88,40 @@ export function WSProvider({ children }: { children: ReactNode }) {
       ws.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
+          if (msg.type === "TACTICAL_MARKERS") {
+            if (typeof msg.mapKey === "string" && msg.mapKey.length > 0) {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-markers", msg.mapKey] });
+            } else {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-markers"] });
+            }
+            return;
+          }
+          if (msg.type === "MENTION") {
+            const who = typeof msg.fromUsername === "string" ? msg.fromUsername : "Someone";
+            const scopeLabel =
+              msg.scope === "general"
+                ? "#general"
+                : msg.scope === "group"
+                  ? String(msg.groupName || `Group`)
+                  : "Messages";
+            toast({
+              title: `Ping from ${who}`,
+              description: `${scopeLabel}: ${typeof msg.snippet === "string" ? msg.snippet : ""}`,
+            });
+            if (msg.scope === "general") {
+              qc.invalidateQueries({ queryKey: ["/api/messages/general"] });
+              qc.invalidateQueries({ queryKey: ["/api/messages/unread"] });
+            } else if (msg.scope === "group" && msg.groupId != null) {
+              qc.invalidateQueries({ queryKey: ["/api/groups", Number(msg.groupId), "messages"] });
+              qc.invalidateQueries({ queryKey: ["/api/messages/unread"] });
+            }
+            return;
+          }
+          if (msg.type === "GROUP_MESSAGE" && msg.groupId != null) {
+            qc.invalidateQueries({ queryKey: ["/api/groups", Number(msg.groupId), "messages"] });
+            qc.invalidateQueries({ queryKey: ["/api/messages/unread"] });
+            return;
+          }
           const keys = EVENT_KEY_MAP[msg.type];
           if (keys) {
             keys.forEach(key => qc.invalidateQueries({ queryKey: key }));

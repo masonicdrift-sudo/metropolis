@@ -1,0 +1,22 @@
+{
+  "name": "Cain",
+  "exportVersion": "1.0.0",
+  "exportTimestamp": 1768184846,
+  "bounds": {
+    "min": [0, -204.781, 0],
+    "max": [12800, 699.281, 12800]
+  },
+  "size": {
+    "x": 12800,
+    "y": 904.062,
+    "z": 12800
+  },
+  "oceanHeight": 0,
+  "coordinateSystem": {
+    "type": "cartesian",
+    "xAxis": "east",
+    "yAxis": "up",
+    "zAxis": "north",
+    "units": "meters"
+  }
+}

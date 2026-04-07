@@ -1,0 +1,7805 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [12132.3, 1965.27, 3.36568]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11940.2, 1880.36, 20.214]
+      },
+      "properties": {
+        "name": "L_AnchorPeninsula",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11900.3, 1277.47, 6.85179]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11785, 2278.75, 21.7409]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11722.2, 1715.71, 0]
+      },
+      "properties": {
+        "name": "B_CorsairsCove",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11719.1, 1393.77, 0.669]
+      },
+      "properties": {
+        "name": "L_CragPoint",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11684.5, 2234.58, 8.441]
+      },
+      "properties": {
+        "name": "S_Lancre",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11520.9, 2440.8, 2.24703]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11545.7, 1478.78, 14.258]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11389.9, 11181.3, 69.4062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11228.5, 11450.5, 35.291]
+      },
+      "properties": {
+        "name": "I_Island4",
+        "category": "other",
+        "type": "MDT_NAME_ISLAND"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11415.2, 2598.81, 0]
+      },
+      "properties": {
+        "name": "B_AnchorBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11369.9, 1858.16, 70.7314]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11265.8, 2742.58, 18.5958]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11185.4, 11480.5, 32.9981]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11157.7, 2189.45, 80.7068]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11133.1, 1704.14, 18.5833]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11013.9, 8607.47, 9.49034]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11042.8, 2049.35, 87.3982]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [11033.9, 1547.21, 13.4132]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10908.1, 11812.3, 25.1612]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10918.7, 11706.2, 24.915]
+      },
+      "properties": {
+        "name": "C_LocationErquy",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10920.5, 8667.67, 26.766]
+      },
+      "properties": {
+        "name": "I_Island5",
+        "category": "other",
+        "type": "MDT_NAME_ISLAND"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10927.2, 8486.37, 4.45699]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10943.4, 1988.27, 55.176]
+      },
+      "properties": {
+        "name": "R_Whitewater",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10966.8, 1710.92, 48.8007]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10868.1, 11776.5, 21.8673]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10769.2, 12020.2, 15.4835]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10663, 11791.2, 2.345]
+      },
+      "properties": {
+        "name": "G_Harbour3",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10743.4, 2790.35, 61.241]
+      },
+      "properties": {
+        "name": "L_SmugglersHole",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10740.8, 2515.2, 242.011]
+      },
+      "properties": {
+        "name": "V_OreRidge",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10734.4, 1598.22, 7.57036]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10544.1, 11846.6, 2.344]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10646.4, 11800.4, 2.38404]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10645.4, 11803.3, 2.38478]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10556.2, 2268.73, 166.923]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10527.4, 11809.1, 2.02482]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10410.4, 342.846, 23.847]
+      },
+      "properties": {
+        "name": "L_RockweedCape",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10386.4, 2956.29, 126.309]
+      },
+      "properties": {
+        "name": "L_Cascades",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10402.7, 2048.19, 137.163]
+      },
+      "properties": {
+        "name": "R_PickCreek",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10275, 1590.12, 7.2335]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10365.5, 1154.07, 0]
+      },
+      "properties": {
+        "name": "B_FleetBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10304.6, 497.566, 45.4499]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10382.9, 376.075, 35.681]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10212.3, 2590.04, 256.174]
+      },
+      "properties": {
+        "name": "P_BellPitLake",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10214.4, 795.79, 16.043]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10124.3, 1479.31, 2.522]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10092.3, 1488.1, 2.54869]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10099, 1343.49, 2.526]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10092.1, 1341.01, 3.128]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9922.59, 2584.58, 295.967]
+      },
+      "properties": {
+        "name": "L_ChevalGinLodge",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9953.31, 2297.45, 315.244]
+      },
+      "properties": {
+        "name": "H_PickMountain",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9945.22, 2260.76, 316.529]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10020.5, 1602.55, 2.808]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9925.09, 1525.32, 2.389]
+      },
+      "properties": {
+        "name": "G_Harbour",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10016.8, 1508.82, 2.55325]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9919.57, 1508.35, 2.55525]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [10022.4, 938.725, 20.4477]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9890.79, 216.248, 7.60301]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9866.78, 5726.44, 0]
+      },
+      "properties": {
+        "name": "B_Shallows",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9716.93, 5436.36, 8.55212]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9743.37, 5264.4, 15.5312]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9736.48, 5159.78, 7.25867]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9766.16, 4878.55, 13.4014]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9794.58, 4695.81, 10.9013]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9720.21, 1720.34, 22.5222]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9718.39, 1721.98, 22.5483]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9714.16, 1713.57, 22.524]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9829.83, 1609.27, 8.34375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9853.03, 1240.21, 28.1449]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9832.23, 1254.2, 28.126]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9736.83, 659.163, 111.544]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9621.85, 5656.13, 4.48954]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9633.35, 5333.33, 18.414]
+      },
+      "properties": {
+        "name": "L_ScuaPoint",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9680.18, 5180.37, 13.1501]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9658.25, 4924.61, 8.47875]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9712.33, 1715.21, 22.5497]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9686.66, 1625.8, 21.1675]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9685.7, 1607.6, 21.187]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9688.1, 1600.78, 19.8404]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9703.81, 1562.13, 12.231]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9689.02, 1558.48, 14.024]
+      },
+      "properties": {
+        "name": "C_Location_St_Pierre",
+        "category": "settlement",
+        "type": "MDT_NAME_TOWN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9578.74, 1548.34, 24.179]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9664.5, 1449.69, 20.881]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9544.64, 5390.8, 10.2429]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9467.48, 3906.61, 322.312]
+      },
+      "properties": {
+        "name": "H_MargaretsMount",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9482.46, 3047.67, 207.163]
+      },
+      "properties": {
+        "name": "P_BlackLake",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9443.07, 2402.73, 150.905]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9534.39, 1765.23, 29.8863]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9420.3, 1164.57, 189.839]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9336.12, 5490.01, 13.257]
+      },
+      "properties": {
+        "name": "B_PerelleBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9270.72, 5317.51, 10.3931]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9354.21, 5072.69, 5.281]
+      },
+      "properties": {
+        "name": "S_Perelle",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9327.8, 5051.5, 5.84203]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9374.66, 4436.46, 130.359]
+      },
+      "properties": {
+        "name": "V_BeaconRidge",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9255.8, 3279.75, 232.786]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9243.44, 2077.24, 59.721]
+      },
+      "properties": {
+        "name": "C_LocationVernon",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9228.09, 2078.82, 61.092]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9247.02, 2062.41, 58.3936]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9217.86, 1885.02, 58.5722]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9365.88, 1741.11, 52.2574]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9315.08, 1144.53, 196.166]
+      },
+      "properties": {
+        "name": "G_MontfortCastle",
+        "category": "other",
+        "type": "MDT_RUIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9006.54, 5565.29, 12.097]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9064.77, 5461.39, 12.3588]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9107.8, 5300.73, 14.718]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9160.71, 2255.26, 74.9021]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9068.73, 2260.63, 76.063]
+      },
+      "properties": {
+        "name": "R_MillstoneCreek",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9190.5, 2101.03, 64.52]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9027.46, 929.223, 124.989]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [9094, 773.845, 100.676]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8839.53, 4014.79, 221.16]
+      },
+      "properties": {
+        "name": "G_Quarry",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8858.47, 2789.54, 93.238]
+      },
+      "properties": {
+        "name": "P_MillPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8831.37, 2758, 95.094]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8844.15, 2670.73, 94.63]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8831.29, 2673.49, 95.9343]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8955.66, 557.794, 49.173]
+      },
+      "properties": {
+        "name": "L_LaRoue",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8736.41, 4299.08, 291.354]
+      },
+      "properties": {
+        "name": "H_SpruceHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8744.42, 3325, 133.108]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8814.28, 2784.66, 96.045]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8798.39, 2761.62, 95.7184]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8826.85, 2745.83, 94.671]
+      },
+      "properties": {
+        "name": "C_LocationDurras",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8824.33, 2380.27, 103.577]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8725.43, 1750.16, 310.15]
+      },
+      "properties": {
+        "name": "H_SwellMountain",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8579.07, 5317.82, 17.4709]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8642.07, 3544.94, 158.423]
+      },
+      "properties": {
+        "name": "V_GreenValley",
+        "category": "other",
+        "type": "MDT_NAME_VALLEY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8539.18, 3398.77, 133.648]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8526.16, 3381.39, 132.462]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8498.24, 2712.59, 166.038]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8467.88, 2704, 184.026]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8476.53, 2468.25, 230.211]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8499.25, 2303.09, 308.313]
+      },
+      "properties": {
+        "name": "H_ProwPeak",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8574.57, 1837.88, 280.911]
+      },
+      "properties": {
+        "name": "V_CastleRidge",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8350.44, 4785.59, 238.326]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8281.91, 4802, 224.671]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8248.14, 4790.49, 218.154]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8315.15, 4787.99, 230.435]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8137.5, 4783.93, 191.504]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8214.3, 4795.39, 208.906]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8173.98, 4785.29, 198.6]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8068.72, 4776.8, 181.286]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8023.82, 4770.08, 171.988]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8107.2, 4771.65, 187.605]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8164.43, 4111.73, 218.048]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8020.89, 4217, 217.707]
+      },
+      "properties": {
+        "name": "G_PetersPass",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7891.25, 8177.96, 1.227]
+      },
+      "properties": {
+        "name": "L_SchoonersEnd",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7866.5, 6764.29, 31.757]
+      },
+      "properties": {
+        "name": "B_FishermansBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MAJOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7882.08, 4764.55, 149.735]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7918.36, 4774.35, 151.561]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7954.27, 4751.83, 159.955]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7982.83, 4761.68, 164.481]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7853.6, 4243.62, 223.948]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7711.2, 9038.85, 8.46035]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7671.19, 6664.35, 2.189]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7795.52, 5554.47, 42.014]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7695.39, 4805.27, 134.409]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7641.46, 8078.11, 14.1959]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7631.8, 8141.2, 13.131]
+      },
+      "properties": {
+        "name": "G_Military3",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7568.04, 5554.31, 80.5498]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7584.25, 5549.97, 80.71]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7539.62, 5508.44, 83.1123]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7558.34, 5540.85, 82.526]
+      },
+      "properties": {
+        "name": "C_LocationLaruns",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7622.59, 4590.38, 157.442]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7486.67, 9459.89, 1.079]
+      },
+      "properties": {
+        "name": "L_Scythe",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7539.68, 8370.61, 32.5323]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7535.81, 6749.91, 6.253]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7511.12, 6773.34, 6.37133]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7526.19, 4806.88, 132.657]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7464.44, 4738.91, 142.167]
+      },
+      "properties": {
+        "name": "C_LocationLevie",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7472.69, 4740.45, 136.888]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7520.69, 4391.57, 163.739]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7505.48, 4283.15, 165.761]
+      },
+      "properties": {
+        "name": "G_Military6",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7394.2, 9577.74, 3.26912]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7354.92, 8647.13, 44.1777]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7372.76, 7275.13, 2.258]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7443.69, 6818.28, 10.504]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7447.12, 6704.91, 7.894]
+      },
+      "properties": {
+        "name": "G_Military",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7383.65, 5935.88, 72.9825]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7430.69, 5900.28, 82.013]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7372.07, 5309.94, 118.527]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7412.34, 4748.86, 136.054]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7441.24, 4747.82, 136.861]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7293.66, 4592.61, 137.89]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7292.27, 4302.03, 156.04]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7432.83, 4274.1, 164.266]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8334.92, 3343.43, 150.948]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8248.33, 2816.39, 308.19]
+      },
+      "properties": {
+        "name": "L_LaChalette",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8330.6, 2415.11, 233.029]
+      },
+      "properties": {
+        "name": "G_PennantsPass",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8389.86, 1075.75, 11.5734]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8416.36, 802.811, 12.049]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8419.34, 791.855, 12.701]
+      },
+      "properties": {
+        "name": "L_Coubet",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8263.07, 2181.83, 223.837]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8191.41, 1558.77, 104.059]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8061.53, 3875.56, 219.064]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8087.4, 2752.02, 375.313]
+      },
+      "properties": {
+        "name": "H_MarysMount",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [8176.87, 2172.64, 221.256]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7890.94, 1838.89, 144.738]
+      },
+      "properties": {
+        "name": "L_MartinsWatch",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7962.75, 1485.36, 14.801]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7938.76, 1469.65, 12.809]
+      },
+      "properties": {
+        "name": "S_LeBosc",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7924.45, 1486.2, 14.2101]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7743.85, 3341.01, 331.856]
+      },
+      "properties": {
+        "name": "V_WesternHeights",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7808.96, 1525.31, 19.1907]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7689.17, 3058.43, 340.637]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7448.94, 2714.13, 185.165]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7329.39, 2881.52, 201.782]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7272.38, 2541.16, 140.26]
+      },
+      "properties": {
+        "name": "G_Sawmill2",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7399.2, 2445.11, 141.783]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7541.2, 2044.86, 133.957]
+      },
+      "properties": {
+        "name": "R_ReginaStream",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7306.22, 2084.51, 151.579]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7376.37, 1498.59, 12.519]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7366.62, 1151.62, 1.54136]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7039.16, 8999.06, 9.45332]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6763.71, 9058.83, 5.27192]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7264.54, 8597.23, 57.7593]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7073.53, 8391.95, 114.099]
+      },
+      "properties": {
+        "name": "L_AnresBeacon",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7104.75, 8318.48, 82.6309]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7077.69, 8168.65, 56.538]
+      },
+      "properties": {
+        "name": "P_GillnetPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6988.77, 8313.79, 87.9088]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6709.14, 9660.98, 2.914]
+      },
+      "properties": {
+        "name": "L_BoulderCape",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6732.58, 9605.71, 4.89458]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6681.36, 7249.62, 148.503]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6367.38, 9664.13, 9.46]
+      },
+      "properties": {
+        "name": "S_Kermovan",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6466.07, 8043.46, 89.999]
+      },
+      "properties": {
+        "name": "R_TheRushes",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6226.22, 9880.73, 7.40725]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6346.2, 8462.02, 75.7402]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6304.68, 7519.48, 178.266]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7233.22, 5656.2, 113.566]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7155.96, 5573.17, 110.618]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7266.1, 5637.44, 118.057]
+      },
+      "properties": {
+        "name": "H_SixBells",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7097.57, 6447.55, 69.6792]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7104.5, 6036.6, 119.095]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7085.91, 6036.13, 119.103]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7086.13, 6012.35, 129.414]
+      },
+      "properties": {
+        "name": "C_LocationChotain",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7083.34, 6012.34, 117.894]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7102.23, 5426.35, 117.511]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6982.69, 6041.44, 119.466]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6942.49, 5836.29, 105.11]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6858.83, 6974.74, 131.583]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6903.14, 6650.36, 123.423]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6915.45, 5096.81, 95.3764]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6718.55, 6792.91, 124.435]
+      },
+      "properties": {
+        "name": "P_PeriwinklePond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6579.38, 7103.25, 151.649]
+      },
+      "properties": {
+        "name": "S_Benac",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6600.56, 6370.49, 158.562]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6281.42, 6855.71, 181.572]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6463.93, 6497.73, 162.215]
+      },
+      "properties": {
+        "name": "G_Industrial3",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6483.01, 6320.53, 155.169]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6228.44, 6417.63, 164.845]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6505.58, 6040.72, 120.781]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6508.96, 5976.63, 118.937]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6390.33, 5959.9, 105.268]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6621.7, 5892.32, 109.61]
+      },
+      "properties": {
+        "name": "G_Farm4",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6446.35, 5864.48, 99.1375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6736.65, 5650.29, 89.29]
+      },
+      "properties": {
+        "name": "S_Lavalette",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6746.51, 5692.58, 91.773]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6485.75, 5602.18, 79.518]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6514.23, 5543.3, 78.848]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6536.23, 5576.95, 78.126]
+      },
+      "properties": {
+        "name": "P_ReedPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6542.52, 5298.84, 86.1684]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7028.7, 5019.72, 107.985]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6974.12, 4689.24, 91.5687]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7017.79, 4368.33, 83.2939]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6858.05, 3191.44, 48.7517]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6409.05, 4740.16, 73.3278]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6547.06, 4575.71, 18.9871]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6295.25, 3956.82, 0]
+      },
+      "properties": {
+        "name": "B_GoatBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6588.58, 3113.84, 5.783]
+      },
+      "properties": {
+        "name": "S_Camurac",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6547.65, 3135.81, 2.48144]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7196.93, 2330.75, 136.908]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7205.02, 2324.23, 145.19]
+      },
+      "properties": {
+        "name": "C_LocationRegina",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7198.96, 2322.21, 137.046]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7180.57, 2249.36, 139.238]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7054.58, 2746.07, 145.599]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6850.33, 2911.32, 54.472]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7176.55, 1594.04, 16.097]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7071.1, 2079.03, 156.762]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6742.78, 1707.8, 9.06481]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6551.58, 1829.88, 8.65698]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6362.5, 1917.87, 9.22372]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6314.12, 1965.72, 3.117]
+      },
+      "properties": {
+        "name": "L_StubwoodPoint",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5159.99, 12407.2, 16.195]
+      },
+      "properties": {
+        "name": "L_HelmansSip",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5153.63, 12359, 18.4587]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4716.68, 12392.9, 10.7635]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5588.88, 12110.7, 8.85003]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4335.62, 12135.5, 14.73]
+      },
+      "properties": {
+        "name": "L_JuniperPoint",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4219.42, 12220.9, 6.78472]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5422.81, 12025.3, 2.334]
+      },
+      "properties": {
+        "name": "B_NorthernShoals",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4970.31, 11997.4, 28.202]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4913.54, 11959.4, 29.0051]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5044.4, 11948.7, 25.6812]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4936.77, 11921.9, 28.261]
+      },
+      "properties": {
+        "name": "G_Military4",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4517.06, 11902.6, 42.157]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5325.11, 11854.2, 4.79589]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4900.95, 11787.4, 28.595]
+      },
+      "properties": {
+        "name": "G_Airport",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4914.73, 11567.9, 27.914]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [925.349, 11633.2, 27.6327]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5268.7, 11462.2, 35.5656]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4289.74, 11458.6, -1.451]
+      },
+      "properties": {
+        "name": "B_BirchwoodBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1165.19, 11481.1, 43.86]
+      },
+      "properties": {
+        "name": "I_Island2",
+        "category": "other",
+        "type": "MDT_NAME_ISLAND"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5333.84, 11372.9, 35.849]
+      },
+      "properties": {
+        "name": "S_LesCreux",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5205.88, 11359.2, 38.2603]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5118.6, 11343, 32.957]
+      },
+      "properties": {
+        "name": "P_OldManPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4396.2, 11300.1, 6.35294]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1372.03, 11279, 19.7923]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [992.495, 11351.6, 26.4216]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5624.85, 11228.8, 5.48492]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4868.36, 11167.2, 27.724]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4567.53, 11166.1, 23.9768]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4453.09, 11164.1, 5.8424]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4394.24, 11203.1, 1.59275]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4983.69, 11121.2, 35.1418]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4428.08, 11126.7, 2.0931]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4398.5, 11121.8, 1.59375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CRANE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4397.42, 11098.1, 1.485]
+      },
+      "properties": {
+        "name": "G_Harbour6",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5330.35, 10903.9, 52.344]
+      },
+      "properties": {
+        "name": "G_Landfill",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5043.24, 10867.5, 27.099]
+      },
+      "properties": {
+        "name": "G_Industrial",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4468.46, 10902.3, 9.2565]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4510.08, 10910.4, 14.4502]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4493.81, 10909.1, 12.3722]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4004.54, 10904.7, 1.913]
+      },
+      "properties": {
+        "name": "B_CharletBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5966.94, 10835.6, -0.396]
+      },
+      "properties": {
+        "name": "B_MaidensBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4707.01, 10740, 22.4994]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4565.19, 10844.7, 15.9086]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4502.76, 10772, 14.702]
+      },
+      "properties": {
+        "name": "C_LocationStPhilippe",
+        "category": "settlement",
+        "type": "MDT_NAME_CITY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4448.41, 10733.6, 12.869]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3925.08, 10769.4, 7.46402]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5509.08, 10647.3, 41.796]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4951.53, 10657.8, 28.248]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4602.62, 10713.7, 19.4062]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4613.57, 10659.4, 18.811]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4455.37, 10700.3, 13.0803]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4412.71, 10685.2, 11.908]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4415.5, 10698.5, 11.7015]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4314.3, 10710, 5.23328]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4267.51, 10719.9, 1.3981]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6073.83, 10586.8, 7.62903]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5354.84, 10542.7, 43.473]
+      },
+      "properties": {
+        "name": "G_Military5",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5200.85, 10515.4, 40.8949]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4970.45, 10628.2, 29.093]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4933.88, 10627, 28.3508]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4586.14, 10568.8, 17.529]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4536.63, 10561.2, 16.869]
+      },
+      "properties": {
+        "name": "G_Factory",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4460.33, 10588.3, 18.5778]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4180.79, 10577.3, 15.633]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4091.71, 10616.7, 11.9948]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5880.92, 10484.6, 31.427]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5711.59, 10409.5, 34.9652]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5326.9, 10379.4, 39.7673]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5236.35, 10394.6, 43.2805]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5130.02, 10486.6, 41.4408]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5173.17, 10495, 41.5456]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4981.89, 10370.1, 42.085]
+      },
+      "properties": {
+        "name": "H_GallowsHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4921.4, 10416.8, 42.562]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4670.68, 10503.6, 14.527]
+      },
+      "properties": {
+        "name": "P_SpringPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4554.65, 10486.9, 15.886]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_STACK"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4767.45, 10282.2, 16.9775]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4333.42, 10435.8, 33.7612]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4307.88, 10446.8, 34.3298]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4316.67, 10281.2, 69.024]
+      },
+      "properties": {
+        "name": "L_CoalmansBrow",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6092.04, 10179.5, 7.78459]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4978.63, 10142.4, 24.5136]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4651.6, 10171.6, 13.096]
+      },
+      "properties": {
+        "name": "R_SaintPhilippesCreek",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5390.36, 10008.8, 18.654]
+      },
+      "properties": {
+        "name": "S_Etoupe",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5365.51, 10043.8, 16.893]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5013.4, 9950.9, 26.7372]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4961.01, 9994.38, 26.534]
+      },
+      "properties": {
+        "name": "G_Farm2",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4727.06, 9952.41, 11.8909]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4231.65, 10033.3, 34.9169]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5807.12, 9797.66, 4.562]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5834.38, 9786.42, 4.572]
+      },
+      "properties": {
+        "name": "G_Powerplant",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5806.22, 9765.29, 4.52894]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_STACK"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5968.95, 9544.51, 2.957]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TREE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5304.33, 9833.26, 21.4135]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5303.42, 9830.55, 21.3875]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5410.47, 9510.97, 25.1654]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4986.49, 9631.37, 27.3028]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5029.67, 9477.44, 47.558]
+      },
+      "properties": {
+        "name": "H_HedgehogHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6093.17, 9121.16, 2.474]
+      },
+      "properties": {
+        "name": "B_TyronneBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5602.72, 9149.56, 54.898]
+      },
+      "properties": {
+        "name": "H_LacansHead",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5326.92, 9215.97, 25.887]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4960.79, 9060.22, 38.099]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4927.98, 9092.89, 36.042]
+      },
+      "properties": {
+        "name": "C_LocationTyrone",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4922.84, 9110.37, 36.1318]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4869.79, 9033.42, 39.874]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4930.85, 8758.91, 97.091]
+      },
+      "properties": {
+        "name": "V_TyroneRidge",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4742.21, 8700.17, 75.6599]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6103.26, 7698.18, 130.361]
+      },
+      "properties": {
+        "name": "P_AluettePond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6221.42, 7285.5, 188.674]
+      },
+      "properties": {
+        "name": "V_EastRise",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5856.3, 7260.67, 235.959]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5794.97, 7831.38, 136.524]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5777.38, 7319.67, 228.947]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5825.45, 7346.18, 232.437]
+      },
+      "properties": {
+        "name": "H_PoachersHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5626.27, 7804.42, 119.042]
+      },
+      "properties": {
+        "name": "L_RamtopMeadows",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5544.75, 8447.51, 14.5782]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5454.16, 8266.78, 26.8104]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5365.97, 8313.3, 27.6876]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5266.51, 7527.38, 130.571]
+      },
+      "properties": {
+        "name": "V_HornbeamValley",
+        "category": "other",
+        "type": "MDT_NAME_VALLEY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5014.1, 8474.51, 112.726]
+      },
+      "properties": {
+        "name": "H_Highstone",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5103.11, 7743.33, 135.642]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_ROCK"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5081.4, 7731.56, 155.75]
+      },
+      "properties": {
+        "name": "L_RaccoonRock",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5120.16, 7499.82, 145.324]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4839.62, 8094.3, 112.92]
+      },
+      "properties": {
+        "name": "S_Gorey",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4719.99, 8109.46, 127.722]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4630.49, 7957.93, 120.058]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4740.72, 7295.89, 163.329]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4741.6, 7301.4, 163.288]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4526.28, 9535.07, 18.25]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4529.94, 9456.44, 14.524]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4520.45, 9467.98, 14.178]
+      },
+      "properties": {
+        "name": "C_LocationMeaux",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4474.1, 9458.29, 13.8278]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4545.88, 9183.94, 14.6923]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4306.9, 9525.71, 1.126]
+      },
+      "properties": {
+        "name": "G_Harbour5",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4300.94, 9471.52, 1.43088]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4356.99, 8919.83, 41.305]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4363.82, 8753.22, 63.6503]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4031.46, 9119.04, 8.50085]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4001.7, 9618.56, -15.631]
+      },
+      "properties": {
+        "name": "B_CrabappleBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3955.89, 8499.57, 16.1863]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3890.82, 8490.08, 15.1875]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3745.6, 8503.12, 6.50847]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3710.49, 8607.54, 1.34329]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4451.76, 8243.77, 100.198]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4266.84, 8150.16, 79.1135]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4056.21, 8203.5, 46.6532]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3935.58, 8391.61, 17.6195]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3901.87, 8450.66, 15.249]
+      },
+      "properties": {
+        "name": "G_Military2",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3830.13, 8434.91, 12.1587]
+      },
+      "properties": {
+        "name": "",
+        "category": "medical",
+        "type": "MDT_HOSPITAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3812.4, 8408.75, 11.9445]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4363.75, 7903.4, 86.0945]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4043.34, 7856.24, 32.531]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3014.72, 7920.24, 0]
+      },
+      "properties": {
+        "name": "B_SpaniardsBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4150.87, 7794.27, 38.4249]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4120.76, 7796.2, 35.406]
+      },
+      "properties": {
+        "name": "C_LocationGravette",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4171.73, 7754.91, 40.942]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3987.4, 7790.22, 25.3977]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2292.1, 7836.23, 4.74925]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2303.09, 7710.94, 23.514]
+      },
+      "properties": {
+        "name": "L_DriftwoodSands",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2223.46, 7569.58, 17.345]
+      },
+      "properties": {
+        "name": "S_Redon",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2243.9, 7472.37, 20.158]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2325.61, 7309.43, 47.0836]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6217.38, 7229, 195.339]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6051.13, 7085.41, 211.691]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5963.99, 7110.76, 218.907]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5971.29, 6922.95, 189.281]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5747.44, 7082.36, 218.017]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5766.79, 7035.57, 221.968]
+      },
+      "properties": {
+        "name": "C_LocationEntreDeux",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5746.3, 7035.15, 215.133]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5676.85, 7081.7, 218.738]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5663.3, 6375.05, 114.872]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5133.96, 7043.8, 175.846]
+      },
+      "properties": {
+        "name": "G_Farm3",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5163.14, 7080.27, 174.464]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5148.14, 6996.65, 175.265]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5328.73, 6408.91, 79.215]
+      },
+      "properties": {
+        "name": "P_CowbellPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5332.36, 6313.45, 80.699]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4812.56, 7240.16, 164.704]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4752.97, 7225.71, 160.765]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4785.53, 7111.81, 163.641]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_FOUNTAIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4773.46, 7094.57, 164.342]
+      },
+      "properties": {
+        "name": "C_LocationMontignac",
+        "category": "settlement",
+        "type": "MDT_NAME_TOWN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4917.55, 7059.28, 171.726]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4830.71, 7027.26, 169.778]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4780.17, 6992.04, 169.309]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4822.17, 6969.32, 169.773]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4814.82, 6942.53, 168.969]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4631.1, 6440.23, 91.5998]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4204.9, 7153.13, 79.3045]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4537.88, 6844.21, 155.721]
+      },
+      "properties": {
+        "name": "G_Industrial2",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4446.79, 6529.79, 118.258]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5565.34, 6045.78, 96.011]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5337.29, 6303.99, 80.695]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5510.05, 6094.55, 95.602]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5486.49, 6087.4, 96.127]
+      },
+      "properties": {
+        "name": "C_LocationProvins",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5255.33, 6294.1, 75.137]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5243.98, 6281.28, 75.169]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5656.34, 5881.46, 91.687]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5882.49, 5713.59, 78.755]
+      },
+      "properties": {
+        "name": "P_AlderPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5705.47, 5625.53, 85.791]
+      },
+      "properties": {
+        "name": "L_UpperFields",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5294.9, 5398.99, 61.625]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5250.76, 5337.82, 73.061]
+      },
+      "properties": {
+        "name": "C_LocationFigari",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5991.63, 5198.37, 120.298]
+      },
+      "properties": {
+        "name": "L_SimonsWood",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5581.12, 5221.92, 95.1464]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5467.34, 5266.33, 89.0459]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4888.49, 5568.82, 89.382]
+      },
+      "properties": {
+        "name": "R_Greenwater",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4795.51, 5358.17, 53.1737]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4608.4, 5429.55, 48.338]
+      },
+      "properties": {
+        "name": "P_MoonstonePond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4465.61, 6219.41, 58.674]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4479.93, 6182.61, 57.8102]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4344.29, 6042.28, 50.736]
+      },
+      "properties": {
+        "name": "P_PinewoodLake",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MAJOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4389.58, 5169.86, 76.0637]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4090.19, 5275.15, 107.329]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5412.74, 5062.88, 93.0971]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5337.58, 4911.93, 96.9551]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6064.36, 4806.24, 92.3074]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5291.52, 4751.83, 118.022]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6096.49, 4617.58, 53.9311]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5708.28, 4614.84, 66.6168]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5355.78, 4598.75, 134.156]
+      },
+      "properties": {
+        "name": "H_BonfireHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5447.35, 4127.7, 44.2775]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5735.18, 3925.67, 19.0358]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [6103.51, 3352.05, 5.64739]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5969.33, 3376.71, 1.323]
+      },
+      "properties": {
+        "name": "L_SeagullPoint",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5605.01, 3717.73, 7.54514]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5376.38, 3782.14, 0.0608116]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5633.37, 3559.21, 0.80082]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5176.27, 4154.33, 29.9448]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5196.62, 3971.54, 14.1606]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5131.95, 4008.61, 14.6109]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_FOUNTAIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5132.71, 3983.22, 14.282]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5135.24, 4011.78, 13.126]
+      },
+      "properties": {
+        "name": "C_LocationMorton",
+        "category": "settlement",
+        "type": "MDT_NAME_TOWN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5214.12, 3397.23, 0]
+      },
+      "properties": {
+        "name": "B_MortonBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5006.79, 4920.75, 90.3408]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5100.75, 4179.31, 34.281]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5107.25, 4039.11, 14.9303]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_PUB"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5067.66, 3961.9, 14.6784]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5046.68, 2735.87, -14.158]
+      },
+      "properties": {
+        "name": "B_SouthernGulf",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MAJOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4955.81, 4052.18, 17.4039]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4901.46, 4094.97, 20.328]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4941.93, 3977.09, 13.9844]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4956.8, 3875.63, 2.188]
+      },
+      "properties": {
+        "name": "G_Harbour4",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4917.67, 3896.23, 2.172]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4948.97, 3738.75, 2.5191]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4715.57, 4562.4, 81.5271]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4713.51, 3968.45, 14.1825]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4535.89, 4657.64, 42.575]
+      },
+      "properties": {
+        "name": "V_MortonValley",
+        "category": "other",
+        "type": "MDT_NAME_VALLEY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4538.48, 4567.57, 63.5618]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4524.31, 4414.63, 68.202]
+      },
+      "properties": {
+        "name": "R_MortonStream",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4173.45, 4906.78, 68.0267]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4204.58, 4359.05, 100.997]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4511.57, 3928.39, 58.9776]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4368.38, 3958.12, 74.4483]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4105.38, 3949.51, 90.0402]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4219.91, 4010.51, 86.3174]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [4207.67, 3571.37, 31.9013]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3843.7, 6850.79, 74.1609]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3866.94, 6714.66, 88.622]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3883.05, 6264.52, 103.853]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3883.53, 6286.33, 102.709]
+      },
+      "properties": {
+        "name": "S_Lacourt",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3746.83, 4586.09, 147.917]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3841.3, 4311.87, 163.048]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3854.08, 4344.24, 162.955]
+      },
+      "properties": {
+        "name": "H_Wolfhill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3849.92, 4338.16, 163.652]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3783.89, 4163.61, 135.938]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_ROCK"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3792.9, 4180.01, 157.733]
+      },
+      "properties": {
+        "name": "L_Wolfstone",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3597.1, 6970.91, 52.036]
+      },
+      "properties": {
+        "name": "L_TillersFind",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3672.02, 6848.45, 70.9622]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3540.59, 5061.81, 111.071]
+      },
+      "properties": {
+        "name": "S_Richemont",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3543.75, 4818.03, 103.779]
+      },
+      "properties": {
+        "name": "P_ShepherdsPond",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3531.61, 4668.72, 121.126]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3658.13, 4327.68, 145.167]
+      },
+      "properties": {
+        "name": "V_OldWood",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3368.08, 7153.75, 9.43657]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3493.23, 6774.71, 65.5189]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3408.4, 6204.09, 135.751]
+      },
+      "properties": {
+        "name": "V_NewWood",
+        "category": "other",
+        "type": "MDT_NAME_RIDGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3464.6, 5789.26, 177.993]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3383.21, 5758.89, 164.376]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3407.22, 5767.09, 167.761]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3453.24, 5777.33, 175.095]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3438.84, 5780.03, 173.148]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3421.34, 5767.6, 169.365]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3397.43, 5756.77, 165.922]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3478.99, 5787.12, 179.538]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3506.9, 5815.68, 181.547]
+      },
+      "properties": {
+        "name": "H_CalvaryHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3483.28, 5804.69, 180.052]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3401.1, 5589.05, 142.38]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3391.39, 4807.55, 120.134]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3424.54, 4550.41, 128.901]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3397.48, 1540.9, 14.231]
+      },
+      "properties": {
+        "name": "I_Island1",
+        "category": "other",
+        "type": "MDT_NAME_ISLAND"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3415.02, 1455.2, 8.19821]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3283.93, 6769.6, 63.497]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3192.21, 6394.83, 85.8017]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3346.82, 6500.99, 96.1077]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3210.16, 6050.01, 146.924]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3358.72, 6063.27, 152.576]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3359.87, 5747.1, 160.775]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3345.75, 5748.96, 158.539]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3202.94, 5741.73, 145.184]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3316.89, 5702.04, 150.108]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3320.01, 5720.19, 153.061]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3338.73, 5727.23, 155.606]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3257.44, 5154.67, 115.375]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3230.14, 4599.99, 111.707]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3208.32, 4407.63, 110.633]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3119.51, 6775.11, 51.0115]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3069.22, 5195.23, 117.068]
+      },
+      "properties": {
+        "name": "G_Sawmill",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3056.81, 2131.46, 6.322]
+      },
+      "properties": {
+        "name": "L_Thollevast",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2947.77, 6542.15, 78.2343]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2951.55, 6457.07, 76.543]
+      },
+      "properties": {
+        "name": "P_GillaumesDip",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2940.4, 6119.13, 109.031]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2980.89, 6021.71, 121.606]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2967.07, 5799.54, 126.381]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3016.93, 5472.54, 123.118]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [3031.51, 5496.94, 121.613]
+      },
+      "properties": {
+        "name": "G_Farm",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2918.98, 1931.78, 19.531]
+      },
+      "properties": {
+        "name": "I_Island3",
+        "category": "other",
+        "type": "MDT_NAME_ISLAND"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2987.9, 1700.68, 8.99807]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2942.7, 1031.07, 44.065]
+      },
+      "properties": {
+        "name": "B_LechucsShelf",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2771.11, 6885.79, 60.217]
+      },
+      "properties": {
+        "name": "R_MeadowStream",
+        "category": "other",
+        "type": "MDT_NAME_WATER_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2849.46, 6433.89, 81.641]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2860.51, 6345.64, 86.9019]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_FOUNTAIN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2838.69, 6339.8, 86.345]
+      },
+      "properties": {
+        "name": "C_LocationVilleneuve",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2787.31, 6386.39, 82.836]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2874.39, 6347.47, 86.8683]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2823.07, 6333.53, 86.04]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2818.95, 5750.58, 115.827]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2766.38, 4396.37, 67.0922]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2807.37, 3255.54, 0]
+      },
+      "properties": {
+        "name": "B_HalcyonStrait",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MAJOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2814.43, 1799.34, 9.63458]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2870.7, 1690.27, 1.04798]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2704.33, 7030.46, 49.7114]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2648.77, 6892.96, 45.9795]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2650.75, 5401.73, 94.229]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2615.96, 5378.78, 92.06]
+      },
+      "properties": {
+        "name": "C_LocationLeMoule",
+        "category": "settlement",
+        "type": "MDT_NAME_VILLAGE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2653.16, 5367.87, 92.213]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2599.31, 5403.41, 93.4461]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2616.91, 5380.72, 92.3108]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2663.68, 5385.93, 94.1133]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2713.9, 4397.36, 63.194]
+      },
+      "properties": {
+        "name": "G_HuntsmansHeath",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2453.3, 7187.76, 66.551]
+      },
+      "properties": {
+        "name": "H_HumboldtHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2529.03, 6650.91, 51.4455]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2564.23, 6522.87, 51.7891]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2521.34, 6260.45, 72.0092]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2568.61, 6003.6, 86.9663]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2302.36, 5851.03, 124.327]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2150.5, 6931.13, 12.7761]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUNKER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1978.74, 6118.46, 42.2608]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2455.9, 5046.98, 75.3221]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2253.98, 5558.06, 133.538]
+      },
+      "properties": {
+        "name": "H_LongHill",
+        "category": "other",
+        "type": "MDT_NAME_HILL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2162.78, 5597.01, 133.423]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1908.1, 5382.7, 60.8461]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1880.98, 5364.25, 55.0509]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2175.68, 5083.24, 59.685]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_SPRING"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2027.87, 5156.25, 80.9499]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1931.8, 5138.73, 81.777]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1797.41, 5095.97, 62.278]
+      },
+      "properties": {
+        "name": "G_Briars",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2465.12, 4904.31, 59.4029]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_VIEWTOWER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [2520.75, 4289.53, 13.821]
+      },
+      "properties": {
+        "name": "S_Kervel",
+        "category": "other",
+        "type": "MDT_NAME_SETTLEMENT"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1649.92, 5748.93, 71.4603]
+      },
+      "properties": {
+        "name": "",
+        "category": "fuel",
+        "type": "MDT_FUELSTATION"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1524.57, 5993.12, 53.6905]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1512.03, 5825.07, 61.219]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSMITTER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1450.19, 6702.4, 0]
+      },
+      "properties": {
+        "name": "B_BlackrockBay",
+        "category": "other",
+        "type": "MDT_NAME_SEA_MINOR"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1425.28, 6153.23, 61.08]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1429.97, 6126.15, 63.3992]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1278.28, 6033.04, 37.2505]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHURCH"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1326.23, 6040.86, 40.047]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_BUSSTOP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1393.74, 6010.36, 47.4345]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1468.36, 5963.37, 51.967]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CHAPEL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1279.67, 5940.5, 37.386]
+      },
+      "properties": {
+        "name": "C_LocationLamentin",
+        "category": "settlement",
+        "type": "MDT_NAME_TOWN"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1341.04, 5856, 42.657]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_TRANSFORMER"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1184.89, 6324.55, 35.8772]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_WATERPUMP"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1124.1, 6393.91, 33.9118]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1088.79, 6369.38, 25.115]
+      },
+      "properties": {
+        "name": "L_GibbetCape",
+        "category": "other",
+        "type": "MDT_NAME_LOCAL"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1243.29, 6118.53, 29.4704]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1273.25, 5924.97, 37.6009]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_CALVARY"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [900.347, 6212.26, 2.752]
+      },
+      "properties": {
+        "name": "",
+        "category": "other",
+        "type": "MDT_LIGHTHOUSE"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [1024.02, 6043.25, 2.849]
+      },
+      "properties": {
+        "name": "G_Harbour2",
+        "category": "other",
+        "type": "MDT_NAME_GENERIC"
+      }
+    }
+  ]
+}

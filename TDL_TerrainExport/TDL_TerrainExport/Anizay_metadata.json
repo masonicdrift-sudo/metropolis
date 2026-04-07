@@ -1,0 +1,22 @@
+{
+  "name": "GM_Anizay",
+  "exportVersion": "1.0.0",
+  "exportTimestamp": 1774916475,
+  "bounds": {
+    "min": [0, 15.1562, 0],
+    "max": [10240, 354.625, 10240]
+  },
+  "size": {
+    "x": 10240,
+    "y": 339.469,
+    "z": 10240
+  },
+  "oceanHeight": 0,
+  "coordinateSystem": {
+    "type": "cartesian",
+    "xAxis": "east",
+    "yAxis": "up",
+    "zAxis": "north",
+    "units": "meters"
+  }
+}

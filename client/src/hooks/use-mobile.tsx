@@ -1,7 +1,8 @@
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
-/** Landscape phones are often wider than 768px but still need compact chrome. */
+/** Shell + compact CSS: tablets in portrait, phones; avoids “rotate for layout” on ~768–1024px. */
+const MOBILE_BREAKPOINT = 1024
+/** Landscape phones are often wide but short — still need compact chrome. */
 const COMPACT_MAX_HEIGHT = 520
 const COMPACT_MAX_WIDTH = 1100
 
@@ -15,9 +16,11 @@ export function matchesMobileShell(): boolean {
 }
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = React.useState<boolean>(() =>
+    typeof window !== "undefined" ? matchesMobileShell() : false
+  )
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const update = () => setIsMobile(matchesMobileShell())
     update()
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
@@ -31,5 +34,5 @@ export function useIsMobile() {
     }
   }, [])
 
-  return !!isMobile
+  return isMobile
 }

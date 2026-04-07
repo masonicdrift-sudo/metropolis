@@ -17,7 +17,7 @@ import {
   sidcForAffiliation,
 } from "@shared/natoSidc";
 import {
-  FitBoundsOnBounds,
+  FitBoundsDebouncedOncePerMap,
   GameGridOverlay,
   MapCursorCoords,
 } from "@/components/tactical/TacticalLeafletExtras";
@@ -188,6 +188,11 @@ function canDeleteMarker(
   if (!username) return false;
   if (m.createdBy === username) return true;
   return role === "admin" || role === "owner";
+}
+
+/** Repositioning is allowed for any logged-in user (shared map); deletion uses canDeleteMarker. */
+function canDragMarker(username: string | undefined): boolean {
+  return !!username;
 }
 
 function canDeleteLine(
@@ -458,11 +463,6 @@ export default function TacticalTerrainMap() {
     return b;
   }, [bounds, geo.water, geo.roads, geo.pois, geo.contours, geo.structures]);
 
-  const maxBounds = useMemo(() => {
-    if (!combinedBounds.isValid()) return combinedBounds;
-    return combinedBounds.pad(0.18);
-  }, [combinedBounds]);
-
   const { data: markers = [], isLoading: markersLoading } = useQuery<TacticalMapMarker[]>({
     queryKey: ["/api/tactical-markers", mapKey],
     queryFn: () =>
@@ -512,7 +512,25 @@ export default function TacticalTerrainMap() {
         gameX: body.gameX,
         gameZ: body.gameZ,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-markers", mapKey] }),
+    onMutate: async (body) => {
+      await qc.cancelQueries({ queryKey: ["/api/tactical-markers", mapKey] });
+      const prev = qc.getQueryData<TacticalMapMarker[]>(["/api/tactical-markers", mapKey]);
+      if (prev) {
+        qc.setQueryData<TacticalMapMarker[]>(
+          ["/api/tactical-markers", mapKey],
+          prev.map((m) =>
+            m.id === body.id ? { ...m, gameX: body.gameX, gameZ: body.gameZ } : m,
+          ),
+        );
+      }
+      return { prev };
+    },
+    onError: (_err, _body, ctx) => {
+      if (ctx?.prev) {
+        qc.setQueryData(["/api/tactical-markers", mapKey], ctx.prev);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["/api/tactical-markers", mapKey] }),
   });
 
   const createLineMut = useMutation({
@@ -719,7 +737,7 @@ export default function TacticalTerrainMap() {
         <p className="text-[9px] text-muted-foreground leading-snug">
           Active: <span className="text-foreground font-mono">{currentLabel}</span>
           {" · "}
-          Drag your markers (or admin) to move · BLUFOR/OPFOR/neutral/unknown · APP-6 · lines · game X/Z (m).
+          Drag markers to reposition (any logged-in user) · delete: owner or admin · APP-6 · lines · game X/Z (m).
         </p>
       </div>
 
@@ -756,13 +774,16 @@ export default function TacticalTerrainMap() {
               minZoom={-10}
               maxZoom={12}
               zoomSnap={0.25}
-              maxBounds={maxBounds}
-              maxBoundsViscosity={0.55}
               className="h-full w-full min-h-[inherit] [&.leaflet-container]:bg-[hsl(150_15%_10%)] [&.leaflet-container]:outline-none"
               style={{ minHeight: mobileShell ? "min(58dvh,560px)" : 420 }}
               zoomControl
             >
-              <FitBoundsOnBounds bounds={combinedBounds} padFraction={0.03} />
+              <FitBoundsDebouncedOncePerMap
+                mapKey={mapKey}
+                bounds={combinedBounds}
+                padFraction={0.06}
+                debounceMs={900}
+              />
               <GameGridOverlay enabled={layers.grid} />
               <MapCursorCoords onCoords={setCursorCoords} />
               <MapInteractionHandler
@@ -846,12 +867,13 @@ export default function TacticalTerrainMap() {
                 />
               ) : null}
               {markers.map((m) => {
-                const canMove = canDeleteMarker(m, user?.username, user?.role);
+                const canMove = canDragMarker(user?.username);
                 return (
                   <Marker
                     key={m.id}
                     position={[m.gameZ, m.gameX]}
                     icon={makeNatoDivIcon(m.sidc, m.label)}
+                    zIndexOffset={800}
                     draggable={canMove}
                     eventHandlers={
                       canMove
@@ -1043,7 +1065,31 @@ export default function TacticalTerrainMap() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent
+          className="max-w-md"
+          onPointerDownOutside={(e) => {
+            const t = e.target as HTMLElement;
+            if (
+              t.closest("[data-radix-popper-content-wrapper]") ||
+              t.closest("[data-radix-popover-content]") ||
+              t.closest("[data-radix-select-content]") ||
+              t.closest("[data-radix-select-viewport]")
+            ) {
+              e.preventDefault();
+            }
+          }}
+          onInteractOutside={(e) => {
+            const t = e.target as HTMLElement;
+            if (
+              t.closest("[data-radix-popper-content-wrapper]") ||
+              t.closest("[data-radix-popover-content]") ||
+              t.closest("[data-radix-select-content]") ||
+              t.closest("[data-radix-select-viewport]")
+            ) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-sm tracking-wider">
               ADD MARKER (JOINT SYMBOLOGY)
@@ -1064,7 +1110,7 @@ export default function TacticalTerrainMap() {
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[200]">
                   <SelectItem value="friendly">Friendly (BLUFOR)</SelectItem>
                   <SelectItem value="hostile">Hostile (OPFOR)</SelectItem>
                   <SelectItem value="neutral">Neutral</SelectItem>
@@ -1103,7 +1149,11 @@ export default function TacticalTerrainMap() {
             ) : null}
             <div className="space-y-1">
               <Label className="text-[10px]">SYMBOL (catalog or shortcut)</Label>
-              <Popover open={symbolPickerOpen} onOpenChange={setSymbolPickerOpen} modal>
+              <Popover
+                open={symbolPickerOpen}
+                onOpenChange={setSymbolPickerOpen}
+                modal={false}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -1118,7 +1168,7 @@ export default function TacticalTerrainMap() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[min(calc(100vw-2rem),440px)] p-0"
+                  className="z-[200] w-[min(calc(100vw-2rem),440px)] p-0"
                   align="start"
                   onOpenAutoFocus={(e) => e.preventDefault()}
                 >

@@ -991,13 +991,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       id,
       parsed.data.gameX,
       parsed.data.gameZ,
-      req.session.username!,
-      req.session.role || "",
     );
     if (!result.ok) {
-      if (result.reason === "forbidden") {
-        return res.status(403).json({ error: "Only the placer or an admin/owner can move this marker" });
-      }
       return res.status(404).json({ error: "Marker not found" });
     }
     wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });

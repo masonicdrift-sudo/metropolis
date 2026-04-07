@@ -88,7 +88,7 @@ export type AccessCode = typeof accessCodes.$inferSelect;
 // ─── ISOFAC Documents ──────────────────────────────────────────────────────────
 export const isofacDocs = sqliteTable("isofac_docs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  type: text("type").notNull(), // OPORD | IMINT | HVT_CARD | FRAGORD | ISR_PLAN | CASEVAC_PLAN | ROE | INTEL_SUMMARY | CUSTOM
+  type: text("type").notNull(), // OPORD | IMINT | … | RADIO_LOG | CUSTOM
   title: text("title").notNull(),
   classification: text("classification").notNull().default("UNCLASS"),
   status: text("status").notNull().default("DRAFT"), // DRAFT | ACTIVE | SUPERSEDED | ARCHIVED

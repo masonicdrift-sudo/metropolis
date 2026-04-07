@@ -11,21 +11,52 @@ function niceStep(span: number, lines: number): number {
   return f * base;
 }
 
-/** Fit the map when bounds change (e.g. metadata loaded). */
-export function FitBoundsOnBounds({
+/**
+ * One automatic fit per map after bounds stabilize (GeoJSON loads in waves).
+ * Does not refit when bounds change again after that (avoids recentre while panning).
+ * Skips entirely if the user pans before the fit runs.
+ */
+export function FitBoundsDebouncedOncePerMap({
+  mapKey,
   bounds,
-  padFraction = 0.02,
+  padFraction = 0.04,
+  debounceMs = 800,
 }: {
+  mapKey: string;
   bounds: L.LatLngBounds;
   padFraction?: number;
+  debounceMs?: number;
 }) {
   const map = useMap();
+  const userPannedRef = useRef(false);
+  const hasAutoFittedRef = useRef(false);
+
   useEffect(() => {
-    if (!bounds.isValid()) return;
-    const target = padFraction > 0 ? bounds.pad(padFraction) : bounds;
-    // No maxZoom cap — large terrain must be able to zoom out far enough to show the full extent.
-    map.fitBounds(target, { padding: [36, 36], animate: false });
-  }, [map, bounds, padFraction]);
+    userPannedRef.current = false;
+    hasAutoFittedRef.current = false;
+  }, [mapKey]);
+
+  useMapEvents({
+    dragend: () => {
+      userPannedRef.current = true;
+      hasAutoFittedRef.current = true;
+    },
+  });
+
+  useEffect(() => {
+    if (!mapKey || !bounds.isValid() || hasAutoFittedRef.current) return;
+    const id = window.setTimeout(() => {
+      if (userPannedRef.current) {
+        hasAutoFittedRef.current = true;
+        return;
+      }
+      const target = padFraction > 0 ? bounds.pad(padFraction) : bounds;
+      map.fitBounds(target, { padding: [48, 48], animate: false });
+      hasAutoFittedRef.current = true;
+    }, debounceMs);
+    return () => window.clearTimeout(id);
+  }, [map, mapKey, bounds, padFraction, debounceMs]);
+
   return null;
 }
 

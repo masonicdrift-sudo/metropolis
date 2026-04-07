@@ -105,6 +105,11 @@
   border: none !important;
 }
 
+/* Let Leaflet handle drag on the icon; inner SVGs don’t steal pointer events. */
+.tac-nato-leaflet-icon svg {
+  pointer-events: none;
+}
+
 .leaflet-marker-draggable .tac-nato-leaflet-icon {
   cursor: grab;
 }

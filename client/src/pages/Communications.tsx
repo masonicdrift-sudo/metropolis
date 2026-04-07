@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 const MSG_TYPES = ["SITREP","SALUTE","FRAGO","CASEVAC","FIRE_MISSION","LOGSTAT","FLASH","CONTACT_REPORT","MEDEVAC_9LINE","SPOT_REPORT"];
 const CHANNELS = ["PRIMARY","ALTERNATE","CONTINGENCY","EMERGENCY"];
@@ -421,6 +422,15 @@ export default function Communications() {
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>COMMUNICATIONS CENTER</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
             {unacked > 0 ? <span className="text-yellow-400">{unacked} UNACKNOWLEDGED</span> : "ALL MESSAGES ACK'D"} ▪ {comms.length} TOTAL MSGS
+          </div>
+          <div className="text-[9px] text-muted-foreground/80 mt-1.5">
+            <Link
+              href="/isofac"
+              className="text-cyan-400/90 hover:text-cyan-300 underline-offset-2 hover:underline font-mono tracking-wide"
+            >
+              RADIO LOG BOOK (ISOFAC)
+            </Link>
+            <span className="text-muted-foreground/50"> — create under COMMS & SIGNAL → RADIO LOG BOOK</span>
           </div>
         </div>
       </div>

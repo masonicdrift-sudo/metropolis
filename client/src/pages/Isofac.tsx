@@ -6,7 +6,7 @@ import type { IsofacDoc } from "@shared/schema";
 import {
   FileText, Plus, Trash2, Edit, Paperclip, X,
   Eye, Shield, AlertTriangle, Target, Map,
-  Crosshair, Activity, BookOpen, Save, Upload, ChevronDown, ChevronRight
+  Crosshair, Activity, BookOpen, Save, Upload, ChevronDown, ChevronRight, Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,8 @@ const DOC_TYPES = [
   { value: "FIRE_PLAN",     label: "FIRE SUPPORT PLAN",  icon: Target,        color: "text-red-400",          bg: "bg-red-950/20 border-red-900/40",          group: "SUPPORT" },
   { value: "CASEVAC_PLAN",  label: "CASEVAC PLAN",       icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "SUPPORT" },
   { value: "LOGSTAT",       label: "LOG / CSS PLAN",     icon: Activity,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "SUPPORT" },
+  // Comms & signal
+  { value: "RADIO_LOG",     label: "RADIO LOG BOOK",     icon: Radio,         color: "text-cyan-400",         bg: "bg-cyan-950/25 border-cyan-900/45",       group: "COMMS" },
   // Admin & Command
   { value: "ROE",           label: "ROE",                icon: BookOpen,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "ADMIN" },
   { value: "EPA",           label: "EVASION PLAN (EPA)", icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "ADMIN" },
@@ -46,6 +48,7 @@ const DOC_GROUPS = [
   { key: "ORDERS",  label: "ORDERS",          types: ["WARNO","OPORD","FRAGORD","OPLAN","CONOP"] },
   { key: "INTEL",   label: "INTELLIGENCE",    types: ["IMINT","HVT_CARD","INTEL_SUMMARY","JIPOE","COA","THREAT_ASSESS","ACE"] },
   { key: "SUPPORT", label: "FIRES & SUPPORT", types: ["ISR_PLAN","FIRE_PLAN","CASEVAC_PLAN","LOGSTAT"] },
+  { key: "COMMS",   label: "COMMS & SIGNAL",  types: ["RADIO_LOG"] },
   { key: "ADMIN",   label: "CMD & ADMIN",     types: ["ROE","EPA","OPSEC","REHEARSAL","CUSTOM"] },
 ];
 
@@ -1022,6 +1025,42 @@ CLASSIFICATION:
 ─── QUESTIONS / NOTES ─────────────────────────────────────────
 
 REHEARSAL CONDUCTED BY: 
+`,
+
+RADIO_LOG: `RADIO LOG BOOK (ISOFAC)
+─────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: UNCLASS     OPERATION / NET NAME: _______________________
+STATION / CALLSIGN: _________________   DATE (ZULU): ____/____/__________
+PRIMARY NET: _______________________   FREQ (MHz): ________________________
+BACKUP / ALT: _______________________   ENCRYPT: ___________________________
+LOG KEEPER: _________________________   RELIEF: ___________________________
+
+PURPOSE: Record all radio traffic in order of receipt. Time in ZULU unless
+         SOP dictates local. Use standard brevity; quote verbatim when possible.
+
+─── LOG ENTRIES ─────────────────────────────────────────────────────────
+TIME | FROM | TO | PREC | MESSAGE (TEXT) | INIT | ACK
+( Z )| CSGN | CSGN| R/I/F|                 | SENT | Y/N
+─────┼──────┼─────┼──────┼─────────────────┼──────┼────
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+─────┴──────┴─────┴──────┴─────────────────┴──────┴────
+
+PREC KEY: R=ROUTINE  I=PRIORITY  F=FLASH  IMM=IMMEDIATE (per unit SOP)
+
+─── SPECIAL INSTRUCTIONS / NOTES ─────────────────────────────────────────
+
+RELIEF SIGNATURE: ______________________   TIME: __________ Z
+REVIEWED BY (NCO/O): ___________________   TIME: __________ Z
+
+─── CROSS-REFERENCE (optional) ───────────────────────────────────────────
+Link to COMMS tab entries: note message IDs or time blocks for audit trail.
 `,
 
 CUSTOM: `[DOCUMENT TITLE]

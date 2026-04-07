@@ -522,11 +522,7 @@ export interface IStorage {
     id: number,
     gameX: number,
     gameZ: number,
-    username: string,
-    role: string,
-  ):
-    | { ok: true; marker: TacticalMapMarker; mapKey: string }
-    | { ok: false; reason: "not_found" | "forbidden" };
+  ): { ok: true; marker: TacticalMapMarker; mapKey: string } | { ok: false; reason: "not_found" };
   tryDeleteTacticalMarker(
     id: number,
     username: string,
@@ -964,21 +960,14 @@ export class Storage implements IStorage {
     id: number,
     gameX: number,
     gameZ: number,
-    username: string,
-    role: string,
-  ):
-    | { ok: true; marker: TacticalMapMarker; mapKey: string }
-    | { ok: false; reason: "not_found" | "forbidden" } {
+  ): { ok: true; marker: TacticalMapMarker; mapKey: string } | { ok: false; reason: "not_found" } {
     const row = db
       .select()
       .from(schema.tacticalMapMarkers)
       .where(eq(schema.tacticalMapMarkers.id, id))
       .get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
-      return { ok: false, reason: "forbidden" };
-    }
+    // Any authenticated user may reposition markers (shared tactical board); delete remains restricted.
     const marker = db
       .update(schema.tacticalMapMarkers)
       .set({ gameX, gameZ })

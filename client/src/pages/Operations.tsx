@@ -44,7 +44,7 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">OP NAME *</Label>
           <Input placeholder="OP IRON VEIL" value={form.name || ""} onChange={e => set("name")(e.target.value)} className="font-mono text-xs uppercase" data-testid="input-op-name" /></div>
         <div><Label className="text-[10px] tracking-wider">TYPE</Label>
@@ -102,8 +102,8 @@ export default function Operations() {
   const priorityBg: Record<string, string> = { critical: "border-l-2 border-l-red-600", high: "border-l-2 border-l-orange-600", medium: "border-l-2 border-l-yellow-600", low: "border-l-2 border-l-green-800" };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>OPERATIONS PLANNING</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{ops.filter(o => o.status === "active").length} ACTIVE // {ops.filter(o => o.status === "planning").length} IN PLANNING</div>
@@ -122,7 +122,7 @@ export default function Operations() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-3">
+      <div className="tac-filter-row mb-3">
         {Object.entries(statusCounts).map(([s, c]) => (
           <button key={s} onClick={() => setFilter(s)} data-testid={`filter-${s}`}
             className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === s ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>

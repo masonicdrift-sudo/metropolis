@@ -1,8 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import type { Unit, Operation, IntelReport, CommsLog, Asset, Threat } from "@shared/schema";
-import { Clock, Activity, AlertTriangle, Radio, Shield, Package, Zap, TrendingUp } from "lucide-react";
+import { Clock, Activity, AlertTriangle, Radio, Shield, Package, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+
+type ThreatLevel = "LOW" | "GUARDED" | "ELEVATED" | "HIGH" | "SEVERE";
 
 function LiveClock() {
   const [time, setTime] = useState(new Date());
@@ -29,16 +34,39 @@ function KPICard({ label, value, sub, color = "text-green-400", alert = false }:
   );
 }
 
-function ThreatLevel({ level }: { level: "LOW" | "GUARDED" | "ELEVATED" | "HIGH" | "SEVERE" }) {
+function ThreatLevelCard({
+  level,
+  canEdit,
+  mode,
+  computed,
+  onSetAuto,
+  onSetManual,
+  saving,
+}: {
+  level: ThreatLevel;
+  canEdit: boolean;
+  mode: "auto" | "manual";
+  computed: ThreatLevel;
+  onSetAuto: () => void;
+  onSetManual: (l: ThreatLevel) => void;
+  saving: boolean;
+}) {
   const colors: Record<string, string> = {
     LOW: "bg-green-500", GUARDED: "bg-blue-500",
     ELEVATED: "bg-yellow-500", HIGH: "bg-orange-500", SEVERE: "bg-red-500",
   };
-  const levels = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"];
+  const levels: ThreatLevel[] = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"];
   const idx = levels.indexOf(level);
   return (
     <div className="bg-card border border-border rounded p-3">
-      <div className="text-[10px] text-muted-foreground tracking-[0.12em] mb-2">THREAT LEVEL</div>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="text-[10px] text-muted-foreground tracking-[0.12em]">THREAT LEVEL</div>
+        <span className={`text-[8px] font-bold tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${
+          mode === "manual" ? "border-yellow-700/50 text-yellow-400 bg-yellow-950/30" : "border-border text-muted-foreground"
+        }`}>
+          {mode === "manual" ? "MANUAL" : "AUTO"}
+        </span>
+      </div>
       <div className="flex gap-1 items-end mb-1">
         {levels.map((l, i) => (
           <div key={l} className={`flex-1 rounded-sm transition-all ${i <= idx ? colors[l] : "bg-secondary"}`}
@@ -51,11 +79,48 @@ function ThreatLevel({ level }: { level: "LOW" | "GUARDED" | "ELEVATED" | "HIGH"
         level === "ELEVATED" ? "text-yellow-400" :
         "text-green-400"
       }`}>{level}</div>
+      {mode === "manual" && (
+        <div className="text-[9px] text-muted-foreground/70 mt-1 tracking-wide">
+          Auto would be: <span className="text-muted-foreground font-mono">{computed}</span>
+        </div>
+      )}
+      {canEdit && (
+        <div className="mt-3 pt-2 border-t border-border space-y-2">
+          <div className="text-[9px] text-muted-foreground tracking-wider">STAFF OVERRIDE (ADMIN / OWNER)</div>
+          <Select
+            value={mode === "manual" ? level : "__auto__"}
+            disabled={saving}
+            onValueChange={(v) => {
+              if (v === "__auto__") onSetAuto();
+              else onSetManual(v as ThreatLevel);
+            }}
+          >
+            <SelectTrigger className="text-[10px] h-8 touch-manipulation">
+              <SelectValue placeholder="Set level…" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__auto__">Automatic (from threat board)</SelectItem>
+              {levels.map(l => (
+                <SelectItem key={l} value={l}>Manual — {l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {mode === "manual" && (
+            <Button type="button" variant="outline" size="sm" className="w-full text-[9px] h-7 tracking-wider" disabled={saving} onClick={onSetAuto}>
+              RESET TO AUTOMATIC
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const canEditThreat = user?.role === "admin" || user?.role === "owner";
+
   const { data: units = [] } = useQuery<Unit[]>({ queryKey: ["/api/units"], queryFn: () => apiRequest("GET", "/api/units") });
   const { data: ops = [] } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations") });
   const { data: intel = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel") });
@@ -73,7 +138,28 @@ export default function Dashboard() {
   const criticalThreats = threats.filter(t => t.active && t.confidence === "confirmed").length;
   const totalPax = units.reduce((acc, u) => acc + u.pax, 0);
 
-  const threatLevel = criticalThreats >= 3 ? "SEVERE" : criticalThreats >= 2 ? "HIGH" : activeThreats >= 3 ? "ELEVATED" : "GUARDED";
+  const computedThreat: ThreatLevel =
+    criticalThreats >= 3 ? "SEVERE" :
+    criticalThreats >= 2 ? "HIGH" :
+    activeThreats >= 3 ? "ELEVATED" : "GUARDED";
+
+  const { data: threatSetting } = useQuery<{ computed: ThreatLevel; mode: "auto" | "manual"; display: ThreatLevel }>({
+    queryKey: ["/api/dashboard/threat-level"],
+    queryFn: () => apiRequest("GET", "/api/dashboard/threat-level"),
+    enabled: !!user,
+  });
+
+  const displayThreat: ThreatLevel = threatSetting?.display ?? computedThreat;
+  const threatMode = threatSetting?.mode ?? "auto";
+  const computedFromApi = threatSetting?.computed ?? computedThreat;
+
+  const saveThreat = useMutation({
+    mutationFn: (body: { mode: string; level?: ThreatLevel }) =>
+      apiRequest("PATCH", "/api/dashboard/threat-level", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/dashboard/threat-level"] });
+    },
+  });
 
   const recentComms = comms.slice(0, 5);
   const recentIntel = intel.slice(0, 4);
@@ -84,9 +170,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-3 md:p-4 space-y-3 md:space-y-4">
+    <div className="p-3 md:p-4 space-y-3 md:space-y-4 tac-page">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border pb-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             TACTICAL OPERATIONS CENTER
@@ -97,7 +183,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
+      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
         <KPICard label="ACTIVE OPS" value={activeOps} sub={`${ops.length} total`} color={activeOps > 0 ? "text-green-400" : "text-muted-foreground"} />
         <KPICard label="ACTIVE UNITS" value={activeUnits} sub={`${totalPax} PAX`} />
         <KPICard label="CRIT INTEL" value={criticalIntel} color={criticalIntel > 0 ? "text-red-400" : "text-green-400"} alert={criticalIntel > 0} sub="unverified rpts" />
@@ -105,7 +191,15 @@ export default function Dashboard() {
         <KPICard label="ASSETS OP" value={`${opAssets}/${assets.length}`} sub="operational" />
         <KPICard label="ACT THREATS" value={activeThreats} color={activeThreats > 0 ? "text-orange-400" : "text-green-400"} alert={criticalThreats > 0} />
         <KPICard label="CONFIRMED" value={criticalThreats} color={criticalThreats > 0 ? "text-red-400" : "text-green-400"} sub="threats" />
-        <ThreatLevel level={threatLevel as any} />
+        <ThreatLevelCard
+          level={displayThreat}
+          canEdit={!!canEditThreat}
+          mode={threatMode}
+          computed={computedFromApi}
+          saving={saveThreat.isPending}
+          onSetAuto={() => saveThreat.mutate({ mode: "auto" })}
+          onSetManual={(l) => saveThreat.mutate({ mode: "manual", level: l })}
+        />
       </div>
 
       {/* Main Grid */}
@@ -196,16 +290,16 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-border">
             {recentComms.map(c => (
-              <div key={c.id} className={`px-3 py-2 ${!c.acknowledged ? "bg-yellow-950/10" : ""}`}>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`badge-${c.priority} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase`}>{c.priority}</span>
-                  <span className="text-[10px] font-bold text-green-400">{c.fromCallsign}</span>
-                  <span className="text-[9px] text-muted-foreground">→</span>
-                  <span className="text-[10px] text-muted-foreground">{c.toCallsign}</span>
-                  <span className="text-[9px] text-muted-foreground ml-auto">[{c.channel}]</span>
-                  {!c.acknowledged && <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />}
+              <div key={c.id} className={`px-3 py-2 min-w-0 ${!c.acknowledged ? "bg-yellow-950/10" : ""}`}>
+                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                  <span className={`badge-${c.priority} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase shrink-0`}>{c.priority}</span>
+                  <span className="text-[10px] font-bold text-green-400 shrink-0">{c.fromCallsign}</span>
+                  <span className="text-[9px] text-muted-foreground shrink-0">→</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{c.toCallsign}</span>
+                  <span className="text-[9px] text-muted-foreground sm:ml-auto shrink-0">[{c.channel}]</span>
+                  {!c.acknowledged && <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse shrink-0" />}
                 </div>
-                <div className="text-[11px] text-foreground leading-snug line-clamp-2">{c.message}</div>
+                <div className="text-[11px] text-foreground leading-snug line-clamp-2 break-words min-w-0">{c.message}</div>
               </div>
             ))}
           </div>

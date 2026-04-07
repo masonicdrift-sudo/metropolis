@@ -255,6 +255,10 @@ sqlite.exec(`
     active INTEGER DEFAULT 1,
     notes TEXT DEFAULT ''
   );
+  CREATE TABLE IF NOT EXISTS site_settings (
+    setting_key TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL DEFAULT ''
+  );
 `);
 
 // Seed 24FEB2026 Commo Card
@@ -403,6 +407,8 @@ export interface IStorage {
   deleteUser(id: number): void;
   updateLastLogin(id: number): void;
   updateUserById(id: number, updates: Partial<User>): User | undefined;
+  /** Updates username on user row and all username references across the DB (transaction). */
+  changeUsername(userId: number, oldUsername: string, newUsername: string): User | undefined;
   // Units
   getUnits(): Unit[];
   getUnit(id: number): Unit | undefined;
@@ -467,6 +473,9 @@ export interface IStorage {
   createBroadcast(b: InsertBroadcast): Broadcast;
   dismissBroadcast(id: number): void;
   deleteBroadcast(id: number): void;
+  // Key-value settings (dashboard threat level, etc.)
+  getSiteSetting(key: string): string | undefined;
+  setSiteSetting(key: string, value: string): void;
 }
 
 export class Storage implements IStorage {
@@ -696,6 +705,48 @@ export class Storage implements IStorage {
     return db.update(schema.users).set(updates).where(eq(schema.users.id, id)).returning().get();
   }
 
+  changeUsername(userId: number, oldUsername: string, newUsername: string): User | undefined {
+    const run = sqlite.transaction(() => {
+      db.update(schema.messages).set({ fromUsername: newUsername }).where(eq(schema.messages.fromUsername, oldUsername)).run();
+      db.update(schema.messages).set({ toUsername: newUsername }).where(eq(schema.messages.toUsername, oldUsername)).run();
+      for (const m of db.select().from(schema.messages).all()) {
+        try {
+          const rb: Record<string, boolean> = JSON.parse(m.readBy || "{}");
+          if (Object.prototype.hasOwnProperty.call(rb, oldUsername)) {
+            const nrb = { ...rb, [newUsername]: rb[oldUsername] };
+            delete (nrb as Record<string, boolean>)[oldUsername];
+            db.update(schema.messages).set({ readBy: JSON.stringify(nrb) }).where(eq(schema.messages.id, m.id)).run();
+          }
+        } catch { /* ignore malformed read_by */ }
+      }
+      for (const g of db.select().from(schema.groupChats).all()) {
+        let mem: string[] = [];
+        try { mem = JSON.parse(g.members || "[]"); } catch { mem = []; }
+        const hasM = mem.includes(oldUsername);
+        const newCreated = g.createdBy === oldUsername ? newUsername : g.createdBy;
+        if (hasM) {
+          const newMem = mem.map(u => (u === oldUsername ? newUsername : u));
+          db.update(schema.groupChats).set({ members: JSON.stringify(newMem), createdBy: newCreated }).where(eq(schema.groupChats.id, g.id)).run();
+        } else if (g.createdBy === oldUsername) {
+          db.update(schema.groupChats).set({ createdBy: newUsername }).where(eq(schema.groupChats.id, g.id)).run();
+        }
+      }
+      db.update(schema.perstat).set({ username: newUsername }).where(eq(schema.perstat.username, oldUsername)).run();
+      db.update(schema.trainingRecords).set({ username: newUsername }).where(eq(schema.trainingRecords.username, oldUsername)).run();
+      db.update(schema.awards).set({ username: newUsername }).where(eq(schema.awards.username, oldUsername)).run();
+      db.update(schema.awards).set({ awardedBy: newUsername }).where(eq(schema.awards.awardedBy, oldUsername)).run();
+      db.update(schema.afterActionReports).set({ submittedBy: newUsername }).where(eq(schema.afterActionReports.submittedBy, oldUsername)).run();
+      db.update(schema.isofacDocs).set({ createdBy: newUsername }).where(eq(schema.isofacDocs.createdBy, oldUsername)).run();
+      db.update(schema.commoCards).set({ createdBy: newUsername }).where(eq(schema.commoCards.createdBy, oldUsername)).run();
+      db.update(schema.broadcasts).set({ sentBy: newUsername }).where(eq(schema.broadcasts.sentBy, oldUsername)).run();
+      db.update(schema.opTasks).set({ assignedTo: newUsername }).where(eq(schema.opTasks.assignedTo, oldUsername)).run();
+      db.update(schema.accessCodes).set({ createdBy: newUsername }).where(eq(schema.accessCodes.createdBy, oldUsername)).run();
+      db.update(schema.accessCodes).set({ usedBy: newUsername }).where(eq(schema.accessCodes.usedBy, oldUsername)).run();
+      return db.update(schema.users).set({ username: newUsername }).where(eq(schema.users.id, userId)).returning().get();
+    });
+    return run();
+  }
+
   // Units
   getUnits() { return db.select().from(schema.units).all(); }
   getUnit(id: number) { return db.select().from(schema.units).where(eq(schema.units.id, id)).get(); }
@@ -822,6 +873,16 @@ export class Storage implements IStorage {
   createBroadcast(b: InsertBroadcast) { return db.insert(schema.broadcasts).values(b).returning().get(); }
   dismissBroadcast(id: number) { db.update(schema.broadcasts).set({ active: false }).where(eq(schema.broadcasts.id, id)).run(); }
   deleteBroadcast(id: number) { db.delete(schema.broadcasts).where(eq(schema.broadcasts.id, id)).run(); }
+
+  getSiteSetting(key: string): string | undefined {
+    const row = sqlite.prepare("SELECT value FROM site_settings WHERE setting_key = ?").get(key) as { value: string } | undefined;
+    return row?.value;
+  }
+  setSiteSetting(key: string, value: string): void {
+    sqlite.prepare(
+      "INSERT INTO site_settings (setting_key, value) VALUES (?, ?) ON CONFLICT(setting_key) DO UPDATE SET value = excluded.value",
+    ).run(key, value);
+  }
 }
 
 export const storage = new Storage();

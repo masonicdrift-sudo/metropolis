@@ -68,8 +68,8 @@ export default function AccessCodes() {
   const usedCount = codes.filter(c => c.used).length;
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>ACCESS CODE MANAGER</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
@@ -94,7 +94,7 @@ export default function AccessCodes() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
         <div className="bg-card border border-border rounded px-3 py-2">
           <div className="text-[9px] text-muted-foreground tracking-wider">ACTIVE CODES</div>
           <div className="kpi-value text-xl text-green-400">{activeCount}</div>
@@ -110,7 +110,7 @@ export default function AccessCodes() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 mb-3">
+      <div className="tac-filter-row mb-3">
         {(["all", "active", "used"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === f ? "bg-yellow-900/60 text-yellow-400 border border-yellow-800/60" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
@@ -126,7 +126,7 @@ export default function AccessCodes() {
             {filter === "active" ? "NO ACTIVE CODES — GENERATE ONE ABOVE" : "NO CODES"}
           </div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full text-xs mobile-card-table">
             <thead>
               <tr className="border-b border-border text-[10px] text-muted-foreground tracking-[0.12em]">
                 <th className="text-left px-4 py-2">CODE</th>
@@ -142,7 +142,7 @@ export default function AccessCodes() {
                 const expired = isExpired(c);
                 return (
                   <tr key={c.id} className="hover:bg-secondary/20 transition-colors" data-testid={`code-row-${c.id}`}>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="CODE">
                       <div className="flex items-center gap-1">
                         <span className={`font-mono font-bold tracking-[0.2em] text-sm ${c.used || expired ? "text-muted-foreground line-through" : "text-yellow-300"}`}>
                           {c.code}
@@ -150,19 +150,19 @@ export default function AccessCodes() {
                         {!c.used && !expired && <CopyButton text={c.code} />}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" data-label="STATUS">
                       {c.used
                         ? <span className="badge-offline text-[9px] px-2 py-0.5 rounded font-bold tracking-wider">REDEEMED</span>
                         : expired
                         ? <span className="badge-compromised text-[9px] px-2 py-0.5 rounded font-bold tracking-wider">EXPIRED</span>
                         : <span className="badge-active text-[9px] px-2 py-0.5 rounded font-bold tracking-wider">ACTIVE</span>}
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(c.createdAt)}</td>
-                    <td className="px-4 py-3 text-[10px] font-mono">
+                    <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="CREATED">{formatDate(c.createdAt)}</td>
+                    <td className="px-4 py-3 text-[10px] font-mono" data-label="REDEEMED BY">
                       {c.usedBy ? <span className="text-green-400">{c.usedBy}</span> : <span className="text-muted-foreground">—</span>}
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono">{formatDate(c.usedAt)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="REDEEMED AT">{formatDate(c.usedAt)}</td>
+                    <td className="px-4 py-3" data-label="ACTIONS">
                       {!c.used && (
                         <button onClick={() => del.mutate(c.id)}
                           className="p-1 text-muted-foreground hover:text-red-400 transition-colors" title="Revoke"

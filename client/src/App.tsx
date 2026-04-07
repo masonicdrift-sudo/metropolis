@@ -32,12 +32,14 @@ import NotFound from "./pages/not-found";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "./lib/queryClient";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   LayoutDashboard, Radio, Target, ShieldAlert,
   Crosshair, Package, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, Signal, BookOpen,
   Settings, Menu, X, ChevronRight, UserCheck, FileText,
-  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Bell
+  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap
 } from "lucide-react";
 
 // All nav items
@@ -61,17 +63,16 @@ const NAV = [
   { path: "/grid-tool",   label: "GRID TOOL",    icon: MapPin,          short: "Grid" },
 ];
 
-// Mobile bottom tab — show 5 most important + "More" drawer
-const BOTTOM_TABS = [
-  { path: "/",           label: "Home",    icon: LayoutDashboard },
-  { path: "/operations", label: "Ops",     icon: Crosshair },
-  { path: "/messages",   label: "Msgs",    icon: MessageSquare },
-  { path: "/perstat",    label: "PERSTAT", icon: UserCheck },
-  { path: "/isofac",     label: "ISOFAC",  icon: BookOpen },
-];
+// Mobile bottom tab — primary destinations + "More" opens full nav (Discord-style rail)
+const MOBILE_TAB_ITEMS = [
+  { path: "/",           label: "Home",  icon: LayoutDashboard },
+  { path: "/messages",   label: "Msgs",  icon: MessageSquare },
+  { path: "/operations", label: "Ops",   icon: Crosshair },
+  { path: "/comms",      label: "Comms", icon: Radio },
+] as const;
 
 // ── Desktop Sidebar ───────────────────────────────────────────────────────────
-function Sidebar() {
+function Sidebar({ mobileShell }: { mobileShell: boolean }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
 
@@ -84,7 +85,12 @@ function Sidebar() {
   const totalUnread = (unread?.dms || 0) + (unread?.general || 0);
 
   return (
-    <aside className="hidden md:flex flex-col w-[200px] min-h-screen border-r border-border bg-card shrink-0">
+    <aside
+      className={cn(
+        "flex-col w-[200px] min-h-screen border-r border-border bg-card shrink-0",
+        mobileShell ? "hidden" : "flex",
+      )}
+    >
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
         <svg viewBox="0 0 32 32" width="28" height="28" aria-label="TACEDGE logo">
@@ -185,7 +191,7 @@ function Sidebar() {
 }
 
 // ── Mobile Top Bar ────────────────────────────────────────────────────────────
-function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
+function MobileTopBar({ onMenuOpen, mobileShell }: { onMenuOpen: () => void; mobileShell: boolean }) {
   const [location] = useLocation();
   const { user } = useAuth();
   const { data: unread } = useQuery<{ dms: number; general: number }>({
@@ -199,7 +205,12 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
     .find(n => n.path === location || (n.path !== "/" && location.startsWith(n.path)));
 
   return (
-    <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0 safe-top">
+    <div
+      className={cn(
+        "items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0 safe-top",
+        mobileShell ? "flex" : "hidden",
+      )}
+    >
       <div className="flex items-center gap-3">
         <svg viewBox="0 0 32 32" width="22" height="22">
           <rect width="32" height="32" fill="hsl(150 8% 6%)" rx="4" />
@@ -248,7 +259,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       {/* Drawer panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-72 bg-card border-l border-border flex flex-col shadow-2xl">
+      <div className="fixed inset-y-0 right-0 z-50 w-[min(100vw,18rem)] sm:w-72 max-w-full bg-card border-l border-border flex flex-col shadow-2xl safe-top">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <div>
@@ -296,27 +307,48 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 }
 
 // ── Mobile Bottom Tab Bar ─────────────────────────────────────────────────────
-function BottomTabBar() {
+function BottomTabBar({ onOpenMore, mobileShell }: { onOpenMore: () => void; mobileShell: boolean }) {
   const [location] = useLocation();
-  const { user } = useQuery<{ dms: number; general: number }>({
+  const { user } = useAuth();
+  const { data: unread } = useQuery<{ dms: number; general: number }>({
     queryKey: ["/api/messages/unread"],
     queryFn: () => apiRequest("GET", "/api/messages/unread"),
-    
-  }) as any;
+    enabled: !!user,
+  });
+  const totalUnread = (unread?.dms || 0) + (unread?.general || 0);
 
-  // Suppress ts errors — just use data inline
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border flex safe-bottom">
-      {BOTTOM_TABS.map(({ path, label, icon: Icon }) => {
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-sm border-t border-border safe-bottom touch-manipulation max-w-[100vw]",
+        mobileShell ? "flex" : "hidden",
+      )}
+    >
+      {MOBILE_TAB_ITEMS.map(({ path, label, icon: Icon }) => {
         const active = location === path || (path !== "/" && location.startsWith(path));
+        const showBadge = path === "/messages" && totalUnread > 0 && !active;
         return (
           <Link key={path} href={path}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 transition-colors ${active ? "text-green-400" : "text-muted-foreground"}`}>
-            <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
-            <span className="text-[9px] tracking-wider">{label}</span>
+            className={`relative flex-1 flex flex-col items-center gap-0.5 py-2.5 px-0.5 min-h-[52px] min-w-0 justify-center transition-colors ${active ? "text-green-400" : "text-muted-foreground"}`}>
+            <Icon size={20} strokeWidth={active ? 2.5 : 1.5} className="shrink-0" />
+            <span className="text-[8px] sm:text-[9px] tracking-wider truncate max-w-full">{label}</span>
+            {showBadge && (
+              <span className="absolute top-1 right-1/4 translate-x-1 min-w-[16px] h-4 px-1 bg-red-600 rounded-full text-[8px] text-white font-bold flex items-center justify-center">
+                {totalUnread > 9 ? "9+" : totalUnread}
+              </span>
+            )}
           </Link>
         );
       })}
+      <button
+        type="button"
+        onClick={onOpenMore}
+        className="flex-1 flex flex-col items-center gap-0.5 py-2.5 px-0.5 min-h-[52px] min-w-0 justify-center text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="Open full menu"
+      >
+        <Menu size={20} strokeWidth={1.5} className="shrink-0" />
+        <span className="text-[8px] sm:text-[9px] tracking-wider">MORE</span>
+      </button>
     </nav>
   );
 }
@@ -324,28 +356,39 @@ function BottomTabBar() {
 // ── Layout ────────────────────────────────────────────────────────────────────
 function Layout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const mobileShell = useIsMobile();
 
   return (
-    <div className="flex min-h-screen bg-background scanlines">
+    <div
+      className={cn(
+        "flex max-w-[100vw] overflow-x-hidden bg-background scanlines",
+        mobileShell ? "min-h-dvh" : "min-h-dvh md:min-h-screen",
+      )}
+    >
       {/* Desktop sidebar */}
-      <Sidebar />
+      <Sidebar mobileShell={mobileShell} />
 
       {/* Mobile drawer */}
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* Main content area */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col max-w-full">
         {/* Mobile top bar */}
-        <MobileTopBar onMenuOpen={() => setDrawerOpen(true)} />
+        <MobileTopBar mobileShell={mobileShell} onMenuOpen={() => setDrawerOpen(true)} />
 
-        {/* Page content — add bottom padding on mobile for tab bar */}
-        <main className="flex-1 min-w-0 overflow-y-auto flex flex-col pb-16 md:pb-0">
-          {children}
+        {/* Page content — bottom padding = tab bar + home indicator */}
+        <main
+          className={cn(
+            "flex-1 min-w-0 min-h-0 overflow-y-auto overflow-x-hidden flex flex-col",
+            mobileShell ? "pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))]" : "pb-0",
+          )}
+        >
+          <div className="tac-page flex-1 flex flex-col min-h-0 min-w-0">{children}</div>
         </main>
       </div>
 
       {/* Mobile bottom tab bar */}
-      <BottomTabBar />
+      <BottomTabBar mobileShell={mobileShell} onOpenMore={() => setDrawerOpen(true)} />
     </div>
   );
 }

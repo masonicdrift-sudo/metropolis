@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import type { TrainingRecord } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -112,6 +112,10 @@ export default function TrainingPage() {
   const [filterUser, setFilterUser] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
 
+  useEffect(() => {
+    if (!canAdmin) setFilterUser("all");
+  }, [canAdmin]);
+
   const { data: records = [] } = useQuery<TrainingRecord[]>({ queryKey: ["/api/training"], queryFn: () => apiRequest("GET", "/api/training") });
   const { data: users = [] } = useQuery<any[]>({ queryKey: ["/api/users"], queryFn: () => apiRequest("GET", "/api/users"), enabled: canAdmin });
 
@@ -139,11 +143,13 @@ export default function TrainingPage() {
   const fmt = (s: string) => { try { return new Date(s).toLocaleDateString(); } catch { return s; } };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>TRAINING RECORDS</h1>
-          <div className="text-[10px] text-muted-foreground tracking-wider">{records.length} RECORDS ▪ {expiring.length} EXPIRING SOON</div>
+          <div className="text-[10px] text-muted-foreground tracking-wider">
+            {canAdmin ? `${records.length} RECORDS ▪ ${expiring.length} EXPIRING SOON` : `${records.length} YOUR RECORDS ▪ ${expiring.length} EXPIRING SOON`}
+          </div>
         </div>
         {canAdmin && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -169,16 +175,21 @@ export default function TrainingPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-1 mb-2">
-        {allUsers.length > 0 && ["all", ...allUsers].map(u => (
-          <button key={u} onClick={() => setFilterUser(u)}
-            className={`px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterUser === u ? "bg-green-900/50 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
-            {u === "all" ? "ALL OPERATORS" : u}
-          </button>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-1 mb-3">
+      {/* Operator filter — admins only (operators only receive their own rows from the API) */}
+      {canAdmin && allUsers.length > 0 && (
+        <div className="tac-filter-row mb-2">
+          {["all", ...allUsers].map(u => (
+            <button key={u} onClick={() => setFilterUser(u)}
+              className={`px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterUser === u ? "bg-green-900/50 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+              {u === "all" ? "ALL OPERATORS" : u}
+            </button>
+          ))}
+        </div>
+      )}
+      {!canAdmin && (
+        <p className="text-[10px] text-muted-foreground/80 mb-2">Showing your logged qualifications. Admins add new entries from the roster.</p>
+      )}
+      <div className="tac-filter-row mb-3">
         {cats.map(c => (
           <button key={c} onClick={() => setFilterCat(c)}
             className={`px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterCat === c ? "bg-secondary text-foreground border border-border" : "text-muted-foreground hover:text-foreground"}`}>

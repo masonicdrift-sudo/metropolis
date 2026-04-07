@@ -32,7 +32,7 @@ function IntelForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">TITLE *</Label>
           <Input placeholder="Report title..." value={form.title || ""} onChange={e => set("title")(e.target.value)} className="text-xs" data-testid="input-intel-title" /></div>
         <div><Label className="text-[10px] tracking-wider">CLASSIFICATION</Label>
@@ -135,8 +135,8 @@ export default function Intel() {
   });
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>INTELLIGENCE COLLECTION</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{counts.critical} CRITICAL // {counts.unverified} UNVERIFIED</div>
@@ -155,7 +155,7 @@ export default function Intel() {
       </div>
 
       {/* KPI mini row */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
         {Object.entries(counts).slice(0, 5).map(([cat, c]) => (
           <div key={cat} className="bg-card border border-border rounded px-3 py-2">
             <div className="text-[9px] text-muted-foreground tracking-wider">{cat}</div>
@@ -165,7 +165,7 @@ export default function Intel() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 mb-3">
+      <div className="tac-filter-row mb-3">
         {categories.map(c => (
           <button key={c} onClick={() => setFilter(c)}
             className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === c ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
@@ -235,7 +235,7 @@ export default function Intel() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div><div className="text-[9px] text-muted-foreground tracking-wider">CATEGORY</div><div className="font-bold">{viewing.category}</div></div>
                 <div><div className="text-[9px] text-muted-foreground tracking-wider">THREAT</div><div className={`badge-${viewing.threat} inline-block text-[9px] px-1.5 py-0.5 rounded tracking-wider uppercase mt-0.5`}>{viewing.threat}</div></div>
                 <div><div className="text-[9px] text-muted-foreground tracking-wider">STATUS</div><div className="font-bold">{viewing.verified ? "✓ VERIFIED" : "UNVERIFIED"}</div></div>
@@ -254,7 +254,7 @@ export default function Intel() {
                       <div className="text-[9px] text-muted-foreground tracking-wider mb-1.5 flex items-center gap-1">
                         <ImageIcon size={9} /> IMAGERY ({imgs.length})
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {imgs.map((img, i) => (
                           <a key={i} href={img.url} target="_blank" rel="noreferrer" className="block">
                             <img src={img.url} alt={img.originalName}

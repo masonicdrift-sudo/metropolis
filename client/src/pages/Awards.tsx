@@ -111,8 +111,8 @@ export default function AwardsPage() {
   const fmt = (iso: string) => { try { return new Date(iso).toLocaleDateString(); } catch { return iso; } };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>AWARDS & COMMENDATIONS</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{awards.length} TOTAL AWARDS</div>
@@ -134,7 +134,7 @@ export default function AwardsPage() {
 
       {/* Filter */}
       {allUsers.length > 0 && (
-        <div className="flex gap-1 flex-wrap mb-3">
+        <div className="tac-filter-row mb-3">
           {["all", ...allUsers].map(u => (
             <button key={u} onClick={() => setFilterUser(u)}
               className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterUser === u ? "bg-yellow-900/50 text-yellow-400 border border-yellow-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>

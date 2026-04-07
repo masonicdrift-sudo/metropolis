@@ -5,6 +5,8 @@ import type { Broadcast } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { X, Radio, AlertTriangle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: string; icon: any }> = {
   flash:     { color: "text-red-400",    bg: "bg-red-950/95",    border: "border-red-600",    icon: Zap },
@@ -15,6 +17,7 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; border: strin
 export function BroadcastOverlay() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const compactShell = useIsMobile();
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [current, setCurrent] = useState<Broadcast | null>(null);
   const seenIds = useRef<Set<number>>(new Set());
@@ -44,7 +47,7 @@ export function BroadcastOverlay() {
 
   const handleDismiss = () => {
     if (!current) return;
-    setDismissed(prev => new Set([...prev, current.id]));
+    setDismissed(prev => new Set([...Array.from(prev), current.id]));
     dismiss.mutate(current.id);
     setCurrent(null);
   };
@@ -55,11 +58,23 @@ export function BroadcastOverlay() {
   const Icon = cfg.icon;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-4">
+    <div
+      className={cn(
+        "fixed inset-0 z-[9999] flex justify-center p-0 md:p-4",
+        compactShell ? "items-end" : "items-center",
+      )}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      {/* Modal — slides up from bottom on mobile, centered on desktop */}
-      <div className={`relative w-full md:max-w-md rounded-t-xl md:rounded-lg border-2 ${cfg.bg} ${cfg.border} p-5 md:p-6 shadow-2xl scanlines safe-bottom`}>
+      {/* Modal — bottom sheet when compact shell; centered on large desktop */}
+      <div
+        className={cn(
+          "relative w-full border-2 shadow-2xl scanlines safe-bottom",
+          cfg.bg,
+          cfg.border,
+          compactShell ? "rounded-t-xl p-5 max-h-[85dvh] overflow-y-auto w-full" : "w-full md:max-w-md rounded-lg p-5 md:p-6",
+        )}
+      >
         {/* Flashing top bar */}
         <div className={`absolute top-0 left-0 right-0 h-1 ${cfg.border.replace("border-","bg-")} animate-pulse rounded-t-lg`} />
 
@@ -76,7 +91,7 @@ export function BroadcastOverlay() {
           </div>
         </div>
 
-        <div className="flex justify-between items-center mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3 mt-6">
           <div className="text-[10px] text-muted-foreground tracking-wider">
             {new Date(current.sentAt).toLocaleString()}
           </div>

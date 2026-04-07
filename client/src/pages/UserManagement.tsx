@@ -56,7 +56,7 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
           placeholder="Enter callsign..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">RANK</label>
           <select value={form.rank} onChange={e => set("rank")(e.target.value)}
@@ -155,7 +155,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
           className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">RANK</label>
           <select value={form.rank} onChange={e => set("rank")(e.target.value)}
@@ -244,8 +244,8 @@ export default function UserManagement() {
   });
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>USER MANAGEMENT</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
@@ -266,7 +266,7 @@ export default function UserManagement() {
       </div>
 
       {/* Unit filter tabs */}
-      <div className="flex gap-1 mb-3 flex-wrap">
+      <div className="tac-filter-row mb-3">
         {allFilters.map(f => (
           <button key={f} onClick={() => setUnitFilter(f)}
             className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${unitFilter === f ? "bg-green-900/60 text-green-400 border border-green-800/60" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
@@ -276,7 +276,7 @@ export default function UserManagement() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
         {[
           { label: "TOTAL USERS", val: users.length, color: "text-green-400" },
           { label: "WITH RANK", val: users.filter(u => u.rank).length, color: "text-yellow-400" },

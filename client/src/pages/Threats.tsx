@@ -33,7 +33,7 @@ function ThreatForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">THREAT LABEL *</Label>
           <Input placeholder="Enemy BTR-80 Plt" value={form.label || ""} onChange={e => set("label")(e.target.value)} className="text-xs" data-testid="input-threat-label" /></div>
         <div><Label className="text-[10px] tracking-wider">CATEGORY</Label>
@@ -90,15 +90,15 @@ export default function Threats() {
   };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>THREAT BOARD</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
             <span className="text-red-400">{confirmed} CONFIRMED</span> ▪ <span className="text-orange-400">{probable} PROBABLE</span> ▪ <span className="text-yellow-400">{possible} POSSIBLE</span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <button onClick={() => setShowActive(a => !a)}
             className={`text-[10px] px-3 py-1 rounded tracking-wider border transition-all ${showActive ? "bg-green-900 text-green-400 border-green-800" : "text-muted-foreground border-border bg-secondary"}`}>
             {showActive ? "ACTIVE ONLY" : "ALL THREATS"}
@@ -118,7 +118,7 @@ export default function Threats() {
       </div>
 
       {/* Threat summary KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-4">
         {["IED","enemy_force","sniper","drone"].map(cat => {
           const c = threats.filter(t => t.category === cat && t.active).length;
           return (

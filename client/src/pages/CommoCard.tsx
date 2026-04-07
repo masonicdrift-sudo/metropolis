@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 // ── Types matching the JSON stored in DB ─────────────────────────────────────
 interface Net { label: string; freq: string; callsigns?: string; notes?: string; tdl?: string; }
@@ -50,7 +52,7 @@ function CryptoBlock({ card }: { card: CommoCard }) {
         <Lock size={10} className="text-red-400" />
         <span className="text-[9px] font-bold tracking-[0.2em] text-red-400">CRYPTO</span>
       </div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs font-mono">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs font-mono">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-[10px]">Key:</span>
           <span className="font-bold text-red-300 tracking-wider">{card.primaryKey}<CopyBtn text={card.primaryKey} /></span>
@@ -75,8 +77,8 @@ function CryptoBlock({ card }: { card: CommoCard }) {
 // ── Nets table ────────────────────────────────────────────────────────────────
 function NetsTable({ nets }: { nets: Net[] }) {
   return (
-    <div className="rounded border border-border overflow-hidden">
-      <table className="w-full text-xs">
+    <div className="rounded border border-border overflow-hidden overflow-x-auto max-w-full">
+      <table className="w-full text-xs min-w-[520px]">
         <thead>
           <tr className="bg-secondary/50 border-b border-border text-[9px] text-muted-foreground tracking-[0.15em]">
             <th className="text-left px-3 py-1.5">NET / CHANNEL</th>
@@ -138,14 +140,15 @@ function RangerNetsBlock({ data }: { data: RangerNets }) {
         <Lock size={9} className="text-red-400/60" />
       </div>
       {/* Ranger crypto */}
-      <div className="px-3 py-2 border-b border-red-900/20 grid grid-cols-4 gap-4 text-[10px] font-mono">
+      <div className="px-3 py-2 border-b border-red-900/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-[10px] font-mono">
         <div><span className="text-muted-foreground">Key: </span><span className="font-bold text-red-300 tracking-wider">{data.primaryKey}</span></div>
         <div><span className="text-muted-foreground">TDL: </span><span className="text-foreground/80">{data.primaryTdl}</span></div>
         <div><span className="text-muted-foreground">Backup: </span><span className="font-bold text-red-300 tracking-wider">{data.backupKey}</span></div>
         <div><span className="text-muted-foreground">Backup: </span><span className="text-foreground/80">{data.backupTdl}</span></div>
       </div>
       {/* Ranger net table */}
-      <table className="w-full text-xs">
+      <div className="overflow-x-auto max-w-full">
+      <table className="w-full text-xs min-w-[320px]">
         <thead>
           <tr className="bg-red-950/20 border-b border-red-900/20 text-[9px] text-red-400/70 tracking-[0.15em]">
             <th className="text-left px-3 py-1.5">NET</th>
@@ -172,6 +175,7 @@ function RangerNetsBlock({ data }: { data: RangerNets }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -187,7 +191,8 @@ function KeycallsBlock({ keycalls, theme, note }: { keycalls: Keycall[]; theme?:
           {theme && <span className="text-[9px] text-muted-foreground/60">— {theme}</span>}
         </div>
       </div>
-      <table className="w-full text-xs">
+      <div className="overflow-x-auto max-w-full">
+      <table className="w-full text-xs min-w-[340px]">
         <thead>
           <tr className="border-b border-border text-[9px] text-muted-foreground tracking-[0.15em]">
             <th className="text-left px-3 py-1.5">KEYCALL WORD</th>
@@ -216,6 +221,7 @@ function KeycallsBlock({ keycalls, theme, note }: { keycalls: Keycall[]; theme?:
           ))}
         </tbody>
       </table>
+      </div>
       {note && (
         <div className="px-3 py-2 border-t border-border bg-secondary/20 text-[9px] text-yellow-400/70 tracking-wider italic">
           ⚠ {note}
@@ -234,7 +240,7 @@ function CardView({ card }: { card: CommoCard }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-dashed border-border/60">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between pb-3 border-b border-dashed border-border/60">
         <div>
           <h2 className="text-base font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             {card.title}
@@ -314,8 +320,8 @@ function CreateCardForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2"><Label className="text-[9px] tracking-wider">CARD TITLE *</Label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="col-span-1 sm:col-span-2"><Label className="text-[9px] tracking-wider">CARD TITLE *</Label>
           <Input placeholder="COMMO CARD - 24FEB2026" value={form.title} onChange={set("title")} className="text-xs font-mono uppercase" /></div>
         <div><Label className="text-[9px] tracking-wider">EFFECTIVE DATE *</Label>
           <Input placeholder="24FEB2026" value={form.effectiveDate} onChange={set("effectiveDate")} className="text-xs font-mono uppercase" /></div>
@@ -353,6 +359,7 @@ export default function CommoCardPage() {
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const isMobile = useIsMobile();
   const isAdmin = user?.role === "admin" || user?.role === "owner";
 
   const { data: cards = [] } = useQuery<CommoCard[]>({
@@ -374,10 +381,24 @@ export default function CommoCardPage() {
   const viewCard = selectedId ? cards.find(c => c.id === selectedId) : activeCard;
 
   return (
-    <div className="flex h-full" style={{ height: "calc(100vh)" }}>
+    <div
+      className={cn(
+        "tac-page flex min-h-0 w-full",
+        isMobile
+          ? "flex-col min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
+          : "flex-row min-h-[min(100dvh,calc(100vh-3rem))]",
+      )}
+    >
 
-      {/* ── Card selector sidebar ───────────────────────────── */}
-      <div className="w-52 border-r border-border bg-card flex flex-col shrink-0">
+      {/* ── Card selector (top strip on phone, sidebar on desktop) ───────── */}
+      <div
+        className={cn(
+          "border-border bg-card flex flex-col shrink-0",
+          isMobile
+            ? "w-full border-b max-h-[min(40vh,220px)]"
+            : "w-52 border-r border-b-0",
+        )}
+      >
         <div className="flex items-center gap-2 px-3 py-3 border-b border-border">
           <Radio size={12} className="text-green-400" />
           <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMMO CARDS</span>
@@ -422,9 +443,9 @@ export default function CommoCardPage() {
       </div>
 
       {/* ── Main card view ──────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain">
         {viewCard ? (
-          <div className="p-5 max-w-5xl">
+          <div className="p-3 sm:p-5 max-w-5xl mx-auto w-full">
             {/* Admin actions */}
             {isAdmin && (
               <div className="flex gap-2 mb-4">

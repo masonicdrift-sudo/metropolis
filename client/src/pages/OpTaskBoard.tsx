@@ -44,7 +44,7 @@ function TaskForm({ opId, onClose }: { opId: number; onClose: () => void }) {
         <Label className="text-[10px] tracking-wider">TASK TITLE *</Label>
         <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Brief task description" className="text-xs" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-[10px] tracking-wider">PHASE</Label>
           <Select value={form.phase} onValueChange={v => setForm(f => ({ ...f, phase: v }))}>
@@ -158,8 +158,8 @@ export default function OpTaskBoard() {
   const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>OP-ORDER TASK BOARD</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">SELECT AN OPERATION TO VIEW PHASES</div>
@@ -175,7 +175,7 @@ export default function OpTaskBoard() {
       <div className="mb-4">
         <Label className="text-[10px] tracking-wider">SELECT OPERATION</Label>
         <Select value={selectedOp ? String(selectedOp) : ""} onValueChange={v => setSelectedOp(Number(v))}>
-          <SelectTrigger className="text-xs max-w-sm"><SelectValue placeholder="— Choose an operation —" /></SelectTrigger>
+          <SelectTrigger className="text-xs w-full max-w-full sm:max-w-sm"><SelectValue placeholder="— Choose an operation —" /></SelectTrigger>
           <SelectContent>
             {ops.map(o => (
               <SelectItem key={o.id} value={String(o.id)}>
@@ -209,10 +209,10 @@ export default function OpTaskBoard() {
           </div>
 
           {/* Kanban columns — horizontal scroll on mobile, grid on desktop */}
-          <div className="flex md:grid md:grid-cols-5 gap-2 overflow-x-auto pb-2 md:overflow-visible"
+          <div className="flex xl:grid xl:grid-cols-5 gap-2 overflow-x-auto pb-2 xl:overflow-visible"
             style={{ scrollSnapType: 'x mandatory' }}>
             {PHASES.map(phase => (
-              <div key={phase} className={`rounded border ${PHASE_COLOR[phase]} p-2 shrink-0 w-[220px] md:w-auto`}
+              <div key={phase} className={`rounded border ${PHASE_COLOR[phase]} p-2 shrink-0 w-[min(85vw,220px)] xl:w-auto`}
                 style={{ scrollSnapAlign: 'start' }}>
                 <div className={`text-[10px] font-bold tracking-widest mb-2 ${PHASE_HEADER[phase]}`}>
                   {phase} <span className="text-muted-foreground font-normal">({phaseTasks(phase).length})</span>

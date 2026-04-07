@@ -65,7 +65,7 @@ export default function GridTool() {
   const threatRefs = threats.filter(t => t.active).map(t => ({ label: t.label, grid: t.grid, type: "enemy" as const }));
 
   return (
-    <div className="p-3 md:p-4">
+    <div className="p-3 md:p-4 tac-page">
       <div className="mb-3">
         <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>GRID REFERENCE TOOL</h1>
         <div className="text-[10px] text-muted-foreground tracking-wider">MGRS COORDINATE MANAGER ▪ MARKER BOARD</div>
@@ -77,7 +77,7 @@ export default function GridTool() {
           <div className="bg-card border border-border rounded p-3">
             <div className="text-[10px] text-muted-foreground tracking-widest mb-3">ADD GRID MARKER</div>
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2"> {/* 2-col is fine here — short labels */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <Label className="text-[10px] tracking-wider">LABEL *</Label>
                   <Input value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value.toUpperCase() }))}

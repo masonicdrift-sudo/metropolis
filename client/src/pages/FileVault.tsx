@@ -71,8 +71,8 @@ export default function FileVault() {
   };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>FILE VAULT</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
@@ -93,23 +93,23 @@ export default function FileVault() {
           <Input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search title, type, op name, tags..." className="pl-7 text-xs h-8 w-full" />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="tac-filter-row mb-3">
           <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="text-xs h-8 flex-1 min-w-[110px]"><SelectValue placeholder="All types" /></SelectTrigger>
+            <SelectTrigger className="text-xs h-8 w-[min(100%,11rem)] min-w-[7.5rem]"><SelectValue placeholder="All types" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ALL TYPES</SelectItem>
               {allTypes.map(t => <SelectItem key={t} value={t}>{t.replace("_"," ")}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterClass} onValueChange={setFilterClass}>
-            <SelectTrigger className="text-xs h-8 flex-1 min-w-[100px]"><SelectValue placeholder="Classification" /></SelectTrigger>
+            <SelectTrigger className="text-xs h-8 w-[min(100%,10rem)] min-w-[7.5rem]"><SelectValue placeholder="Classification" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ALL CLASS</SelectItem>
               {["UNCLASS","CUI","SECRET","TS"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="text-xs h-8 flex-1 min-w-[100px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="text-xs h-8 w-[min(100%,10rem)] min-w-[7rem]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">ALL STATUS</SelectItem>
               {["DRAFT","ACTIVE","SUPERSEDED","ARCHIVED"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}

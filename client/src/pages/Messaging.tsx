@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download } from "lucide-react";
+import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download, ChevronLeft } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -71,7 +73,7 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap }: {
       </div>
 
       {/* Bubble */}
-      <div className={`flex-1 min-w-0 max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
+      <div className={cn("flex-1 min-w-0 max-w-[88%] sm:max-w-[75%]", isMe ? "items-end" : "items-start", "flex flex-col")}>
         <div className={`flex items-center gap-1.5 mb-0.5 ${isMe ? "flex-row-reverse" : ""}`}>
           <span className={`text-[10px] font-bold font-mono tracking-wider ${roleColor(role)}`}>{msg.fromUsername}</span>
           <RoleIcon role={role} />
@@ -308,10 +310,20 @@ function AddMemberDialog({ group, allUsers, currentUser }: {
 export default function Messaging() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
   // activeChannel: "GENERAL" | "DM:username" | "GROUP:id"
   const [activeChannel, setActiveChannel] = useState<string>(GENERAL);
+  /** Portrait: Discord-style — full-width channel list OR full-width chat (not side-by-side). */
+  const [mobileListOpen, setMobileListOpen] = useState(false);
   const [dmSearch, setDmSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const stickToBottomRef = useRef(true);
+
+  const goToChannel = (channel: string) => {
+    setActiveChannel(channel);
+    if (isMobile) setMobileListOpen(false);
+  };
 
   const isGroup = activeChannel.startsWith("GROUP:");
   const isDM = activeChannel.startsWith("DM:") || (!activeChannel.startsWith("GROUP:") && activeChannel !== GENERAL);
@@ -376,10 +388,21 @@ export default function Messaging() {
   // Real-time updates are handled by the global WSProvider in App.tsx.
   // No local WebSocket connection needed here.
 
-  // Auto-scroll to bottom
   useEffect(() => {
+    stickToBottomRef.current = true;
+  }, [activeChannel]);
+
+  const onMessagesScroll = () => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = dist < 120;
+  };
+
+  useEffect(() => {
+    if (!stickToBottomRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [generalMsgs, dmMsgs, activeChannel]);
+  }, [generalMsgs, dmMsgs, groupMsgs, activeChannel]);
 
   // Send general
   const sendGeneral = useMutation({
@@ -402,12 +425,12 @@ export default function Messaging() {
   // Leave group
   const leaveGroup = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/groups/${id}/members/me`),
-    onSuccess: () => { refetchGroups(); setActiveChannel(GENERAL); },
+    onSuccess: () => { refetchGroups(); goToChannel(GENERAL); },
   });
   // Delete group
   const deleteGroup = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/groups/${id}`),
-    onSuccess: () => { refetchGroups(); setActiveChannel(GENERAL); },
+    onSuccess: () => { refetchGroups(); goToChannel(GENERAL); },
   });
   // Delete message
   const deleteMsg = useMutation({
@@ -424,6 +447,7 @@ export default function Messaging() {
 
   const activeMsgs = isGroup ? groupMsgs : activeChannel === GENERAL ? generalMsgs : dmMsgs;
   const handleSend = (text: string, attachment?: Attachment) => {
+    stickToBottomRef.current = true;
     const attStr = attachment ? JSON.stringify(attachment) : "";
     if (activeChannel === GENERAL) sendGeneral.mutate({ text, attachment: attStr });
     else if (isGroup) sendGroup.mutate({ text, attachment: attStr });
@@ -442,16 +466,33 @@ export default function Messaging() {
   const getDMUnread = (username: string) =>
     dmList.find(d => d.username === username)?.unread || 0;
 
-  const openDM = (username: string) => setActiveChannel(`DM:${username}`);
-  const openGroup = (id: number) => setActiveChannel(`GROUP:${id}`);
+  const openDM = (username: string) => goToChannel(`DM:${username}`);
+  const openGroup = (id: number) => goToChannel(`GROUP:${id}`);
 
   return (
-    <div className="flex h-full" style={{ height: "calc(100vh)" }}>
+    <div
+      className={cn(
+        "flex w-full min-h-0 overflow-hidden",
+        /* Match useIsMobile (incl. landscape phones): reserve top bar + bottom tabs + safe areas. */
+        isMobile
+          ? "h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
+          : "h-[min(100dvh,calc(100vh-2.5rem))] min-h-[28rem]",
+      )}
+    >
 
       {/* ── Channel sidebar ─────────────────────────────────── */}
-      <div className="w-56 border-r border-border bg-card flex flex-col shrink-0">
+      <div
+        className={cn(
+          "border-r border-border bg-card shrink-0 min-h-0 flex flex-col",
+          isMobile
+            ? mobileListOpen
+              ? "flex-1 w-full min-w-0"
+              : "hidden"
+            : "w-56",
+        )}
+      >
         {/* Header */}
-        <div className="px-3 py-3 border-b border-border">
+        <div className="px-3 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
             <MessageSquare size={13} className="text-green-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">SECURE COMMS</span>
@@ -462,7 +503,7 @@ export default function Messaging() {
         <div className="px-2 pt-3 pb-1">
           <div className="text-[9px] text-muted-foreground/50 tracking-widest px-2 mb-1">CHANNELS</div>
           <button
-            onClick={() => setActiveChannel(GENERAL)}
+            onClick={() => goToChannel(GENERAL)}
             className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-all ${
               activeChannel === GENERAL
                 ? "bg-green-950/60 text-green-400 border border-green-900/50"
@@ -567,21 +608,43 @@ export default function Messaging() {
       </div>
 
       {/* ── Main chat area ───────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div
+        className={cn(
+          "flex-1 flex flex-col min-w-0 min-h-0",
+          isMobile && mobileListOpen && "hidden",
+          isMobile && !mobileListOpen && "flex w-full",
+        )}
+      >
         {/* Channel header */}
-        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-card/30">
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 border-b border-border bg-card/30 shrink-0">
+          {isMobile && (
+            <button
+              type="button"
+              onClick={() => setMobileListOpen(true)}
+              className="p-2 -ml-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/80 shrink-0 touch-manipulation"
+              aria-label="Back to channels"
+            >
+              <ChevronLeft size={22} strokeWidth={2} />
+            </button>
+          )}
           {activeChannel === GENERAL ? (
             <>
-              <Hash size={14} className="text-green-400" />
-              <span className="text-sm font-bold tracking-wider text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>general</span>
-              <span className="text-[10px] text-muted-foreground ml-2">— All members can see this channel</span>
+              <Hash size={14} className="text-green-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-bold tracking-wider text-green-400 block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>general</span>
+                <span className="text-[9px] text-muted-foreground hidden sm:block">All members can see this channel</span>
+              </div>
             </>
           ) : isGroup && activeGroup ? (
             <>
-              <Users size={14} className="text-green-400" />
-              <span className="text-sm font-bold tracking-wider text-green-400 font-mono" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
-              <span className="text-[10px] text-muted-foreground ml-1">— {JSON.parse(activeGroup.members || "[]").join(", ")}</span>
-              <div className="ml-auto flex items-center gap-1">
+              <Users size={14} className="text-green-400 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-bold tracking-wider text-green-400 font-mono block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
+                <span className="text-[9px] text-muted-foreground truncate hidden md:block">
+                  {JSON.parse(activeGroup.members || "[]").join(", ")}
+                </span>
+              </div>
+              <div className="ml-auto flex items-center gap-1 shrink-0">
                 <AddMemberDialog group={activeGroup} allUsers={allUsers} currentUser={user?.username || ""} />
                 <button onClick={() => leaveGroup.mutate(activeGroup.id)}
                   className="p-1 text-muted-foreground hover:text-yellow-400 transition-colors" title="Leave group">
@@ -597,21 +660,27 @@ export default function Messaging() {
             </>
           ) : (
             <>
-              <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold border ${
+              <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold border shrink-0 ${
                 userMap[activeDMUser || ""] === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
                 userMap[activeDMUser || ""] === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
                 "bg-green-900/40 border-green-800/50 text-green-400"
               }`}>{(activeDMUser || "?")[0].toUpperCase()}</div>
-              <span className={`text-sm font-bold tracking-wider font-mono ${roleColor(userMap[activeDMUser || ""])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-                {activeDMUser}
-              </span>
-              <span className="text-[10px] text-muted-foreground ml-1">— Direct Message</span>
+              <div className="min-w-0 flex-1">
+                <span className={`text-sm font-bold tracking-wider font-mono truncate block ${roleColor(userMap[activeDMUser || ""])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+                  {activeDMUser}
+                </span>
+                <span className="text-[9px] text-muted-foreground hidden sm:inline">Direct message</span>
+              </div>
             </>
           )}
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto py-2">
+        <div
+          ref={messagesScrollRef}
+          onScroll={onMessagesScroll}
+          className="flex-1 min-h-0 overflow-y-auto py-2 tac-messages-scroll"
+        >
           {activeMsgs.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="text-[40px] mb-2">{activeChannel === GENERAL ? "#" : isGroup ? "👥" : "💬"}</div>

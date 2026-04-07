@@ -89,6 +89,30 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json({ ok: true });
   });
 
+  // Change own display username (password required); propagates name across messages, groups, training, etc.
+  app.post("/api/auth/change-username", requireAuth, (req, res) => {
+    const { newUsername, currentPassword } = req.body;
+    const trimmed = typeof newUsername === "string" ? newUsername.trim() : "";
+    if (!trimmed || !currentPassword) return res.status(400).json({ error: "New username and current password required" });
+    if (trimmed.length < 2 || trimmed.length > 48) return res.status(400).json({ error: "Username must be 2–48 characters" });
+    const user = storage.getUserById(req.session.userId!);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!bcrypt.compareSync(currentPassword, user.passwordHash)) return res.status(401).json({ error: "Current password is incorrect" });
+    if (trimmed === user.username) return res.status(400).json({ error: "That is already your username" });
+    if (storage.getUserByUsername(trimmed)) return res.status(409).json({ error: "Username already taken" });
+    const updated = storage.changeUsername(user.id, user.username, trimmed);
+    if (!updated) return res.status(500).json({ error: "Failed to update username" });
+    req.session.username = updated.username;
+    wsPush("USER");
+    res.json({
+      id: updated.id,
+      username: updated.username,
+      role: updated.role,
+      rank: updated.rank || "",
+      assignedUnit: updated.assignedUnit || "",
+    });
+  });
+
   app.get("/api/auth/me", (req, res) => {
     if (!req.session?.userId) return res.status(401).json({ error: "Not logged in" });
     const user = storage.getUserById(req.session.userId);
@@ -540,6 +564,50 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  const THREAT_LEVELS = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"] as const;
+  function computeDashboardThreatLevel(threats: ReturnType<typeof storage.getThreats>) {
+    const activeThreats = threats.filter(t => t.active).length;
+    const criticalThreats = threats.filter(t => t.active && t.confidence === "confirmed").length;
+    if (criticalThreats >= 3) return "SEVERE";
+    if (criticalThreats >= 2) return "HIGH";
+    if (activeThreats >= 3) return "ELEVATED";
+    return "GUARDED";
+  }
+
+  app.get("/api/dashboard/threat-level", requireAuth, (_, res) => {
+    const threats = storage.getThreats();
+    const computed = computeDashboardThreatLevel(threats);
+    let mode: "auto" | "manual" = "auto";
+    let manualLevel: string | null = null;
+    const raw = storage.getSiteSetting("dashboard_threat");
+    if (raw) {
+      try {
+        const j = JSON.parse(raw) as { mode?: string; level?: string };
+        if (j.mode === "manual" && j.level && THREAT_LEVELS.includes(j.level as any)) {
+          mode = "manual";
+          manualLevel = j.level;
+        }
+      } catch { /* ignore */ }
+    }
+    const display = mode === "manual" && manualLevel ? manualLevel : computed;
+    res.json({ computed, mode, display });
+  });
+
+  app.patch("/api/dashboard/threat-level", requireAdmin, (req, res) => {
+    const { mode, level } = req.body || {};
+    if (mode === "auto") {
+      storage.setSiteSetting("dashboard_threat", JSON.stringify({ mode: "auto" }));
+      wsPush("THREAT");
+      return res.json({ ok: true });
+    }
+    if (mode === "manual" && level && THREAT_LEVELS.includes(level)) {
+      storage.setSiteSetting("dashboard_threat", JSON.stringify({ mode: "manual", level }));
+      wsPush("THREAT");
+      return res.json({ ok: true });
+    }
+    return res.status(400).json({ error: "Send { mode: \"auto\" } or { mode: \"manual\", level: LOW|GUARDED|... }" });
+  });
+
   // ── PERSTAT ───────────────────────────────────────────────────────────────────
   app.get("/api/perstat", requireAuth, (_, res) => res.json(storage.getPerstat()));
   app.post("/api/perstat", requireAuth, (req, res) => {
@@ -611,8 +679,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   // ── Training Records ──────────────────────────────────────────────────────────
   app.get("/api/training", requireAuth, (req, res) => {
-    const username = req.query.username as string | undefined;
-    res.json(storage.getTrainingRecords(username));
+    const me = req.session.username!;
+    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
+    const isStaff = callerRank >= ROLE_RANK.admin;
+    const rawU = req.query.username;
+    const qUser = typeof rawU === "string" ? rawU : Array.isArray(rawU) ? rawU[0] : undefined;
+    // Operators only see their own records; admins/owners can filter by ?username= or see all
+    if (!isStaff) {
+      return res.json(storage.getTrainingRecords(me));
+    }
+    res.json(storage.getTrainingRecords(qUser));
   });
   app.post("/api/training", requireAdmin, (req, res) => {
     const rec = storage.createTrainingRecord({ ...req.body, createdAt: new Date().toISOString() }); wsPush("TRAINING");

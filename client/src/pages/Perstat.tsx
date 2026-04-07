@@ -86,8 +86,8 @@ export default function PerstatPage() {
   };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>PERSTAT — PERSONNEL ACCOUNTABILITY</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{entries.length} ACCOUNTED ▪ {counts.active || 0} ACTIVE ▪ {counts.mia || 0} MIA ▪ {counts.kia || 0} KIA</div>
@@ -98,7 +98,7 @@ export default function PerstatPage() {
       </div>
 
       {/* Summary pills */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 mb-4">
         {Object.entries(STATUS_CONFIG).map(([k, v]) => (
           <div key={k} className="bg-card border border-border rounded px-3 py-2">
             <div className="text-[9px] text-muted-foreground tracking-wider">{v.label}</div>
@@ -117,7 +117,7 @@ export default function PerstatPage() {
           {entries.map(e => {
             const cfg = STATUS_CONFIG[e.dutyStatus] || STATUS_CONFIG.active;
             return (
-              <div key={e.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-secondary/20 transition-colors">
+              <div key={e.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-3 py-2.5 hover:bg-secondary/20 transition-colors">
                 <div className="flex items-center gap-3">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                   <div>

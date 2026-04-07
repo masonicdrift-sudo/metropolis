@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 // ── Document type definitions ────────────────────────────────────────────────
 const DOC_TYPES = [
@@ -1155,8 +1157,8 @@ function DocEditor({ doc, onClose }: { doc?: IsofacDoc; onClose: () => void }) {
       </div>
 
       {/* Meta row */}
-      <div className="grid grid-cols-3 gap-2 px-3 py-2 border-b border-border shrink-0">
-        <div className="col-span-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 px-3 py-2 border-b border-border shrink-0">
+        <div className="col-span-1 sm:col-span-3">
           <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             placeholder="Document title..."
             className="w-full bg-transparent text-sm font-bold tracking-wider text-foreground placeholder:text-muted-foreground/40 focus:outline-none border-b border-border/50 pb-1 font-mono uppercase" />
@@ -1301,6 +1303,7 @@ export default function IsofacPage() {
   const [editDoc, setEditDoc] = useState<IsofacDoc | undefined>();
   const [search, setSearch] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const isMobile = useIsMobile();
   const isAdmin = user?.role === "admin" || user?.role === "owner";
 
   const { data: docs = [] } = useQuery<IsofacDoc[]>({
@@ -1331,22 +1334,43 @@ export default function IsofacPage() {
 
   if (editing) {
     return (
-      <div className="h-full flex flex-col" style={{ height: "calc(100vh)" }}>
+      <div
+        className={cn(
+          "tac-page flex flex-col min-h-0 w-full",
+          isMobile
+            ? "min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
+            : "min-h-[min(100dvh,calc(100vh-3rem))]",
+        )}
+      >
         <DocEditor doc={editDoc} onClose={() => { setEditing(false); setEditDoc(undefined); }} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-full" style={{ height: "calc(100vh)" }}>
+    <div
+      className={cn(
+        "tac-page flex min-h-0 w-full",
+        isMobile
+          ? "flex-col min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
+          : "flex-row min-h-[min(100dvh,calc(100vh-3rem))]",
+      )}
+    >
 
-      {/* ── Sidebar ──────────────────────────────────────────────── */}
-      <div className="w-60 border-r border-border bg-card flex flex-col shrink-0">
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border shrink-0">
-          <div className="flex items-center gap-2">
-            <BookOpen size={11} className="text-green-400" />
+      {/* ── Sidebar (stacked on phone) ───────────────────────────── */}
+      <div
+        className={cn(
+          "border-border bg-card flex flex-col shrink-0",
+          isMobile
+            ? "w-full border-b max-h-[min(42vh,280px)]"
+            : "w-60 border-r border-b-0",
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-b border-border shrink-0">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <BookOpen size={11} className="text-green-400 shrink-0" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">ISOFAC</span>
-            <span className="text-[9px] text-muted-foreground/50">MISSION PLANNING</span>
+            <span className="text-[9px] text-muted-foreground/50 hidden sm:inline">MISSION PLANNING</span>
           </div>
           <button onClick={() => { setEditDoc(undefined); setEditing(true); }}
             className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors">
@@ -1393,7 +1417,7 @@ export default function IsofacPage() {
       </div>
 
       {/* ── Main area ────────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden">
         {selectedDoc ? (
           <>
             <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/30 shrink-0">
@@ -1418,7 +1442,7 @@ export default function IsofacPage() {
             <BookOpen size={32} className="text-muted-foreground/20 mb-3" />
             <div className="text-sm font-bold tracking-wider text-muted-foreground">INTELLIGENCE SUPPORT TO OPERATIONS</div>
             <div className="text-[10px] text-muted-foreground/50 mt-1 mb-6">Select a document or create a new one</div>
-            <div className="grid grid-cols-4 gap-2 max-w-2xl w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 max-w-2xl w-full">
               {DOC_GROUPS.map(group => (
                 <div key={group.key} className="bg-card border border-border rounded p-2">
                   <div className="text-[9px] font-bold tracking-wider text-muted-foreground mb-1.5">{group.label}</div>

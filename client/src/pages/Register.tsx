@@ -41,10 +41,10 @@ export default function Register({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center scanlines">
-      <div className="absolute inset-0 map-grid-bg opacity-40 pointer-events-none" />
+    <div className="min-h-dvh bg-background flex items-center justify-center scanlines overflow-y-auto overflow-x-hidden px-4 py-8 safe-bottom">
+      <div className="fixed inset-0 map-grid-bg opacity-40 pointer-events-none" />
 
-      <div className="relative w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-sm min-w-0">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <svg viewBox="0 0 64 64" width="56" height="56" aria-label="TACEDGE logo">

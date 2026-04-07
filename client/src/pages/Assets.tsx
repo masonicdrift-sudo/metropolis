@@ -54,7 +54,7 @@ function AssetForm({ asset, units, onClose }: { asset?: Asset; units: Unit[]; on
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">ASSET NAME *</Label>
           <Input placeholder="M1A2 SEPv3 #1" value={form.name || ""} onChange={e => set("name")(e.target.value)} className="text-xs" /></div>
         <div><Label className="text-[10px] tracking-wider">TYPE</Label>
@@ -123,8 +123,8 @@ export default function Assets() {
   const mntCount = assets.filter(a => a.status === "maintenance").length;
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>ASSET TRACKING</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{opCount} OP ▪ {degCount} DEGRADED ▪ {mntCount} MAINTENANCE</div>
@@ -143,7 +143,7 @@ export default function Assets() {
       </div>
 
       {/* Status summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
           { label: "OPERATIONAL", val: opCount, color: "text-green-400" },
           { label: "DEGRADED", val: degCount, color: "text-orange-400" },
@@ -158,7 +158,7 @@ export default function Assets() {
       </div>
 
       {/* Type filter */}
-      <div className="flex gap-1 mb-3 flex-wrap">
+      <div className="tac-filter-row mb-3">
         {types.map(t => (
           <button key={t} onClick={() => setFilter(t)}
             className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === t ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>

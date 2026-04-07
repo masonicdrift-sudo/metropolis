@@ -39,7 +39,7 @@ function UnitForm({ unit, onClose }: { unit?: Unit; onClose: () => void }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div><Label className="text-[10px] tracking-wider">CALLSIGN *</Label>
           <Input placeholder="ALPHA-1" value={form.callsign || ""} onChange={e => set("callsign")(e.target.value.toUpperCase())} className="font-mono text-xs uppercase" data-testid="input-callsign" /></div>
         <div><Label className="text-[10px] tracking-wider">COMMANDER *</Label>
@@ -129,8 +129,8 @@ export default function Units() {
   };
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>UNIT ROSTER</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
@@ -153,7 +153,7 @@ export default function Units() {
       </div>
 
       {/* Status summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
           { s: "active", label: "ACTIVE", color: "text-green-400" },
           { s: "standby", label: "STANDBY", color: "text-yellow-400" },
@@ -168,7 +168,7 @@ export default function Units() {
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 mb-3">
+      <div className="tac-filter-row mb-3">
         {statuses.map(s => (
           <button key={s} onClick={() => setFilter(s)}
             className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === s ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>

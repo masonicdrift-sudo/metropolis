@@ -3,13 +3,16 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { KeyRound, Check, Eye, EyeOff } from "lucide-react";
+import { KeyRound, Check, Eye, EyeOff, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ChangePassword() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { toast } = useToast();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
+  const [newUsername, setNewUsername] = useState("");
+  const [usernamePassword, setUsernamePassword] = useState("");
+  const [usernameDone, setUsernameDone] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [done, setDone] = useState(false);
@@ -28,6 +31,23 @@ export default function ChangePassword() {
     onError: (err: any) => toast({ title: err?.message || "Failed to change password", variant: "destructive" }),
   });
 
+  const changeUsername = useMutation({
+    mutationFn: () =>
+      apiRequest("POST", "/api/auth/change-username", {
+        newUsername: newUsername.trim(),
+        currentPassword: usernamePassword,
+      }),
+    onSuccess: async () => {
+      toast({ title: "Username updated" });
+      setNewUsername("");
+      setUsernamePassword("");
+      setUsernameDone(true);
+      setTimeout(() => setUsernameDone(false), 4000);
+      await refreshUser();
+    },
+    onError: (err: any) => toast({ title: err?.message || "Could not change username", variant: "destructive" }),
+  });
+
   const strength = (p: string) => {
     if (!p) return { score: 0, label: "", color: "" };
     let s = 0;
@@ -43,6 +63,12 @@ export default function ChangePassword() {
   const pw = strength(form.next);
   const mismatch = form.confirm && form.next !== form.confirm;
   const canSubmit = form.current && form.next.length >= 6 && form.next === form.confirm;
+  const trimmedNew = newUsername.trim();
+  const canChangeUsername =
+    trimmedNew.length >= 2 &&
+    trimmedNew !== user?.username &&
+    !!usernamePassword &&
+    !changeUsername.isPending;
 
   const PasswordInput = ({ value, onChange, show, toggle, placeholder }: {
     value: string; onChange: (v: string) => void;
@@ -64,20 +90,61 @@ export default function ChangePassword() {
   );
 
   return (
-    <div className="p-6 max-w-md">
+    <div className="p-4 sm:p-6 max-w-md w-full mx-auto tac-page">
       <div className="mb-6">
         <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-          CHANGE PASSWORD
+          SETTINGS
         </h1>
         <div className="text-[10px] text-muted-foreground tracking-wider">
-          Logged in as: <span className="text-green-400 font-mono">{user?.username}</span>
+          Signed in as <span className="text-green-400 font-mono">{user?.username}</span>
         </div>
+      </div>
+
+      {/* Username */}
+      <div className="bg-card border border-border rounded p-5 space-y-4 mb-4">
+        <div className="flex items-center gap-2 pb-3 border-b border-border">
+          <User size={12} className="text-green-400" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">DISPLAY NAME</span>
+        </div>
+        <p className="text-[9px] text-muted-foreground/80 leading-relaxed">
+          Your username is used across messages, training records, and accountability. Changing it updates your history everywhere on this node.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">NEW USERNAME</label>
+            <input
+              value={newUsername}
+              onChange={e => setNewUsername(e.target.value)}
+              placeholder={user?.username || "username"}
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+              autoComplete="username"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">CURRENT PASSWORD (confirm it&apos;s you)</label>
+            <input
+              type="password"
+              value={usernamePassword}
+              onChange={e => setUsernamePassword(e.target.value)}
+              placeholder="Enter current password"
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+              autoComplete="current-password"
+            />
+          </div>
+        </div>
+        <Button
+          type="button"
+          onClick={() => changeUsername.mutate()}
+          disabled={!canChangeUsername}
+          className={`w-full text-xs tracking-wider gap-1.5 ${usernameDone ? "bg-green-700" : "bg-green-800 hover:bg-green-700"}`}>
+          {usernameDone ? <><Check size={12} /> USERNAME UPDATED</> : changeUsername.isPending ? "UPDATING..." : "SAVE USERNAME"}
+        </Button>
       </div>
 
       <div className="bg-card border border-border rounded p-5 space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-border">
           <KeyRound size={12} className="text-green-400" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">CREDENTIAL UPDATE</span>
+          <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">PASSWORD</span>
         </div>
 
         <div className="space-y-3">

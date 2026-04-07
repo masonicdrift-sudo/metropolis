@@ -185,8 +185,8 @@ export default function AfterActionPage() {
   });
 
   return (
-    <div className="p-3 md:p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="p-3 md:p-4 tac-page">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>AFTER ACTION REPORTS</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{aars.length} TOTAL REPORTS</div>

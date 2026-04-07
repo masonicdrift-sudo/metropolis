@@ -149,6 +149,35 @@ interface TerrainMeta {
 
 type Fc = { type: "FeatureCollection"; features: unknown[] };
 
+function walkGeoCoords(
+  coords: unknown,
+  fn: (x: number, z: number) => void,
+): void {
+  if (coords == null) return;
+  if (Array.isArray(coords)) {
+    if (
+      coords.length >= 2 &&
+      typeof coords[0] === "number" &&
+      typeof (coords.length >= 3 ? coords[2] : coords[1]) === "number"
+    ) {
+      const x = coords[0] as number;
+      const z = (coords.length >= 3 ? coords[2] : coords[1]) as number;
+      if (Number.isFinite(x) && Number.isFinite(z)) fn(x, z);
+    } else {
+      for (const c of coords) walkGeoCoords(c, fn);
+    }
+  }
+}
+
+function extendBoundsFromGeoJSON(fc: Fc | undefined, b: L.LatLngBounds): void {
+  if (!fc?.features?.length) return;
+  for (const f of fc.features) {
+    const geom = (f as { geometry?: { coordinates?: unknown } }).geometry;
+    if (!geom?.coordinates) continue;
+    walkGeoCoords(geom.coordinates, (x, z) => b.extend(L.latLng(z, x)));
+  }
+}
+
 const TAC_MAP_STORAGE_KEY = "tacedge.tacMapKey";
 
 function canDeleteMarker(
@@ -417,10 +446,22 @@ export default function TacticalTerrainMap() {
     return L.latLngBounds(L.latLng(0, 0), L.latLng(mz, mx));
   }, [meta]);
 
+  /** Union metadata bounds with all loaded GeoJSON so the view includes full vector data. */
+  const combinedBounds = useMemo(() => {
+    const b = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
+    extendBoundsFromGeoJSON(geo.water, b);
+    extendBoundsFromGeoJSON(geo.roads, b);
+    extendBoundsFromGeoJSON(geo.pois, b);
+    extendBoundsFromGeoJSON(geo.contours, b);
+    extendBoundsFromGeoJSON(geo.structures, b);
+    if (!b.isValid()) return bounds;
+    return b;
+  }, [bounds, geo.water, geo.roads, geo.pois, geo.contours, geo.structures]);
+
   const maxBounds = useMemo(() => {
-    if (!bounds.isValid()) return bounds;
-    return bounds.pad(0.06);
-  }, [bounds]);
+    if (!combinedBounds.isValid()) return combinedBounds;
+    return combinedBounds.pad(0.18);
+  }, [combinedBounds]);
 
   const { data: markers = [], isLoading: markersLoading } = useQuery<TacticalMapMarker[]>({
     queryKey: ["/api/tactical-markers", mapKey],
@@ -710,17 +751,18 @@ export default function TacticalTerrainMap() {
             <MapContainer
               key={mapKey}
               crs={L.CRS.Simple}
-              bounds={bounds}
-              boundsOptions={{ padding: [20, 20], maxZoom: 10 }}
-              minZoom={-4}
-              maxZoom={10}
+              bounds={combinedBounds}
+              boundsOptions={{ padding: [28, 28] }}
+              minZoom={-10}
+              maxZoom={12}
+              zoomSnap={0.25}
               maxBounds={maxBounds}
-              maxBoundsViscosity={0.85}
+              maxBoundsViscosity={0.55}
               className="h-full w-full min-h-[inherit] [&.leaflet-container]:bg-[hsl(150_15%_10%)] [&.leaflet-container]:outline-none"
               style={{ minHeight: mobileShell ? "min(58dvh,560px)" : 420 }}
               zoomControl
             >
-              <FitBoundsOnBounds bounds={bounds} padFraction={0.02} />
+              <FitBoundsOnBounds bounds={combinedBounds} padFraction={0.03} />
               <GameGridOverlay enabled={layers.grid} />
               <MapCursorCoords onCoords={setCursorCoords} />
               <MapInteractionHandler

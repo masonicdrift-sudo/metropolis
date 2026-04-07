@@ -206,7 +206,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     req.session.username = user.username;
     req.session.role = user.role;
     // Only return safe fields — never the hash
-    res.json({ id: user.id, username: user.username, role: user.role });
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      rank: user.rank || "",
+      assignedUnit: user.assignedUnit || "",
+      milIdNumber: user.milIdNumber || "",
+      mos: user.mos || "",
+    });
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -253,7 +261,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!req.session?.userId) return res.status(401).json({ error: "Not logged in" });
     const user = storage.getUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Not logged in" });
-    res.json({ id: user.id, username: user.username, role: user.role, rank: user.rank || "", assignedUnit: user.assignedUnit || "" });
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      rank: user.rank || "",
+      assignedUnit: user.assignedUnit || "",
+      milIdNumber: user.milIdNumber || "",
+      mos: user.mos || "",
+    });
   });
 
   // ── Public registration with access code ─────────────────────────────────
@@ -299,7 +315,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     );
   });
   app.post("/api/users", requireAdmin, (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password, role, rank, assignedUnit, milIdNumber, mos } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
     // Role creation rules:
     //  - Owner (rank 3): can create Owner, Admin, Operator
@@ -311,7 +327,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (targetRank > callerRank) return res.status(403).json({ error: "Cannot create a user with a role higher than your own" });
     const exists = storage.getUserByUsername(username);
     if (exists) return res.status(409).json({ error: "Username already exists" });
-    const user = storage.createUser(username, password, requestedRole);
+    const user = storage.createUser(username, password, requestedRole, {
+      rank: typeof rank === "string" ? rank : "",
+      assignedUnit: typeof assignedUnit === "string" ? assignedUnit : "",
+      milIdNumber:
+        typeof milIdNumber === "string" ? milIdNumber.trim().slice(0, 64) : "",
+      mos: typeof mos === "string" ? mos.trim().slice(0, 32) : "",
+    });
     res.status(201).json(safeUser(user));
   });
   // Owner-only: edit any user's username, role, or reset password
@@ -335,6 +357,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     }
     if (typeof req.body.assignedUnit !== "undefined") {
       updates.assignedUnit = req.body.assignedUnit;
+    }
+    if (typeof req.body.milIdNumber !== "undefined") {
+      updates.milIdNumber =
+        typeof req.body.milIdNumber === "string"
+          ? req.body.milIdNumber.trim().slice(0, 64)
+          : "";
+    }
+    if (typeof req.body.mos !== "undefined") {
+      updates.mos =
+        typeof req.body.mos === "string" ? req.body.mos.trim().slice(0, 32) : "";
     }
     if (password) {
       if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });

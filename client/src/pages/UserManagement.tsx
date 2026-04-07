@@ -8,12 +8,23 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { ARMY_RANKS } from "@shared/schema";
 import type { Unit } from "@shared/schema";
+import { US_ARMY_MOS_OPTIONS, US_ARMY_MOS_BY_CODE } from "@shared/usArmyMos";
 
 interface AppUser {
-  id: number; username: string; role: string;
-  rank: string; assignedUnit: string;
-  createdAt: string; lastLogin: string;
+  id: number;
+  username: string;
+  role: string;
+  rank: string;
+  assignedUnit: string;
+  milIdNumber: string;
+  mos: string;
+  createdAt: string;
+  lastLogin: string;
 }
+
+const MOS_SORTED = [...US_ARMY_MOS_OPTIONS].sort((a, b) =>
+  a.code.localeCompare(b.code, undefined, { numeric: true }),
+);
 
 // ── Rank tier colors ────────────────────────────────────────────────────────
 const TIER_COLOR: Record<string, string> = {
@@ -32,7 +43,16 @@ function rankColor(abbr: string) {
 function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; units: Unit[]; callerRole: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [form, setForm] = useState({ username: "", password: "", confirm: "", role: "user", rank: "", assignedUnit: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    confirm: "",
+    role: "user",
+    rank: "",
+    assignedUnit: "",
+    milIdNumber: "",
+    mos: "00",
+  });
 
   const create = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/users", data),
@@ -44,7 +64,15 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
     if (!form.username.trim() || !form.password) { toast({ title: "Fill all required fields", variant: "destructive" }); return; }
     if (form.password !== form.confirm) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
     if (form.password.length < 6) { toast({ title: "Password must be at least 6 characters", variant: "destructive" }); return; }
-    create.mutate({ username: form.username.trim(), password: form.password, role: form.role, rank: form.rank, assignedUnit: form.assignedUnit });
+    create.mutate({
+      username: form.username.trim(),
+      password: form.password,
+      role: form.role,
+      rank: form.rank,
+      assignedUnit: form.assignedUnit,
+      milIdNumber: form.milIdNumber.trim(),
+      mos: form.mos,
+    });
   };
 
   const set = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -77,6 +105,32 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
             className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
             <option value="">— Unassigned —</option>
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">MIL ID #</label>
+          <input
+            type="text"
+            value={form.milIdNumber}
+            onChange={(e) => set("milIdNumber")(e.target.value)}
+            placeholder="EDIPI / DoD ID"
+            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+          />
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">MOS</label>
+          <select
+            value={form.mos}
+            onChange={(e) => set("mos")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+          >
+            {MOS_SORTED.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.code} — {o.title}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -121,9 +175,14 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
   const qc = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState({
-    username: target.username, role: target.role,
-    rank: target.rank || "", assignedUnit: target.assignedUnit || "",
-    password: "", confirm: "",
+    username: target.username,
+    role: target.role,
+    rank: target.rank || "",
+    assignedUnit: target.assignedUnit || "",
+    milIdNumber: target.milIdNumber || "",
+    mos: target.mos || "00",
+    password: "",
+    confirm: "",
   });
 
   const update = useMutation({
@@ -138,6 +197,8 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
     if (form.role !== target.role) payload.role = form.role;
     if (form.rank !== (target.rank || "")) payload.rank = form.rank;
     if (form.assignedUnit !== (target.assignedUnit || "")) payload.assignedUnit = form.assignedUnit;
+    if (form.milIdNumber !== (target.milIdNumber || "")) payload.milIdNumber = form.milIdNumber;
+    if (form.mos !== (target.mos || "00")) payload.mos = form.mos;
     if (form.password) {
       if (form.password !== form.confirm) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
       payload.password = form.password;
@@ -176,6 +237,31 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
             className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
             <option value="">— Unassigned —</option>
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">MIL ID #</label>
+          <input
+            type="text"
+            value={form.milIdNumber}
+            onChange={(e) => set("milIdNumber")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+          />
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">MOS</label>
+          <select
+            value={form.mos}
+            onChange={(e) => set("mos")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+          >
+            {MOS_SORTED.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.code} — {o.title}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -295,6 +381,8 @@ export default function UserManagement() {
           <thead>
             <tr className="border-b border-border text-[10px] text-muted-foreground tracking-[0.12em]">
               <th className="text-left px-4 py-2">USERNAME</th>
+              <th className="text-left px-4 py-2">MIL ID</th>
+              <th className="text-left px-4 py-2">MOS</th>
               <th className="text-left px-4 py-2">RANK</th>
               <th className="text-left px-4 py-2">UNIT</th>
               <th className="text-left px-4 py-2">ROLE</th>
@@ -313,6 +401,21 @@ export default function UserManagement() {
                     <span className="font-mono font-bold tracking-wider">{u.username}</span>
                     {u.username === me?.username && <span className="text-[9px] text-green-500">(YOU)</span>}
                   </div>
+                </td>
+                <td className="px-4 py-3 font-mono text-[10px] text-cyan-400/90" data-label="MIL ID">
+                  {u.milIdNumber?.trim() ? u.milIdNumber : <span className="text-muted-foreground/40">—</span>}
+                </td>
+                <td className="px-4 py-3 max-w-[min(200px,40vw)]" data-label="MOS">
+                  {u.mos && u.mos !== "00" ? (
+                    <div>
+                      <span className="font-mono font-bold text-xs text-purple-400/90">{u.mos}</span>
+                      <div className="text-[9px] text-muted-foreground leading-snug line-clamp-2">
+                        {US_ARMY_MOS_BY_CODE.get(u.mos) || ""}
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-[10px]">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3" data-label="RANK">
                   {u.rank ? (
@@ -354,7 +457,7 @@ export default function UserManagement() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
             )}
           </tbody>
         </table>

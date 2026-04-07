@@ -23,7 +23,8 @@ export function FitBoundsOnBounds({
   useEffect(() => {
     if (!bounds.isValid()) return;
     const target = padFraction > 0 ? bounds.pad(padFraction) : bounds;
-    map.fitBounds(target, { padding: [20, 20], maxZoom: 12, animate: false });
+    // No maxZoom cap — large terrain must be able to zoom out far enough to show the full extent.
+    map.fitBounds(target, { padding: [36, 36], animate: false });
   }, [map, bounds, padFraction]);
   return null;
 }

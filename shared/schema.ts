@@ -10,6 +10,10 @@ export const users = sqliteTable("users", {
   role: text("role").notNull().default("user"), // owner | admin | user
   rank: text("rank").default(""),              // Military rank e.g. SGT, CPT, LTC
   assignedUnit: text("assigned_unit").default(""), // Callsign of assigned unit
+  /** DoD / service personnel identifier (display in user management). */
+  milIdNumber: text("mil_id_number").default(""),
+  /** US Army MOS code (see US_ARMY_MOS_OPTIONS). */
+  mos: text("mos").default(""),
   createdAt: text("created_at").notNull(),
   lastLogin: text("last_login").default(""),
 });

@@ -7,6 +7,8 @@ interface AuthUser {
   role: string;
   rank: string;
   assignedUnit: string;
+  milIdNumber: string;
+  mos: string;
 }
 
 interface AuthContextType {

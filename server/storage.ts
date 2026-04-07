@@ -112,6 +112,8 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS idx_tacmarkers_map ON tactical_map_markers(map_key);
 `);
 try { sqlite.exec(`ALTER TABLE tactical_map_markers ADD COLUMN affiliation TEXT NOT NULL DEFAULT 'unknown'`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN mil_id_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN mos TEXT NOT NULL DEFAULT ''`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_lines (
@@ -435,7 +437,12 @@ export interface IStorage {
   getUsers(): Omit<User, "passwordHash">[];
   getUserById(id: number): User | undefined;
   getUserByUsername(username: string): User | undefined;
-  createUser(username: string, password: string, role: string): User;
+  createUser(
+    username: string,
+    password: string,
+    role: string,
+    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
+  ): User;
   deleteUser(id: number): void;
   updateLastLogin(id: number): void;
   updateUserById(id: number, updates: Partial<User>): User | undefined;
@@ -724,6 +731,8 @@ export class Storage implements IStorage {
       role: schema.users.role,
       rank: schema.users.rank,
       assignedUnit: schema.users.assignedUnit,
+      milIdNumber: schema.users.milIdNumber,
+      mos: schema.users.mos,
       createdAt: schema.users.createdAt,
       lastLogin: schema.users.lastLogin,
     }).from(schema.users).all();
@@ -734,12 +743,21 @@ export class Storage implements IStorage {
   getUserByUsername(username: string) {
     return db.select().from(schema.users).where(eq(schema.users.username, username)).get();
   }
-  createUser(username: string, password: string, role: string) {
+  createUser(
+    username: string,
+    password: string,
+    role: string,
+    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
+  ) {
     const hash = bcrypt.hashSync(password, 10);
     return db.insert(schema.users).values({
       username,
       passwordHash: hash,
       role,
+      rank: profile?.rank ?? "",
+      assignedUnit: profile?.assignedUnit ?? "",
+      milIdNumber: profile?.milIdNumber ?? "",
+      mos: profile?.mos ?? "",
       createdAt: new Date().toISOString(),
       lastLogin: "",
     }).returning().get();

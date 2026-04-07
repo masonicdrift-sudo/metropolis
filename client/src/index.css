@@ -117,6 +117,18 @@
   cursor: grabbing;
 }
 
+/* Permanent labels on structure polygons (tactical map) */
+.leaflet-tooltip.tac-building-tooltip {
+  background: rgba(15, 23, 42, 0.88);
+  color: hsl(210 40% 96%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
 /* ── Scan-line overlay ─────────────────────────────────────────── */
 .scanlines::before {
   content: '';

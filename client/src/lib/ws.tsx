@@ -104,6 +104,22 @@ export function WSProvider({ children }: { children: ReactNode }) {
             }
             return;
           }
+          if (msg.type === "TACTICAL_RANGE_RINGS") {
+            if (typeof msg.mapKey === "string" && msg.mapKey.length > 0) {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-range-rings", msg.mapKey] });
+            } else {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-range-rings"] });
+            }
+            return;
+          }
+          if (msg.type === "TACTICAL_BUILDING_LABELS") {
+            if (typeof msg.mapKey === "string" && msg.mapKey.length > 0) {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-building-labels", msg.mapKey] });
+            } else {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-building-labels"] });
+            }
+            return;
+          }
           if (msg.type === "MENTION") {
             const who = typeof msg.fromUsername === "string" ? msg.fromUsername : "Someone";
             const scopeLabel =

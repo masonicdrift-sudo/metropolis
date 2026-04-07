@@ -398,3 +398,38 @@ export type TacticalMapLineRow = typeof tacticalMapLines.$inferSelect;
 export type TacticalMapLine = Omit<TacticalMapLineRow, "pointsJson"> & {
   points: [number, number][];
 };
+
+// ─── Tactical map range rings (game X/Z meters, radius in meters) ───────────
+export const tacticalMapRangeRings = sqliteTable("tactical_map_range_rings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapKey: text("map_key").notNull(),
+  centerX: real("center_x").notNull(),
+  centerZ: real("center_z").notNull(),
+  radiusMeters: real("radius_meters").notNull(),
+  label: text("label").notNull().default(""),
+  color: text("color").notNull().default("#a855f7"),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export const insertTacticalMapRangeRingSchema = createInsertSchema(
+  tacticalMapRangeRings,
+).omit({ id: true, createdAt: true, createdBy: true });
+export type InsertTacticalMapRangeRing = z.infer<typeof insertTacticalMapRangeRingSchema>;
+export type TacticalMapRangeRing = typeof tacticalMapRangeRings.$inferSelect;
+
+// ─── Tactical map building overlays (structure polygon label + fill; per map, shared) ──
+export const tacticalMapBuildingLabels = sqliteTable("tactical_map_building_labels", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapKey: text("map_key").notNull(),
+  featureKey: text("feature_key").notNull(),
+  label: text("label").notNull().default(""),
+  fillColor: text("fill_color").notNull().default("#64748b"),
+  strokeColor: text("stroke_color").notNull().default("#94a3b8"),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export const insertTacticalMapBuildingLabelSchema = createInsertSchema(
+  tacticalMapBuildingLabels,
+).omit({ id: true, createdAt: true, createdBy: true });
+export type InsertTacticalMapBuildingLabel = z.infer<typeof insertTacticalMapBuildingLabelSchema>;
+export type TacticalMapBuildingLabel = typeof tacticalMapBuildingLabels.$inferSelect;

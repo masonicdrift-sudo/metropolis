@@ -60,6 +60,26 @@ export function FitBoundsDebouncedOncePerMap({
   return null;
 }
 
+/** Mobile Safari / flex layouts often report 0×0 until late; Leaflet needs invalidateSize after layout. */
+export function InvalidateMapSizeOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    const invalidate = () => {
+      map.invalidateSize({ animate: false });
+    };
+    invalidate();
+    const ro = new ResizeObserver(() => invalidate());
+    ro.observe(el);
+    window.addEventListener("orientationchange", invalidate);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("orientationchange", invalidate);
+    };
+  }, [map]);
+  return null;
+}
+
 /** Game-space grid (X = lng, Z = lat) in meters; updates on pan/zoom. */
 export function GameGridOverlay({
   enabled,

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
 import type {
@@ -24,6 +24,8 @@ import type {
   TrainingRecord, InsertTraining,
   Broadcast, InsertBroadcast,
   TacticalMapMarker,
+  TacticalMapRangeRing,
+  TacticalMapBuildingLabel,
 } from "@shared/schema";
 import type { TacticalMapLine, TacticalMapLineRow } from "@shared/schema";
 
@@ -126,6 +128,36 @@ sqlite.exec(`
     created_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_taclines_map ON tactical_map_lines(map_key);
+`);
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS tactical_map_range_rings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_key TEXT NOT NULL,
+    center_x REAL NOT NULL,
+    center_z REAL NOT NULL,
+    radius_meters REAL NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT '#a855f7',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_tacrings_map ON tactical_map_range_rings(map_key);
+`);
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS tactical_map_building_labels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_key TEXT NOT NULL,
+    feature_key TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    fill_color TEXT NOT NULL DEFAULT '#64748b',
+    stroke_color TEXT NOT NULL DEFAULT '#94a3b8',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(map_key, feature_key)
+  );
+  CREATE INDEX IF NOT EXISTS idx_tacbuildings_map ON tactical_map_building_labels(map_key);
 `);
 
 // New feature tables
@@ -1063,6 +1095,138 @@ export class Storage implements IStorage {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapLines).where(eq(schema.tacticalMapLines.id, id)).run();
+    return { ok: true, mapKey: row.mapKey };
+  }
+
+  getTacticalRangeRings(mapKey: string): TacticalMapRangeRing[] {
+    return db
+      .select()
+      .from(schema.tacticalMapRangeRings)
+      .where(eq(schema.tacticalMapRangeRings.mapKey, mapKey))
+      .orderBy(desc(schema.tacticalMapRangeRings.id))
+      .all();
+  }
+
+  createTacticalRangeRing(
+    row: Omit<TacticalMapRangeRing, "id">,
+  ): TacticalMapRangeRing {
+    return db.insert(schema.tacticalMapRangeRings).values(row).returning().get()!;
+  }
+
+  tryUpdateTacticalRangeRing(
+    id: number,
+    patch: Partial<Pick<TacticalMapRangeRing, "centerX" | "centerZ" | "radiusMeters" | "label" | "color">>,
+    username: string,
+    role: string,
+  ):
+    | { ok: true; ring: TacticalMapRangeRing; mapKey: string }
+    | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db
+      .select()
+      .from(schema.tacticalMapRangeRings)
+      .where(eq(schema.tacticalMapRangeRings.id, id))
+      .get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    const ring = db
+      .update(schema.tacticalMapRangeRings)
+      .set(patch)
+      .where(eq(schema.tacticalMapRangeRings.id, id))
+      .returning()
+      .get();
+    if (!ring) return { ok: false, reason: "not_found" };
+    return { ok: true, ring, mapKey: row.mapKey };
+  }
+
+  tryDeleteTacticalRangeRing(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db
+      .select()
+      .from(schema.tacticalMapRangeRings)
+      .where(eq(schema.tacticalMapRangeRings.id, id))
+      .get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    db.delete(schema.tacticalMapRangeRings).where(eq(schema.tacticalMapRangeRings.id, id)).run();
+    return { ok: true, mapKey: row.mapKey };
+  }
+
+  getTacticalBuildingLabels(mapKey: string): TacticalMapBuildingLabel[] {
+    return db
+      .select()
+      .from(schema.tacticalMapBuildingLabels)
+      .where(eq(schema.tacticalMapBuildingLabels.mapKey, mapKey))
+      .orderBy(desc(schema.tacticalMapBuildingLabels.id))
+      .all();
+  }
+
+  upsertTacticalBuildingLabel(row: {
+    mapKey: string;
+    featureKey: string;
+    label: string;
+    fillColor: string;
+    strokeColor: string;
+    createdBy: string;
+    createdAt: string;
+  }): TacticalMapBuildingLabel {
+    sqlite
+      .prepare(
+        `INSERT INTO tactical_map_building_labels (map_key, feature_key, label, fill_color, stroke_color, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(map_key, feature_key) DO UPDATE SET
+           label = excluded.label,
+           fill_color = excluded.fill_color,
+           stroke_color = excluded.stroke_color,
+           created_at = excluded.created_at`,
+      )
+      .run(
+        row.mapKey,
+        row.featureKey,
+        row.label,
+        row.fillColor,
+        row.strokeColor,
+        row.createdBy,
+        row.createdAt,
+      );
+    const found = db
+      .select()
+      .from(schema.tacticalMapBuildingLabels)
+      .where(
+        and(
+          eq(schema.tacticalMapBuildingLabels.mapKey, row.mapKey),
+          eq(schema.tacticalMapBuildingLabels.featureKey, row.featureKey),
+        ),
+      )
+      .get();
+    if (!found) throw new Error("upsert tactical building label failed");
+    return found;
+  }
+
+  tryDeleteTacticalBuildingLabel(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db
+      .select()
+      .from(schema.tacticalMapBuildingLabels)
+      .where(eq(schema.tacticalMapBuildingLabels.id, id))
+      .get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    db.delete(schema.tacticalMapBuildingLabels).where(eq(schema.tacticalMapBuildingLabels.id, id)).run();
     return { ok: true, mapKey: row.mapKey };
   }
 }

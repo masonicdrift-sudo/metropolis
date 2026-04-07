@@ -1,14 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import L from "leaflet";
-import { MapContainer, GeoJSON, Marker, Polyline, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  GeoJSON,
+  Marker,
+  Polygon,
+  Polyline,
+  Tooltip,
+  useMapEvents,
+} from "react-leaflet";
 import ms from "milsymbol";
 import "leaflet/dist/leaflet.css";
 
 import { useAuth } from "@/lib/auth";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { matchesMobileShell, useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest } from "@/lib/queryClient";
-import type { TacticalMapLine, TacticalMapMarker } from "@shared/schema";
+import type {
+  TacticalMapBuildingLabel,
+  TacticalMapLine,
+  TacticalMapMarker,
+  TacticalMapRangeRing,
+} from "@shared/schema";
+import {
+  findBuildingFeatureAt,
+  stableFeatureKey,
+  type GeoJsonFeatureLike,
+} from "@/lib/tacticalBuildings";
 import { useToast } from "@/hooks/use-toast";
 import type { TacAffiliation } from "@shared/natoSidc";
 import {
@@ -19,6 +37,7 @@ import {
 import {
   FitBoundsDebouncedOncePerMap,
   GameGridOverlay,
+  InvalidateMapSizeOnResize,
   MapCursorCoords,
 } from "@/components/tactical/TacticalLeafletExtras";
 import { Button } from "@/components/ui/button";
@@ -64,6 +83,8 @@ import {
   MapPinned,
   AlertTriangle,
   PenLine,
+  Target,
+  Building2,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -106,21 +127,61 @@ function symbolSvg(
   return new ms.Symbol(sidc, opts).asSVG();
 }
 
+/** Closed ring in game X/Z plane; Leaflet lat = Z, lng = X. */
+function rangeRingLatLngs(
+  centerX: number,
+  centerZ: number,
+  radiusM: number,
+  segments = 72,
+): L.LatLngTuple[] {
+  const out: L.LatLngTuple[] = [];
+  const r = Math.max(1, radiusM);
+  for (let i = 0; i <= segments; i++) {
+    const t = (i / segments) * 2 * Math.PI;
+    const x = centerX + r * Math.cos(t);
+    const z = centerZ + r * Math.sin(t);
+    out.push([z, x]);
+  }
+  return out;
+}
+
+function tacMarkerCaption(
+  m: TacticalMapMarker,
+  catalogRows: { value: string; label: string }[],
+): string {
+  const t = m.label?.trim();
+  if (t) return t;
+  if (m.markerType.startsWith("custom:")) return "Custom SIDC";
+  const row = catalogRows.find((r) => r.value === m.markerType);
+  if (row) return row.label;
+  return m.markerType.replace(/_/g, " ");
+}
+
 function MapInteractionHandler({
   placeEnabled,
   lineEnabled,
+  ringEnabled,
+  buildingEnabled,
   onPlaceClick,
   onLineClick,
+  onRingClick,
+  onBuildingClick,
 }: {
   placeEnabled: boolean;
   lineEnabled: boolean;
+  ringEnabled: boolean;
+  buildingEnabled: boolean;
   onPlaceClick: (ll: L.LatLng) => void;
   onLineClick: (ll: L.LatLng) => void;
+  onRingClick: (ll: L.LatLng) => void;
+  onBuildingClick: (ll: L.LatLng) => void;
 }) {
   useMapEvents({
     click(e) {
       if (placeEnabled) onPlaceClick(e.latlng);
       else if (lineEnabled) onLineClick(e.latlng);
+      else if (ringEnabled) onRingClick(e.latlng);
+      else if (buildingEnabled) onBuildingClick(e.latlng);
     },
   });
   return null;
@@ -205,6 +266,26 @@ function canDeleteLine(
   return role === "admin" || role === "owner";
 }
 
+function canDeleteRangeRing(
+  ring: TacticalMapRangeRing,
+  username: string | undefined,
+  role: string | undefined,
+): boolean {
+  if (!username) return false;
+  if (ring.createdBy === username) return true;
+  return role === "admin" || role === "owner";
+}
+
+function canDeleteBuildingLabel(
+  row: TacticalMapBuildingLabel,
+  username: string | undefined,
+  role: string | undefined,
+): boolean {
+  if (!username) return false;
+  if (row.createdBy === username) return true;
+  return role === "admin" || role === "owner";
+}
+
 export default function TacticalTerrainMap() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -212,14 +293,26 @@ export default function TacticalTerrainMap() {
   const mobileShell = useIsMobile();
   const [mapKey, setMapKey] = useState<string>("");
   const [meta, setMeta] = useState<TerrainMeta | null>(null);
-  const [layers, setLayers] = useState({
-    water: true,
-    roads: true,
-    pois: true,
-    contours: false,
-    structures: false,
-    grid: true,
-  });
+  /** Large maps (e.g. Anizay) ship huge GeoJSON; mobile Safari OOMs / hangs on full parse + bounds walk. */
+  const [layers, setLayers] = useState(() =>
+    typeof window !== "undefined" && matchesMobileShell()
+      ? {
+          water: false,
+          roads: false,
+          pois: false,
+          contours: false,
+          structures: false,
+          grid: true,
+        }
+      : {
+          water: true,
+          roads: true,
+          pois: true,
+          contours: false,
+          structures: false,
+          grid: true,
+        },
+  );
   const [geo, setGeo] = useState<{
     water?: Fc;
     roads?: Fc;
@@ -236,6 +329,23 @@ export default function TacticalTerrainMap() {
   const [lineVertices, setLineVertices] = useState<[number, number][]>([]);
   const [lineDialogOpen, setLineDialogOpen] = useState(false);
   const [lineForm, setLineForm] = useState({ label: "", color: "#38bdf8" });
+  const [ringMode, setRingMode] = useState(false);
+  const [ringDialogOpen, setRingDialogOpen] = useState(false);
+  const [ringPending, setRingPending] = useState<L.LatLng | null>(null);
+  const [ringForm, setRingForm] = useState({
+    radiusMeters: "1000",
+    label: "",
+    color: "#a855f7",
+  });
+  const [buildingMode, setBuildingMode] = useState(false);
+  const [buildingDialogOpen, setBuildingDialogOpen] = useState(false);
+  const [buildingEdit, setBuildingEdit] = useState<{
+    featureKey: string;
+    label: string;
+    fillColor: string;
+    strokeColor: string;
+    rowId?: number;
+  } | null>(null);
   const [form, setForm] = useState<{
     affiliation: TacAffiliation;
     markerType: string;
@@ -369,6 +479,13 @@ export default function TacticalTerrainMap() {
     setLineDrawMode(false);
     setLineVertices([]);
     setLineDialogOpen(false);
+    setRingMode(false);
+    setRingDialogOpen(false);
+    setRingPending(null);
+    setRingForm({ radiusMeters: "1000", label: "", color: "#a855f7" });
+    setBuildingMode(false);
+    setBuildingDialogOpen(false);
+    setBuildingEdit(null);
   }, [mapKey]);
 
   const fetchLayer = useCallback(async (fileSuffix: string): Promise<Fc | null> => {
@@ -451,17 +568,30 @@ export default function TacticalTerrainMap() {
     return L.latLngBounds(L.latLng(0, 0), L.latLng(mz, mx));
   }, [meta]);
 
-  /** Union metadata bounds with all loaded GeoJSON so the view includes full vector data. */
+  /**
+   * Union metadata bounds with loaded GeoJSON extents (desktop).
+   * On mobile, skip walking GeoJSON — large exports (Anizay) freeze the main thread for seconds.
+   */
   const combinedBounds = useMemo(() => {
     const b = L.latLngBounds(bounds.getSouthWest(), bounds.getNorthEast());
-    extendBoundsFromGeoJSON(geo.water, b);
-    extendBoundsFromGeoJSON(geo.roads, b);
-    extendBoundsFromGeoJSON(geo.pois, b);
-    extendBoundsFromGeoJSON(geo.contours, b);
-    extendBoundsFromGeoJSON(geo.structures, b);
+    if (!mobileShell) {
+      extendBoundsFromGeoJSON(geo.water, b);
+      extendBoundsFromGeoJSON(geo.roads, b);
+      extendBoundsFromGeoJSON(geo.pois, b);
+      extendBoundsFromGeoJSON(geo.contours, b);
+      extendBoundsFromGeoJSON(geo.structures, b);
+    }
     if (!b.isValid()) return bounds;
     return b;
-  }, [bounds, geo.water, geo.roads, geo.pois, geo.contours, geo.structures]);
+  }, [
+    bounds,
+    mobileShell,
+    geo.water,
+    geo.roads,
+    geo.pois,
+    geo.contours,
+    geo.structures,
+  ]);
 
   const { data: markers = [], isLoading: markersLoading } = useQuery<TacticalMapMarker[]>({
     queryKey: ["/api/tactical-markers", mapKey],
@@ -476,6 +606,28 @@ export default function TacticalTerrainMap() {
       apiRequest("GET", `/api/tactical-lines?mapKey=${encodeURIComponent(mapKey)}`),
     enabled: !!mapKey,
   });
+
+  const { data: rangeRings = [], isLoading: ringsLoading } = useQuery<TacticalMapRangeRing[]>({
+    queryKey: ["/api/tactical-range-rings", mapKey],
+    queryFn: () =>
+      apiRequest("GET", `/api/tactical-range-rings?mapKey=${encodeURIComponent(mapKey)}`),
+    enabled: !!mapKey,
+  });
+
+  const { data: buildingLabels = [], isLoading: buildingLabelsLoading } = useQuery<
+    TacticalMapBuildingLabel[]
+  >({
+    queryKey: ["/api/tactical-building-labels", mapKey],
+    queryFn: () =>
+      apiRequest("GET", `/api/tactical-building-labels?mapKey=${encodeURIComponent(mapKey)}`),
+    enabled: !!mapKey,
+  });
+
+  const buildingOverlayByKey = useMemo(() => {
+    const m = new Map<string, TacticalMapBuildingLabel>();
+    for (const b of buildingLabels) m.set(b.featureKey, b);
+    return m;
+  }, [buildingLabels]);
 
   const createMut = useMutation({
     mutationFn: (body: {
@@ -554,6 +706,54 @@ export default function TacticalTerrainMap() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-lines", mapKey] }),
   });
 
+  const createRingMut = useMutation({
+    mutationFn: (body: {
+      mapKey: string;
+      centerX: number;
+      centerZ: number;
+      radiusMeters: number;
+      label: string;
+      color: string;
+    }) => apiRequest("POST", "/api/tactical-range-rings", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tactical-range-rings", mapKey] });
+      setRingDialogOpen(false);
+      setRingPending(null);
+      setRingMode(false);
+      setRingForm({ radiusMeters: "1000", label: "", color: "#a855f7" });
+    },
+  });
+
+  const deleteRingMut = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/tactical-range-rings/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-range-rings", mapKey] }),
+  });
+
+  const upsertBuildingLabelMut = useMutation({
+    mutationFn: (body: {
+      mapKey: string;
+      featureKey: string;
+      label: string;
+      fillColor: string;
+      strokeColor: string;
+    }) => apiRequest("POST", "/api/tactical-building-labels", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tactical-building-labels", mapKey] });
+      setBuildingDialogOpen(false);
+      setBuildingEdit(null);
+      setBuildingMode(false);
+    },
+  });
+
+  const deleteBuildingLabelMut = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/tactical-building-labels/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tactical-building-labels", mapKey] });
+      setBuildingDialogOpen(false);
+      setBuildingEdit(null);
+    },
+  });
+
   const onMapPlaceClick = (ll: L.LatLng) => {
     setPending(ll);
     setDialogOpen(true);
@@ -561,6 +761,79 @@ export default function TacticalTerrainMap() {
 
   const onMapLineClick = (ll: L.LatLng) => {
     setLineVertices((v) => [...v, [ll.lng, ll.lat]]);
+  };
+
+  const onMapRingClick = (ll: L.LatLng) => {
+    setRingPending(ll);
+    setRingDialogOpen(true);
+  };
+
+  const onBuildingMapClick = useCallback(
+    (ll: L.LatLng) => {
+      if (!layers.structures || !geo.structures) {
+        toast({
+          title: "Enable Structures",
+          description: "Turn on the Structures map layer, then click a building footprint.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const hit = findBuildingFeatureAt(
+        geo.structures as { type: "FeatureCollection"; features: unknown[] },
+        ll.lng,
+        ll.lat,
+      );
+      if (!hit) {
+        toast({
+          title: "No building here",
+          description: "Click inside a structure polygon from the terrain export.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const existing = buildingOverlayByKey.get(hit.featureKey);
+      setBuildingEdit({
+        featureKey: hit.featureKey,
+        label: existing?.label ?? "",
+        fillColor: existing?.fillColor ?? "#64748b",
+        strokeColor: existing?.strokeColor ?? "#94a3b8",
+        rowId: existing?.id,
+      });
+      setBuildingDialogOpen(true);
+    },
+    [layers.structures, geo.structures, buildingOverlayByKey, toast],
+  );
+
+  const submitBuildingLabel = () => {
+    if (!buildingEdit || !mapKey) return;
+    upsertBuildingLabelMut.mutate({
+      mapKey,
+      featureKey: buildingEdit.featureKey,
+      label: buildingEdit.label.trim(),
+      fillColor: buildingEdit.fillColor,
+      strokeColor: buildingEdit.strokeColor,
+    });
+  };
+
+  const submitRangeRing = () => {
+    if (!ringPending || !mapKey) return;
+    const r = Number(ringForm.radiusMeters);
+    if (!Number.isFinite(r) || r < 1 || r > 500_000) {
+      toast({
+        title: "Invalid radius",
+        description: "Enter radius in meters (1–500000).",
+        variant: "destructive",
+      });
+      return;
+    }
+    createRingMut.mutate({
+      mapKey,
+      centerX: ringPending.lng,
+      centerZ: ringPending.lat,
+      radiusMeters: r,
+      label: ringForm.label.trim(),
+      color: ringForm.color,
+    });
   };
 
   const submitMarker = () => {
@@ -709,6 +982,9 @@ export default function TacticalTerrainMap() {
               onClick={() => {
                 setLineDrawMode(false);
                 setLineVertices([]);
+                setRingMode(false);
+                setRingPending(null);
+                setBuildingMode(false);
                 setPlaceMode((p) => !p);
                 if (placeMode) setPending(null);
               }}
@@ -723,6 +999,9 @@ export default function TacticalTerrainMap() {
               onClick={() => {
                 setPlaceMode(false);
                 setPending(null);
+                setRingMode(false);
+                setRingPending(null);
+                setBuildingMode(false);
                 setLineDrawMode((d) => {
                   if (d) setLineVertices([]);
                   return !d;
@@ -732,12 +1011,48 @@ export default function TacticalTerrainMap() {
               <PenLine className="h-3.5 w-3.5" />
               {lineDrawMode ? "DRAWING LINE" : "DRAW LINE"}
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={ringMode ? "default" : "outline"}
+              className="h-11 sm:h-9 w-full sm:w-auto text-[11px] tracking-wider touch-manipulation gap-1.5"
+              onClick={() => {
+                setPlaceMode(false);
+                setPending(null);
+                setLineDrawMode(false);
+                setLineVertices([]);
+                setBuildingMode(false);
+                setRingMode((r) => !r);
+                if (ringMode) setRingPending(null);
+              }}
+            >
+              <Target className="h-3.5 w-3.5" />
+              {ringMode ? "TAP CENTER FOR RING" : "RANGE RING"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={buildingMode ? "default" : "outline"}
+              className="h-11 sm:h-9 w-full sm:w-auto text-[11px] tracking-wider touch-manipulation gap-1.5"
+              onClick={() => {
+                setPlaceMode(false);
+                setPending(null);
+                setLineDrawMode(false);
+                setLineVertices([]);
+                setRingMode(false);
+                setRingPending(null);
+                setBuildingMode((b) => !b);
+              }}
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              {buildingMode ? "TAP BUILDING" : "LABEL BUILDING"}
+            </Button>
           </div>
         </div>
         <p className="text-[9px] text-muted-foreground leading-snug">
           Active: <span className="text-foreground font-mono">{currentLabel}</span>
           {" · "}
-          Drag markers to reposition (any logged-in user) · delete: owner or admin · APP-6 · lines · game X/Z (m).
+          Building labels are shared on this terrain · enable Structures to pick footprints · game X/Z (m).
         </p>
       </div>
 
@@ -753,7 +1068,10 @@ export default function TacticalTerrainMap() {
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>
-          <CollapsibleContent className="px-3 pb-3 pt-0 border-t border-border/60">
+          <CollapsibleContent className="px-3 pb-3 pt-0 border-t border-border/60 space-y-2">
+            <p className="text-[9px] text-muted-foreground leading-snug pt-2">
+              On phones, terrain layers start off — large maps (e.g. Anizay) can overload the browser. Enable water, roads, or POIs one at a time.
+            </p>
             {layerToggles}
           </CollapsibleContent>
         </Collapsible>
@@ -761,7 +1079,9 @@ export default function TacticalTerrainMap() {
         <div className="flex flex-col lg:flex-row gap-3 flex-1 min-h-0 pb-2 md:pb-0">
           <div
             className={`flex-1 rounded border border-border overflow-hidden relative z-0 ${
-              mobileShell ? "min-h-[min(58dvh,560px)]" : "min-h-[420px] lg:min-h-[min(70dvh,720px)]"
+              mobileShell
+                ? "min-h-[max(280px,min(58dvh,560px))]"
+                : "min-h-[420px] lg:min-h-[min(70dvh,720px)]"
             }`}
           >
           {mapKey ? (
@@ -775,9 +1095,12 @@ export default function TacticalTerrainMap() {
               maxZoom={12}
               zoomSnap={0.25}
               className="h-full w-full min-h-[inherit] [&.leaflet-container]:bg-[hsl(150_15%_10%)] [&.leaflet-container]:outline-none"
-              style={{ minHeight: mobileShell ? "min(58dvh,560px)" : 420 }}
+              style={{
+                minHeight: mobileShell ? "max(280px, min(58dvh, 560px))" : 420,
+              }}
               zoomControl
             >
+              <InvalidateMapSizeOnResize />
               <FitBoundsDebouncedOncePerMap
                 mapKey={mapKey}
                 bounds={combinedBounds}
@@ -789,9 +1112,27 @@ export default function TacticalTerrainMap() {
               <MapInteractionHandler
                 placeEnabled={placeMode}
                 lineEnabled={lineDrawMode}
+                ringEnabled={ringMode}
+                buildingEnabled={buildingMode}
                 onPlaceClick={onMapPlaceClick}
                 onLineClick={onMapLineClick}
+                onRingClick={onMapRingClick}
+                onBuildingClick={onBuildingMapClick}
               />
+              {rangeRings.map((rr) => (
+                <Polygon
+                  key={rr.id}
+                  positions={rangeRingLatLngs(rr.centerX, rr.centerZ, rr.radiusMeters)}
+                  pathOptions={{
+                    color: rr.color,
+                    weight: 2,
+                    opacity: 0.92,
+                    fillColor: rr.color,
+                    fillOpacity: 0.07,
+                  }}
+                  interactive={false}
+                />
+              ))}
               {lines.map((ln) => (
                 <Polyline
                   key={ln.id}
@@ -842,13 +1183,32 @@ export default function TacticalTerrainMap() {
               ) : null}
               {geo.structures && layers.structures ? (
                 <GeoJSON
+                  key={`str-${mapKey}-${buildingLabels.length}`}
                   data={geo.structures}
                   coordsToLatLng={gameCoordsToLatLng}
-                  style={() => ({
-                    color: "rgba(148,163,184,0.5)",
-                    weight: 0.5,
-                    fillOpacity: 0.08,
-                  })}
+                  style={(feature) => {
+                    const key = stableFeatureKey(feature as GeoJsonFeatureLike);
+                    const ov = buildingOverlayByKey.get(key);
+                    return {
+                      color: ov?.strokeColor ?? "rgba(148,163,184,0.5)",
+                      weight: ov ? 1.2 : 0.5,
+                      fillColor: ov?.fillColor ?? "rgba(148,163,184,0.45)",
+                      fillOpacity: ov ? 0.4 : 0.08,
+                    };
+                  }}
+                  onEachFeature={(feature, layer) => {
+                    layer.unbindTooltip();
+                    const key = stableFeatureKey(feature as GeoJsonFeatureLike);
+                    const ov = buildingOverlayByKey.get(key);
+                    const t = ov?.label?.trim();
+                    if (t) {
+                      layer.bindTooltip(t, {
+                        permanent: true,
+                        direction: "center",
+                        className: "tac-building-tooltip",
+                      });
+                    }
+                  }}
                 />
               ) : null}
               {geo.pois && layers.pois ? (
@@ -868,6 +1228,7 @@ export default function TacticalTerrainMap() {
               ) : null}
               {markers.map((m) => {
                 const canMove = canDragMarker(user?.username);
+                const cap = tacMarkerCaption(m, natoCatalogRows);
                 return (
                   <Marker
                     key={m.id}
@@ -889,7 +1250,17 @@ export default function TacticalTerrainMap() {
                           }
                         : undefined
                     }
-                  />
+                  >
+                    <Tooltip
+                      permanent
+                      direction="top"
+                      offset={[0, -6]}
+                      opacity={1}
+                      className="tac-marker-tooltip !border-border/80 !bg-black/88 !px-1.5 !py-0.5 !text-[9px] !font-mono !text-green-100 !shadow-md"
+                    >
+                      {cap}
+                    </Tooltip>
+                  </Marker>
                 );
               })}
             </MapContainer>
@@ -937,6 +1308,41 @@ export default function TacticalTerrainMap() {
                     setLineDrawMode(false);
                     setLineVertices([]);
                   }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : null}
+            {ringMode ? (
+              <div className="pointer-events-auto absolute top-2 left-2 right-2 z-[600] flex flex-wrap items-center gap-2 rounded-md border border-border bg-card/95 px-2 py-2 shadow-md backdrop-blur-sm">
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  Tap map for ring center · set radius in dialog (meters)
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-[10px] ml-auto"
+                  onClick={() => {
+                    setRingMode(false);
+                    setRingPending(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : null}
+            {buildingMode ? (
+              <div className="pointer-events-auto absolute top-2 left-2 right-2 z-[600] flex flex-wrap items-center gap-2 rounded-md border border-border bg-card/95 px-2 py-2 shadow-md backdrop-blur-sm">
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  Structures on · tap inside a building footprint to label &amp; color (shared on this map)
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-[10px] ml-auto"
+                  onClick={() => setBuildingMode(false)}
                 >
                   Cancel
                 </Button>
@@ -1005,6 +1411,101 @@ export default function TacticalTerrainMap() {
                             : "Remove (admin/owner)"
                         }
                         onClick={() => deleteMut.mutate(m.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="shrink-0 w-10" aria-hidden />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-border/60 pt-2">
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground px-0.5">
+              RANGE RINGS · {currentLabel}
+            </div>
+            <div className="text-[9px] text-muted-foreground px-0.5">
+              {ringsLoading ? "Loading…" : `${rangeRings.length} rings (m)`}
+            </div>
+            <div className="mt-1 max-h-[min(20dvh,200px)] lg:max-h-[min(24dvh,220px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
+              {rangeRings.map((rr) => {
+                const canDel = canDeleteRangeRing(rr, user?.username, user?.role);
+                return (
+                  <div
+                    key={rr.id}
+                    className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50"
+                  >
+                    <div
+                      className="shrink-0 w-6 h-6 rounded-full border-2 border-dashed"
+                      style={{ borderColor: rr.color }}
+                      title={rr.color}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-purple-300/90 truncate">
+                        {rr.label || `Ring ${rr.radiusMeters.toFixed(0)} m`}
+                      </div>
+                      <div className="text-muted-foreground text-[9px]">
+                        r={rr.radiusMeters.toFixed(0)} m · {rr.createdBy}
+                      </div>
+                    </div>
+                    {canDel ? (
+                      <button
+                        type="button"
+                        className="shrink-0 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                        title="Remove range ring"
+                        onClick={() => deleteRingMut.mutate(rr.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="shrink-0 w-10" aria-hidden />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-border/60 pt-2">
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground px-0.5">
+              BUILDINGS · {currentLabel}
+            </div>
+            <div className="text-[9px] text-muted-foreground px-0.5">
+              {buildingLabelsLoading ? "Loading…" : `${buildingLabels.length} labeled`}
+            </div>
+            <div className="mt-1 max-h-[min(18dvh,180px)] lg:max-h-[min(22dvh,200px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
+              {buildingLabels.map((bl) => {
+                const canDel = canDeleteBuildingLabel(bl, user?.username, user?.role);
+                return (
+                  <div
+                    key={bl.id}
+                    className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50"
+                  >
+                    <div
+                      className="shrink-0 w-6 h-6 rounded border"
+                      style={{
+                        borderColor: bl.strokeColor,
+                        backgroundColor: bl.fillColor,
+                      }}
+                      title={`${bl.fillColor} / ${bl.strokeColor}`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-amber-200/90 truncate">
+                        {bl.label?.trim() || "(no label)"}
+                      </div>
+                      <div className="text-muted-foreground text-[9px] truncate font-mono">
+                        {bl.createdBy}
+                      </div>
+                    </div>
+                    {canDel ? (
+                      <button
+                        type="button"
+                        className="shrink-0 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                        title="Remove building label"
+                        onClick={() => deleteBuildingLabelMut.mutate(bl.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -1300,6 +1801,191 @@ export default function TacticalTerrainMap() {
               disabled={lineVertices.length < 2 || createLineMut.isPending}
             >
               SAVE LINE
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={ringDialogOpen}
+        onOpenChange={(o) => {
+          setRingDialogOpen(o);
+          if (!o) setRingPending(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm tracking-wider">RANGE RING</DialogTitle>
+          </DialogHeader>
+          {ringPending && (
+            <div className="text-[10px] text-muted-foreground font-mono">
+              Center · X {ringPending.lng.toFixed(1)} · Z {ringPending.lat.toFixed(1)}
+            </div>
+          )}
+          <div className="grid gap-3">
+            <div className="space-y-1">
+              <Label className="text-[10px]">RADIUS (METERS)</Label>
+              <Input
+                className="h-9 text-xs font-mono"
+                inputMode="numeric"
+                value={ringForm.radiusMeters}
+                onChange={(e) =>
+                  setRingForm((f) => ({ ...f, radiusMeters: e.target.value }))
+                }
+                placeholder="1000"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">LABEL (OPTIONAL)</Label>
+              <Input
+                className="h-9 text-xs font-mono"
+                value={ringForm.label}
+                onChange={(e) => setRingForm((f) => ({ ...f, label: e.target.value }))}
+                placeholder="Max effective · 155mm · danger close…"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">COLOR</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  className="h-9 w-14 cursor-pointer border border-border p-1 bg-background"
+                  value={ringForm.color}
+                  onChange={(e) => setRingForm((f) => ({ ...f, color: e.target.value }))}
+                />
+                <Input
+                  className="h-9 text-xs font-mono flex-1"
+                  value={ringForm.color}
+                  onChange={(e) => setRingForm((f) => ({ ...f, color: e.target.value }))}
+                  placeholder="#a855f7"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setRingDialogOpen(false);
+                setRingPending(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={submitRangeRing}
+              disabled={!ringPending || createRingMut.isPending}
+            >
+              PLACE RING
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={buildingDialogOpen && !!buildingEdit}
+        onOpenChange={(o) => {
+          setBuildingDialogOpen(o);
+          if (!o) setBuildingEdit(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm tracking-wider">BUILDING LABEL</DialogTitle>
+          </DialogHeader>
+          {buildingEdit && (
+            <div className="grid gap-3">
+              <div className="text-[9px] text-muted-foreground font-mono break-all">
+                feature · {buildingEdit.featureKey}
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">LABEL</Label>
+                <Input
+                  className="h-9 text-xs font-mono"
+                  value={buildingEdit.label}
+                  onChange={(e) =>
+                    setBuildingEdit((b) => (b ? { ...b, label: e.target.value } : b))
+                  }
+                  placeholder="HQ · OBJ ALPHA · cache…"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">FILL</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="color"
+                    className="h-9 w-14 cursor-pointer border border-border p-1 bg-background"
+                    value={buildingEdit.fillColor}
+                    onChange={(e) =>
+                      setBuildingEdit((b) => (b ? { ...b, fillColor: e.target.value } : b))
+                    }
+                  />
+                  <Input
+                    className="h-9 text-xs font-mono flex-1"
+                    value={buildingEdit.fillColor}
+                    onChange={(e) =>
+                      setBuildingEdit((b) => (b ? { ...b, fillColor: e.target.value } : b))
+                    }
+                    placeholder="#64748b"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px]">OUTLINE</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="color"
+                    className="h-9 w-14 cursor-pointer border border-border p-1 bg-background"
+                    value={buildingEdit.strokeColor}
+                    onChange={(e) =>
+                      setBuildingEdit((b) => (b ? { ...b, strokeColor: e.target.value } : b))
+                    }
+                  />
+                  <Input
+                    className="h-9 text-xs font-mono flex-1"
+                    value={buildingEdit.strokeColor}
+                    onChange={(e) =>
+                      setBuildingEdit((b) => (b ? { ...b, strokeColor: e.target.value } : b))
+                    }
+                    placeholder="#94a3b8"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setBuildingDialogOpen(false);
+                setBuildingEdit(null);
+              }}
+            >
+              Cancel
+            </Button>
+            {buildingEdit?.rowId != null &&
+            (() => {
+              const row = buildingLabels.find((b) => b.id === buildingEdit.rowId);
+              return row && canDeleteBuildingLabel(row, user?.username, user?.role) ? (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => deleteBuildingLabelMut.mutate(buildingEdit.rowId!)}
+                  disabled={deleteBuildingLabelMut.isPending}
+                >
+                  Delete
+                </Button>
+              ) : null;
+            })()}
+            <Button
+              size="sm"
+              onClick={submitBuildingLabel}
+              disabled={!buildingEdit || upsertBuildingLabelMut.isPending}
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -12,6 +12,7 @@ import {
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
   ROLE_RANK,
 } from "@shared/schema";
+import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
 import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
 
@@ -98,6 +99,45 @@ const tacticalLinePostSchema = z.object({
     .regex(/^#[0-9A-Fa-f]{3,8}$/)
     .optional()
     .default("#38bdf8"),
+});
+
+const tacticalRangeRingPostSchema = z.object({
+  mapKey: z.string().min(1).max(120),
+  centerX: z.number(),
+  centerZ: z.number(),
+  radiusMeters: z.number().min(1).max(500_000),
+  label: z.string().max(200).optional().default(""),
+  color: z
+    .string()
+    .max(32)
+    .regex(/^#[0-9A-Fa-f]{3,8}$/)
+    .optional()
+    .default("#a855f7"),
+});
+
+const tacticalRangeRingPatchSchema = z.object({
+  centerX: z.number().optional(),
+  centerZ: z.number().optional(),
+  radiusMeters: z.number().min(1).max(500_000).optional(),
+  label: z.string().max(200).optional(),
+  color: z
+    .string()
+    .max(32)
+    .regex(/^#[0-9A-Fa-f]{3,8}$/)
+    .optional(),
+});
+
+const tacticalBuildingLabelPostSchema = z.object({
+  mapKey: z.string().min(1).max(120),
+  featureKey: z.string().min(1).max(256),
+  label: z.string().max(200).optional().default(""),
+  fillColor: z
+    .string()
+    .max(32)
+    .regex(/^#[0-9A-Fa-f]{3,8}$/)
+    .optional()
+    .default("#64748b"),
+  strokeColor: z.string().max(48).optional().default("#94a3b8"),
 });
 
 // Rate limiter: max 10 login attempts per 15 minutes per IP
@@ -1052,6 +1092,126 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Line not found" });
     }
     wsPush("TACTICAL_LINES", { mapKey: result.mapKey });
+    res.status(204).send();
+  });
+
+  app.get("/api/tactical-range-rings", requireAuth, (req, res) => {
+    const raw = req.query.mapKey;
+    const mapKey =
+      typeof raw === "string"
+        ? raw
+        : Array.isArray(raw) && typeof raw[0] === "string"
+          ? raw[0]
+          : "";
+    if (!mapKey) return res.status(400).json({ error: "mapKey query required" });
+    res.json(storage.getTacticalRangeRings(mapKey));
+  });
+
+  app.post("/api/tactical-range-rings", requireAuth, (req, res) => {
+    const parsed = tacticalRangeRingPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const b = parsed.data;
+    const ring = storage.createTacticalRangeRing({
+      mapKey: b.mapKey,
+      centerX: b.centerX,
+      centerZ: b.centerZ,
+      radiusMeters: b.radiusMeters,
+      label: b.label.trim(),
+      color: b.color,
+      createdBy: req.session.username!,
+      createdAt: new Date().toISOString(),
+    });
+    wsPush("TACTICAL_RANGE_RINGS", { mapKey: b.mapKey });
+    res.status(201).json(ring);
+  });
+
+  app.patch("/api/tactical-range-rings/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = tacticalRangeRingPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const d = parsed.data;
+    const updates: Partial<
+      Pick<TacticalMapRangeRing, "centerX" | "centerZ" | "radiusMeters" | "label" | "color">
+    > = {};
+    if (d.centerX !== undefined) updates.centerX = d.centerX;
+    if (d.centerZ !== undefined) updates.centerZ = d.centerZ;
+    if (d.radiusMeters !== undefined) updates.radiusMeters = d.radiusMeters;
+    if (d.label !== undefined) updates.label = d.label.trim();
+    if (d.color !== undefined) updates.color = d.color;
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+    const result = storage.tryUpdateTacticalRangeRing(
+      id,
+      updates,
+      req.session.username!,
+      req.session.role || "",
+    );
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the author or an admin/owner can edit this range ring" });
+      }
+      return res.status(404).json({ error: "Range ring not found" });
+    }
+    wsPush("TACTICAL_RANGE_RINGS", { mapKey: result.mapKey });
+    res.json(result.ring);
+  });
+
+  app.delete("/api/tactical-range-rings/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const result = storage.tryDeleteTacticalRangeRing(id, req.session.username!, req.session.role || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the author or an admin/owner can remove this range ring" });
+      }
+      return res.status(404).json({ error: "Range ring not found" });
+    }
+    wsPush("TACTICAL_RANGE_RINGS", { mapKey: result.mapKey });
+    res.status(204).send();
+  });
+
+  app.get("/api/tactical-building-labels", requireAuth, (req, res) => {
+    const raw = req.query.mapKey;
+    const mapKey =
+      typeof raw === "string"
+        ? raw
+        : Array.isArray(raw) && typeof raw[0] === "string"
+          ? raw[0]
+          : "";
+    if (!mapKey) return res.status(400).json({ error: "mapKey query required" });
+    res.json(storage.getTacticalBuildingLabels(mapKey));
+  });
+
+  app.post("/api/tactical-building-labels", requireAuth, (req, res) => {
+    const parsed = tacticalBuildingLabelPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const b = parsed.data;
+    const row = storage.upsertTacticalBuildingLabel({
+      mapKey: b.mapKey,
+      featureKey: b.featureKey,
+      label: b.label.trim(),
+      fillColor: b.fillColor,
+      strokeColor: b.strokeColor,
+      createdBy: req.session.username!,
+      createdAt: new Date().toISOString(),
+    });
+    wsPush("TACTICAL_BUILDING_LABELS", { mapKey: b.mapKey });
+    res.status(201).json(row);
+  });
+
+  app.delete("/api/tactical-building-labels/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const result = storage.tryDeleteTacticalBuildingLabel(id, req.session.username!, req.session.role || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the author or an admin/owner can remove this label" });
+      }
+      return res.status(404).json({ error: "Building label not found" });
+    }
+    wsPush("TACTICAL_BUILDING_LABELS", { mapKey: result.mapKey });
     res.status(204).send();
   });
 

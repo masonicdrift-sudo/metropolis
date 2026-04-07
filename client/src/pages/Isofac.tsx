@@ -7,6 +7,7 @@ import {
   FileText, Plus, Trash2, Edit, Paperclip, X,
   Eye, Shield, AlertTriangle, Target, Map,
   Crosshair, Activity, BookOpen, Save, Upload, ChevronDown, ChevronRight, Radio,
+  NotebookTabs, ListOrdered, Users, IdCard, ListChecks, Satellite,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +36,13 @@ const DOC_TYPES = [
   { value: "CASEVAC_PLAN",  label: "CASEVAC PLAN",       icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "SUPPORT" },
   { value: "LOGSTAT",       label: "LOG / CSS PLAN",     icon: Activity,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "SUPPORT" },
   // Comms & signal
-  { value: "RADIO_LOG",     label: "RADIO LOG BOOK",     icon: Radio,         color: "text-cyan-400",         bg: "bg-cyan-950/25 border-cyan-900/45",       group: "COMMS" },
+  { value: "RADIO_LOG",           label: "RADIO LOG BOOK",           icon: Radio,         color: "text-cyan-400",   bg: "bg-cyan-950/25 border-cyan-900/45",   group: "COMMS" },
+  { value: "SOI_NET_EXTRACT",     label: "SOI / NET EXTRACT",        icon: NotebookTabs,  color: "text-sky-400",    bg: "bg-sky-950/25 border-sky-900/45",    group: "COMMS" },
+  { value: "CEOI_FREQ_LIST",      label: "CEOI / FREQ WORKSHEET",    icon: ListOrdered,   color: "text-emerald-400", bg: "bg-emerald-950/25 border-emerald-900/45", group: "COMMS" },
+  { value: "NET_ROSTER_CALLSIGNS", label: "NET ROSTER / CALLSIGNS", icon: Users,         color: "text-teal-400",   bg: "bg-teal-950/25 border-teal-900/45",   group: "COMMS" },
+  { value: "OPFREQ_QUICK_CARD",   label: "OPFREQ QUICK CARD",        icon: IdCard,        color: "text-violet-400", bg: "bg-violet-950/25 border-violet-900/45", group: "COMMS" },
+  { value: "COMMS_PRE_COMSEC_CHECK", label: "PRE-COMMS CHECKLIST", icon: ListChecks,    color: "text-amber-400",  bg: "bg-amber-950/25 border-amber-900/45", group: "COMMS" },
+  { value: "SATCOM_HF_LOG",       label: "HF / SATCOM PASS LOG",     icon: Satellite,     color: "text-blue-400",   bg: "bg-blue-950/25 border-blue-900/45",   group: "COMMS" },
   // Admin & Command
   { value: "ROE",           label: "ROE",                icon: BookOpen,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "ADMIN" },
   { value: "EPA",           label: "EVASION PLAN (EPA)", icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "ADMIN" },
@@ -48,7 +55,15 @@ const DOC_GROUPS = [
   { key: "ORDERS",  label: "ORDERS",          types: ["WARNO","OPORD","FRAGORD","OPLAN","CONOP"] },
   { key: "INTEL",   label: "INTELLIGENCE",    types: ["IMINT","HVT_CARD","INTEL_SUMMARY","JIPOE","COA","THREAT_ASSESS","ACE"] },
   { key: "SUPPORT", label: "FIRES & SUPPORT", types: ["ISR_PLAN","FIRE_PLAN","CASEVAC_PLAN","LOGSTAT"] },
-  { key: "COMMS",   label: "COMMS & SIGNAL",  types: ["RADIO_LOG"] },
+  { key: "COMMS",   label: "COMMS & SIGNAL",  types: [
+    "RADIO_LOG",
+    "SOI_NET_EXTRACT",
+    "CEOI_FREQ_LIST",
+    "NET_ROSTER_CALLSIGNS",
+    "OPFREQ_QUICK_CARD",
+    "COMMS_PRE_COMSEC_CHECK",
+    "SATCOM_HF_LOG",
+  ] },
   { key: "ADMIN",   label: "CMD & ADMIN",     types: ["ROE","EPA","OPSEC","REHEARSAL","CUSTOM"] },
 ];
 
@@ -1061,6 +1076,155 @@ REVIEWED BY (NCO/O): ___________________   TIME: __________ Z
 
 ─── CROSS-REFERENCE (optional) ───────────────────────────────────────────
 Link to COMMS tab entries: note message IDs or time blocks for audit trail.
+`,
+
+SOI_NET_EXTRACT: `SIGNAL OPERATING INSTRUCTIONS (SOI) — NET / EXTRACT
+────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: _________   UNIT / NET: __________________   DATE: ____ Z
+REFERENCE: Parent OPORD / CEOI version: _________________________________
+
+PURPOSE: Extract of active nets for this operation (fill only assigned nets).
+
+─── NET A — PRIMARY COMMAND ────────────────────────────────────────────────
+NET NAME: ________________   NET ID: ______   TIME Z: _______________________
+FREQ (TX/RX MHz): _________ / _________   TONE / SQUELCH: ___________________
+CRYPTO / FILL: ___________   KEK / TEK: ____________________________________
+CALLSIGNS: CDR ___  XO ___  RTO ___  ALO ___  FSO ___  OTHER ________________
+CHALLENGE / RESPONSE (if used): _____________________________________________
+RESTRICTED FREQ LIST (prohibited / guard): ___________________________________
+
+─── NET B — TACTICAL ─────────────────────────────────────────────────────────
+NET NAME: ________________   NET ID: ______   TIME Z: _______________________
+FREQ (TX/RX MHz): _________ / _________   MODE: FM / SINCGARS / OTHER ________
+HOPSET / LOCKOUT (if applicable): __________________________________________
+CALLSIGNS: __________________________________________________________________
+
+─── NET C — FIRE SUPPORT / CAS ──────────────────────────────────────────────
+NET NAME: ________________   FREQ: __________   ABORT WORDS: ________________
+
+─── EMISSION CONTROL (EMCON) ────────────────────────────────────────────────
+[ ] Radio silence until H-Hour   [ ] Listen only   [ ] Full duplex as ordered
+NOTES: _______________________________________________________________________
+
+PREPARED BY: _______________________   APPROVED BY: __________________________
+`,
+
+CEOI_FREQ_LIST: `COMMUNICATIONS-ELECTRONICS OPERATING INSTRUCTIONS — FREQ / NET WORKSHEET
+────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: _________   EDITION / DATE: __________   EFFECTIVE: ____ Z
+UNIT: _______________________   OP: __________________   GRID / LOC: _______
+
+Use for hop / net planning; align with SOI and COMSEC fill.
+
+─── TABLE 1 — PRIMARY & ALTERNATE NETS ────────────────────────────────────────
+NET | ROLE        | FREQ (MHz) | MODE / BW | CALLSIGN | REMARKS
+----+-------------+------------+------------+----------+--------
+    | CMD         |            |            |          |
+    | MANEUVER    |            |            |          |
+    | FIRES       |            |            |          |
+    | ISR         |            |            |          |
+    | CSS / LOG   |            |            |          |
+    | AIR / CAS   |            |            |          |
+    | MED / CASEVAC |          |            |          |
+
+─── TABLE 2 — BACKUP / CONTINGENCY ──────────────────────────────────────────
+TRIGGER (loss of primary / EMCON): __________________________________________
+NET | FREQ | CALLSIGN | NOTES
+----+------+----------+------
+    |      |          |
+
+─── COMSEC / KEYS ───────────────────────────────────────────────────────────
+LOAD SET: ________   DATE-TIME GROUP: __________   ZEROIZE TIME / COND: _______
+SINCGARS: FH / SC / OTHER ______   TSK / TEK INDEX: ___________________________
+
+REVIEWED BY (COMMO / S6): __________________   DATE: __________________________
+`,
+
+NET_ROSTER_CALLSIGNS: `NET ROSTER — CALLSIGN & STATION MATRIX (FILLABLE)
+────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: _________   NET: __________________   DATE: ____ Z
+PRIMARY FREQ: _____________ MHz   BACKUP: __________ MHz   ENCRYPT: Y / N
+
+─── STATIONS ────────────────────────────────────────────────────────────────
+# | CALLSIGN | UNIT / ROLE      | STATION ID | REMARKS (freq alt, brevity)
+--+----------+------------------+------------+--------------------------------
+1 |          |                  |            |
+2 |          |                  |            |
+3 |          |                  |            |
+4 |          |                  |            |
+5 |          |                  |            |
+6 |          |                  |            |
+
+─── BREVITY / PROWORDS (NET-SPECIFIC) ───────────────────────────────────────
+WORD / PHRASE | MEANING ON THIS NET
+--------------+----------------------------------------------------------
+              |
+              |
+
+─── RELIEF / CHANGEOVER ───────────────────────────────────────────────────────
+OUTGOING RTO: ______________   INCOMING RTO: ______________   TIME: ____ Z
+`,
+
+OPFREQ_QUICK_CARD: `OPERATIONAL FREQUENCY QUICK CARD (POCKET / VEHICLE)
+────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: _________   UNIT: ________________   UNTIL: ____ Z (or OP END)
+
+PRIMARY CMD:  ______ MHz   MODE: ______   NET: __________   CSGN: ___________
+TACTICAL:     ______ MHz   MODE: ______   NET: __________   CSGN: ___________
+FIRES / CAS:  ______ MHz   MODE: ______   ABORT / CHECK: ____________________
+GUARD / MON:  ______ MHz   NOTES: ___________________________________________
+
+SAR / EMERGENCY (per SOI): ___________________________________________________
+CHALLENGE / RESPONSE (if issued today): _______________________________________
+
+ZEROIZE / DESTRUCT ON: [ ] Capture imminent  [ ] Ordered  [ ] N/A
+`,
+
+COMMS_PRE_COMSEC_CHECK: `PRE-MISSION COMMUNICATIONS & COMSEC CHECKLIST
+────────────────────────────────────────────────────────────────────────────
+UNIT: ________________   MISSION: ________________   DATE: ____ Z   RTO: ______
+
+EQUIPMENT
+[ ] Antenna matched / secured    [ ] Power / battery / vehicle power checked
+[ ] Handset / PTT                [ ] Spares (bat, handset, cable) on board
+[ ] GPS time sync (if required)  [ ] NVG / lighting for night ops
+
+CRYPTO / KEYS
+[ ] Correct fill for period      [ ] KEK / TEK loaded per SOI
+[ ] Zeroization procedure briefed   [ ] CI checklist (no phones, PII)
+
+NET / PLAN
+[ ] Correct SOI / CEOI extract     [ ] Freq / hop / net ID verified
+[ ] Callsign roster current        [ ] EMCON / listen-only rules understood
+
+TESTS
+[ ] Comm check on primary net      [ ] Backup net (if time permits)
+[ ] Flash / priority procedure     [ ] MEDEVAC / CASEVAC freq confirmed
+
+SIGN-OFF: RTO __________________   SL / COMMO __________________   TIME: ____ Z
+`,
+
+SATCOM_HF_LOG: `HF / SATCOM PASS LOG (OPERATOR)
+────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: _________   STATION: ________________   DATE: ____ Z (ALL TIMES Z)
+
+─── PASS SCHEDULE / EXECUTION ────────────────────────────────────────────────
+ASSET | AOS START | AOS END | AZ / EL / POL | FREQ (MHz) | MODE | RESULT
+------+-----------+---------+---------------+------------+------+--------
+SAT   |           |         |               |            |      |
+SAT   |           |         |               |            |      |
+HF    |           |         |               |            |      |
+
+─── LINK QUALITY / NOTES ─────────────────────────────────────────────────────────
+BER / SNR / EIRP (if measured): _____________________________________________
+DROPS / RETRIES: _________________   WORKAROUNDS: _____________________________
+
+─── INCIDENTS ────────────────────────────────────────────────────────────────
+TIME | EVENT (lost lock, jam, wrong key, etc.) | ACTION TAKEN
+-----+------------------------------------------+---------------------------
+     |                                          |
+
+OPERATOR: ______________________   REVIEWED BY: _____________________________
 `,
 
 CUSTOM: `[DOCUMENT TITLE]

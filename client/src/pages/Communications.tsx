@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const MSG_TYPES = [
   "SITREP",
@@ -42,6 +42,174 @@ const priorityColor: Record<string, string> = {
   priority: "border-l-4 border-l-yellow-600 bg-yellow-950/10",
   routine: "border-l-2 border-l-border",
 };
+
+function radioPrecCode(p: string): string {
+  switch (p) {
+    case "flash":
+      return "F";
+    case "immediate":
+      return "IMM";
+    case "priority":
+      return "I";
+    case "routine":
+    default:
+      return "R";
+  }
+}
+
+function padRight(s: string, n: number): string {
+  const t = (s ?? "").toString();
+  return t.length >= n ? t.slice(0, n) : t + " ".repeat(n - t.length);
+}
+
+function hhmmssZ(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+}
+
+function hhmmZ(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}Z`;
+}
+
+// Must match ISOFAC `RADIO_LOG` template verbatim (see `Isofac.tsx`).
+const ISOFAC_RADIO_LOG_TEMPLATE = `RADIO LOG BOOK (ISOFAC)
+─────────────────────────────────────────────────────────────────────────────
+CLASSIFICATION: UNCLASS     OPERATION / NET NAME: _______________________
+STATION / CALLSIGN: _________________   DATE (ZULU): ____/____/__________
+PRIMARY NET: _______________________   FREQ (MHz): ________________________
+BACKUP / ALT: _______________________   ENCRYPT: ___________________________
+LOG KEEPER: _________________________   RELIEF: ___________________________
+
+PURPOSE: Record all radio traffic in order of receipt. Time in ZULU unless
+         SOP dictates local. Use standard brevity; quote verbatim when possible.
+
+─── LOG ENTRIES ─────────────────────────────────────────────────────────
+TIME | FROM | TO | PREC | MESSAGE (TEXT) | INIT | ACK
+( Z )| CSGN | CSGN| R/I/F|                 | SENT | Y/N
+─────┼──────┼─────┼──────┼─────────────────┼──────┼────
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+     |      |     |      |                 |      |
+─────┴──────┴─────┴──────┴─────────────────┴──────┴────
+
+PREC KEY: R=ROUTINE  I=PRIORITY  F=FLASH  IMM=IMMEDIATE (per unit SOP)
+
+─── SPECIAL INSTRUCTIONS / NOTES ─────────────────────────────────────────
+
+RELIEF SIGNATURE: ______________________   TIME: __________ Z
+REVIEWED BY (NCO/O): ___________________   TIME: __________ Z
+
+─── CROSS-REFERENCE (optional) ───────────────────────────────────────────
+Link to COMMS tab entries: note message IDs or time blocks for audit trail.
+`;
+
+function zuluDateForTemplate(d: Date): string {
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const yyyy = String(d.getUTCFullYear());
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+function splitFixed(s: string, width: number): string[] {
+  const t = (s ?? "").toString();
+  const out: string[] = [];
+  for (let i = 0; i < t.length; i += width) out.push(t.slice(i, i + width));
+  return out.length ? out : [""];
+}
+
+function formatRadioLogBook(comms: CommsLog[]): string {
+  const now = new Date();
+  const zuluDate = zuluDateForTemplate(now);
+
+  const tableStart = "─────┼──────┼─────┼──────┼─────────────────┼──────┼────";
+  const tableEnd = "─────┴──────┴─────┴──────┴─────────────────┴──────┴────";
+
+  const tmplLines = ISOFAC_RADIO_LOG_TEMPLATE.split("\n");
+  const startIdx = tmplLines.findIndex((l) => l.includes(tableStart));
+  const endIdx = tmplLines.findIndex((l) => l.includes(tableEnd));
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    // Fallback: should never happen unless template is edited unexpectedly.
+    return ISOFAC_RADIO_LOG_TEMPLATE;
+  }
+
+  // Fill the DATE (ZULU) line while keeping the rest verbatim.
+  for (let i = 0; i < tmplLines.length; i++) {
+    if (tmplLines[i].includes("DATE (ZULU): ____/____/__________")) {
+      tmplLines[i] = tmplLines[i].replace("____/____/__________", zuluDate);
+      break;
+    }
+  }
+
+  // Comms are shown newest-first in UI; radio log reads best oldest-first.
+  const rows = [...comms].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
+
+  // ISOFAC radio log column widths inferred from the template separator:
+  // TIME(5) | FROM(6) | TO(5) | PREC(6) | MESSAGE(17) | INIT(6) | ACK(4)
+  const makeLine = (p: {
+    time?: string;
+    from?: string;
+    to?: string;
+    prec?: string;
+    msg?: string;
+    init?: string;
+    ack?: string;
+  }) =>
+    `${padRight(p.time ?? "", 5)}|${padRight(p.from ?? "", 6)}|${padRight(p.to ?? "", 5)}|${padRight(p.prec ?? "", 6)}|${padRight(p.msg ?? "", 17)}|${padRight(p.init ?? "", 6)}|${padRight(p.ack ?? "", 4)}`;
+
+  const injected: string[] = [];
+  for (const m of rows) {
+    const time = hhmmZ(m.timestamp);
+    const from = (m.fromCallsign || "").toUpperCase();
+    const to = (m.toCallsign || "").toUpperCase();
+    const prec = radioPrecCode(m.priority);
+    const ack = m.acknowledged ? "Y" : "N";
+    // Keep the log compact; message itself may be multi-line (templates), so squash whitespace.
+    const msgRaw = (m.message || "").replace(/\s+/g, " ").trim();
+    const msgWithId = `${msgRaw} [${m.id}]`;
+    const chunks = splitFixed(msgWithId, 17);
+    for (let i = 0; i < chunks.length; i++) {
+      injected.push(
+        makeLine({
+          time: i === 0 ? time : "",
+          from: i === 0 ? from : "",
+          to: i === 0 ? to : "",
+          prec: i === 0 ? prec : "",
+          msg: chunks[i],
+          init: "",
+          ack: i === 0 ? ack : "",
+        }),
+      );
+    }
+  }
+
+  // Replace the blank entry area (between separator lines) with our injected rows.
+  const before = tmplLines.slice(0, startIdx + 1);
+  const after = tmplLines.slice(endIdx);
+  const out = [...before, ...injected, ...after];
+
+  // Add a note to the SPECIAL INSTRUCTIONS block (still within template content).
+  const notesIdx = out.findIndex((l) => l.includes("─── SPECIAL INSTRUCTIONS / NOTES"));
+  if (notesIdx !== -1) {
+    out.splice(
+      notesIdx + 2,
+      0,
+      "AUTO-EXPORT: Entries generated from COMMS → MESSAGE LOG. IDs in brackets cross-reference Comms IDs.",
+      "",
+    );
+  }
+
+  return out.join("\n");
+}
 
 // ── Format template definitions ──────────────────────────────────────────────
 type Field = { key: string; label: string; hint?: string; multiline?: boolean; required?: boolean; options?: string[] };
@@ -575,6 +743,7 @@ export default function Communications() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const isOwner = user?.role === "owner";
   const [form, setForm] = useState<Partial<InsertCommsLog>>({
     channel: "PRIMARY", type: "SITREP", priority: "routine",
@@ -605,6 +774,30 @@ export default function Communications() {
   const ack = useMutation({
     mutationFn: (id: number) => apiRequest("PATCH", `/api/comms/${id}/ack`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/comms"] }),
+  });
+
+  const exportRadioLog = useMutation({
+    mutationFn: async () => {
+      const content = formatRadioLogBook(comms);
+      const now = new Date();
+      const title = `RADIO LOG BOOK — COMMS EXPORT — ${now.toISOString().slice(0, 10)}Z`;
+      return apiRequest("POST", "/api/isofac", {
+        type: "RADIO_LOG",
+        title,
+        classification: "UNCLASS",
+        status: "DRAFT",
+        content,
+        attachments: "[]",
+        tags: "[]",
+        opName: "",
+        targetGrid: "",
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Exported to ISOFAC", description: "Created a RADIO LOG BOOK from the Message Log." });
+      navigate("/isofac");
+    },
+    onError: () => toast({ title: "Export failed", variant: "destructive" }),
   });
 
   const transmit = () => {
@@ -732,6 +925,15 @@ export default function Communications() {
                   </button>
                 ))}
               </div>
+              <button
+                type="button"
+                onClick={() => exportRadioLog.mutate()}
+                disabled={exportRadioLog.isPending || comms.length === 0}
+                className="text-[9px] px-2 py-0.5 rounded border border-cyan-900/40 bg-cyan-950/20 text-cyan-300/90 hover:text-cyan-200 hover:border-cyan-800/60 hover:bg-cyan-950/30 disabled:text-muted-foreground/40 disabled:border-border disabled:bg-secondary/30 flex items-center gap-1 tracking-wider transition-colors shrink-0 touch-manipulation min-h-[28px]"
+                title="Export all messages to ISOFAC → RADIO LOG BOOK"
+              >
+                <FileText size={9} /> EXPORT → ISOFAC
+              </button>
               {isOwner && (
                 confirmClear ? (
                   <div className="flex items-center gap-1 flex-wrap shrink-0">

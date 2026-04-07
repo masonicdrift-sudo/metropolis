@@ -2,23 +2,72 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import type { Unit, Operation, IntelReport, CommsLog, Asset, Threat } from "@shared/schema";
-import { Clock, Activity, AlertTriangle, Radio, Shield, Package, TrendingUp } from "lucide-react";
+import { Activity, AlertTriangle, Radio, Shield, Package, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 type ThreatLevel = "LOW" | "GUARDED" | "ELEVATED" | "HIGH" | "SEVERE";
 
+function shortTimeZoneName(d: Date): string {
+  try {
+    return (
+      Intl.DateTimeFormat(undefined, { timeZoneName: "short" })
+        .formatToParts(d)
+        .find((p) => p.type === "timeZoneName")?.value ?? ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 function LiveClock() {
   const [time, setTime] = useState(new Date());
-  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const z = time.getUTCHours();
+  const localTzId = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const localTzShort = shortTimeZoneName(time);
+
   return (
-    <div className="text-right">
-      <div className="kpi-value text-lg">{pad(z)}{pad(time.getUTCMinutes())}{pad(time.getUTCSeconds())}Z</div>
-      <div className="text-[10px] text-muted-foreground tracking-widest">
-        {time.toUTCString().slice(0, 16).toUpperCase()}
+    <div className="flex flex-col items-end gap-3 min-[480px]:flex-row min-[480px]:items-stretch min-[480px]:gap-5 min-[480px]:justify-end">
+      <div className="text-right min-w-0">
+        <div className="text-[9px] text-muted-foreground tracking-[0.18em]">ZULU (UTC)</div>
+        <div className="kpi-value text-lg tabular-nums">
+          {pad(time.getUTCHours())}
+          {pad(time.getUTCMinutes())}
+          {pad(time.getUTCSeconds())}
+          Z
+        </div>
+        <div className="text-[10px] text-muted-foreground tracking-widest">
+          {time.toUTCString().slice(0, 16).toUpperCase()}
+        </div>
+      </div>
+      <div className="hidden min-[480px]:block w-px shrink-0 bg-border self-stretch min-h-[2.75rem]" aria-hidden />
+      <div className="text-right min-w-0">
+        <div className="text-[9px] text-muted-foreground tracking-[0.18em]">LOCAL</div>
+        <div className="kpi-value text-lg tabular-nums text-foreground/95">
+          {pad(time.getHours())}
+          {pad(time.getMinutes())}
+          {pad(time.getSeconds())}
+          {localTzShort ? (
+            <span className="text-base font-semibold tracking-normal ml-1">{localTzShort}</span>
+          ) : null}
+        </div>
+        <div
+          className="text-[10px] text-muted-foreground tracking-wide max-w-[min(100%,14rem)] min-[480px]:max-w-[16rem] truncate"
+          title={localTzId}
+        >
+          {time.toLocaleDateString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}{" "}
+          · {localTzId.replace(/_/g, " ")}
+        </div>
       </div>
     </div>
   );

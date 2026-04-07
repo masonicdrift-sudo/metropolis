@@ -379,3 +379,18 @@ export const insertTacticalMapMarkerSchema = createInsertSchema(
 ).omit({ id: true, createdAt: true, createdBy: true, sidc: true });
 export type InsertTacticalMapMarker = z.infer<typeof insertTacticalMapMarkerSchema>;
 export type TacticalMapMarker = typeof tacticalMapMarkers.$inferSelect;
+
+// ─── Tactical map polylines (game X/Z in meters, JSON point list) ─────────────
+export const tacticalMapLines = sqliteTable("tactical_map_lines", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mapKey: text("map_key").notNull(),
+  pointsJson: text("points_json").notNull(),
+  label: text("label").notNull().default(""),
+  color: text("color").notNull().default("#38bdf8"),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export type TacticalMapLineRow = typeof tacticalMapLines.$inferSelect;
+export type TacticalMapLine = Omit<TacticalMapLineRow, "pointsJson"> & {
+  points: [number, number][];
+};

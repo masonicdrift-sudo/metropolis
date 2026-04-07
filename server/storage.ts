@@ -25,6 +25,7 @@ import type {
   Broadcast, InsertBroadcast,
   TacticalMapMarker,
 } from "@shared/schema";
+import type { TacticalMapLine, TacticalMapLineRow } from "@shared/schema";
 
 // Use persistent disk path on Render if it exists, fallback to local
 import { existsSync, mkdirSync } from "fs";
@@ -111,6 +112,19 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS idx_tacmarkers_map ON tactical_map_markers(map_key);
 `);
 try { sqlite.exec(`ALTER TABLE tactical_map_markers ADD COLUMN affiliation TEXT NOT NULL DEFAULT 'unknown'`); } catch {}
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS tactical_map_lines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    map_key TEXT NOT NULL,
+    points_json TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT '#38bdf8',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_taclines_map ON tactical_map_lines(map_key);
+`);
 
 // New feature tables
 sqlite.exec(`
@@ -497,6 +511,15 @@ export interface IStorage {
   // Tactical terrain map (NATO markers)
   getTacticalMarkers(mapKey: string): TacticalMapMarker[];
   createTacticalMarker(row: Omit<TacticalMapMarker, "id">): TacticalMapMarker;
+  tryUpdateTacticalMarkerPosition(
+    id: number,
+    gameX: number,
+    gameZ: number,
+    username: string,
+    role: string,
+  ):
+    | { ok: true; marker: TacticalMapMarker; mapKey: string }
+    | { ok: false; reason: "not_found" | "forbidden" };
   tryDeleteTacticalMarker(
     id: number,
     username: string,
@@ -919,6 +942,34 @@ export class Storage implements IStorage {
   createTacticalMarker(row: Omit<TacticalMapMarker, "id">) {
     return db.insert(schema.tacticalMapMarkers).values(row).returning().get()!;
   }
+  tryUpdateTacticalMarkerPosition(
+    id: number,
+    gameX: number,
+    gameZ: number,
+    username: string,
+    role: string,
+  ):
+    | { ok: true; marker: TacticalMapMarker; mapKey: string }
+    | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db
+      .select()
+      .from(schema.tacticalMapMarkers)
+      .where(eq(schema.tacticalMapMarkers.id, id))
+      .get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    const marker = db
+      .update(schema.tacticalMapMarkers)
+      .set({ gameX, gameZ })
+      .where(eq(schema.tacticalMapMarkers.id, id))
+      .returning()
+      .get();
+    if (!marker) return { ok: false, reason: "not_found" };
+    return { ok: true, marker, mapKey: row.mapKey };
+  }
   tryDeleteTacticalMarker(
     id: number,
     username: string,
@@ -931,6 +982,80 @@ export class Storage implements IStorage {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapMarkers).where(eq(schema.tacticalMapMarkers.id, id)).run();
+    return { ok: true, mapKey: row.mapKey };
+  }
+
+  private parseTacticalLineRow(row: TacticalMapLineRow): TacticalMapLine {
+    let points: [number, number][] = [];
+    try {
+      const parsed = JSON.parse(row.pointsJson) as unknown;
+      if (Array.isArray(parsed)) {
+        points = parsed
+          .filter(
+            (p): p is [number, number] =>
+              Array.isArray(p) &&
+              p.length === 2 &&
+              typeof p[0] === "number" &&
+              typeof p[1] === "number",
+          )
+          .map((p) => [p[0], p[1]]);
+      }
+    } catch {
+      points = [];
+    }
+    const { pointsJson: _pj, ...rest } = row;
+    return { ...rest, points };
+  }
+
+  getTacticalLines(mapKey: string): TacticalMapLine[] {
+    const rows = db
+      .select()
+      .from(schema.tacticalMapLines)
+      .where(eq(schema.tacticalMapLines.mapKey, mapKey))
+      .orderBy(desc(schema.tacticalMapLines.id))
+      .all();
+    return rows.map((r) => this.parseTacticalLineRow(r));
+  }
+
+  createTacticalLine(input: {
+    mapKey: string;
+    points: [number, number][];
+    label: string;
+    color: string;
+    createdBy: string;
+    createdAt: string;
+  }): TacticalMapLine {
+    const row = db
+      .insert(schema.tacticalMapLines)
+      .values({
+        mapKey: input.mapKey,
+        pointsJson: JSON.stringify(input.points),
+        label: input.label,
+        color: input.color,
+        createdBy: input.createdBy,
+        createdAt: input.createdAt,
+      })
+      .returning()
+      .get()!;
+    return this.parseTacticalLineRow(row);
+  }
+
+  tryDeleteTacticalLine(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db
+      .select()
+      .from(schema.tacticalMapLines)
+      .where(eq(schema.tacticalMapLines.id, id))
+      .get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ROLE_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+      return { ok: false, reason: "forbidden" };
+    }
+    db.delete(schema.tacticalMapLines).where(eq(schema.tacticalMapLines.id, id)).run();
     return { ok: true, mapKey: row.mapKey };
   }
 }

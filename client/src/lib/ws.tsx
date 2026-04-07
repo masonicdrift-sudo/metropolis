@@ -96,6 +96,14 @@ export function WSProvider({ children }: { children: ReactNode }) {
             }
             return;
           }
+          if (msg.type === "TACTICAL_LINES") {
+            if (typeof msg.mapKey === "string" && msg.mapKey.length > 0) {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-lines", msg.mapKey] });
+            } else {
+              qc.invalidateQueries({ queryKey: ["/api/tactical-lines"] });
+            }
+            return;
+          }
           if (msg.type === "MENTION") {
             const who = typeof msg.fromUsername === "string" ? msg.fromUsername : "Someone";
             const scopeLabel =

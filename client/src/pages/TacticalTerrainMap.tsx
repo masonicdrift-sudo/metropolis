@@ -1,16 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import L from "leaflet";
-import { MapContainer, GeoJSON, Marker, useMapEvents } from "react-leaflet";
+import { MapContainer, GeoJSON, Marker, Polyline, useMapEvents } from "react-leaflet";
 import ms from "milsymbol";
 import "leaflet/dist/leaflet.css";
 
 import { useAuth } from "@/lib/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest } from "@/lib/queryClient";
-import type { TacticalMapMarker } from "@shared/schema";
-import type { TacAffiliation, TacMarkerCategory } from "@shared/natoSidc";
-import { sidcForMarker } from "@shared/natoSidc";
+import type { TacticalMapLine, TacticalMapMarker } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import type { TacAffiliation } from "@shared/natoSidc";
+import {
+  NATO_FRIENDLY_SIDCS,
+  resolveMarkerSidc,
+  sidcForAffiliation,
+} from "@shared/natoSidc";
+import {
+  FitBoundsOnBounds,
+  GameGridOverlay,
+  MapCursorCoords,
+} from "@/components/tactical/TacticalLeafletExtras";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,13 +38,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Layers, MapPinned, AlertTriangle, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronsUpDown,
+  Layers,
+  MapPinned,
+  AlertTriangle,
+  PenLine,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 
 function gameCoordsToLatLng(coords: number[]): L.LatLng {
   const x = coords[0];
@@ -42,8 +74,14 @@ function gameCoordsToLatLng(coords: number[]): L.LatLng {
   return L.latLng(z, x);
 }
 
-function makeNatoDivIcon(sidc: string): L.DivIcon {
-  const sym = new ms.Symbol(sidc, { size: 30, fill: true });
+function makeNatoDivIcon(sidc: string, uniqueDesignation?: string): L.DivIcon {
+  const opts: { size: number; fill: boolean; uniqueDesignation?: string } = {
+    size: 30,
+    fill: true,
+  };
+  const t = uniqueDesignation?.trim();
+  if (t) opts.uniqueDesignation = t;
+  const sym = new ms.Symbol(sidc, opts);
   const { width, height } = sym.getSize();
   const anchor = sym.getAnchor();
   return L.divIcon({
@@ -54,19 +92,53 @@ function makeNatoDivIcon(sidc: string): L.DivIcon {
   });
 }
 
-function MapClickHandler({
-  enabled,
-  onClick,
+function symbolSvg(
+  sidc: string,
+  size: number,
+  uniqueDesignation?: string,
+): string {
+  const opts: { size: number; fill: boolean; uniqueDesignation?: string } = {
+    size,
+    fill: true,
+  };
+  const t = uniqueDesignation?.trim();
+  if (t) opts.uniqueDesignation = t;
+  return new ms.Symbol(sidc, opts).asSVG();
+}
+
+function MapInteractionHandler({
+  placeEnabled,
+  lineEnabled,
+  onPlaceClick,
+  onLineClick,
 }: {
-  enabled: boolean;
-  onClick: (ll: L.LatLng) => void;
+  placeEnabled: boolean;
+  lineEnabled: boolean;
+  onPlaceClick: (ll: L.LatLng) => void;
+  onLineClick: (ll: L.LatLng) => void;
 }) {
   useMapEvents({
     click(e) {
-      if (enabled) onClick(e.latlng);
+      if (placeEnabled) onPlaceClick(e.latlng);
+      else if (lineEnabled) onLineClick(e.latlng);
     },
   });
   return null;
+}
+
+function affiliationUiLabel(a: string): string {
+  switch (a) {
+    case "friendly":
+      return "Friendly (BLUFOR)";
+    case "hostile":
+      return "Hostile (OPFOR)";
+    case "neutral":
+      return "Neutral";
+    case "unknown":
+      return "Unknown";
+    default:
+      return a;
+  }
 }
 
 interface TerrainMeta {
@@ -89,8 +161,19 @@ function canDeleteMarker(
   return role === "admin" || role === "owner";
 }
 
+function canDeleteLine(
+  line: TacticalMapLine,
+  username: string | undefined,
+  role: string | undefined,
+): boolean {
+  if (!username) return false;
+  if (line.createdBy === username) return true;
+  return role === "admin" || role === "owner";
+}
+
 export default function TacticalTerrainMap() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const { user } = useAuth();
   const mobileShell = useIsMobile();
   const [mapKey, setMapKey] = useState<string>("");
@@ -101,6 +184,7 @@ export default function TacticalTerrainMap() {
     pois: true,
     contours: false,
     structures: false,
+    grid: true,
   });
   const [geo, setGeo] = useState<{
     water?: Fc;
@@ -112,11 +196,92 @@ export default function TacticalTerrainMap() {
   const [placeMode, setPlaceMode] = useState(false);
   const [pending, setPending] = useState<L.LatLng | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [symbolPickerOpen, setSymbolPickerOpen] = useState(false);
+  const [cursorCoords, setCursorCoords] = useState<string | null>(null);
+  const [lineDrawMode, setLineDrawMode] = useState(false);
+  const [lineVertices, setLineVertices] = useState<[number, number][]>([]);
+  const [lineDialogOpen, setLineDialogOpen] = useState(false);
+  const [lineForm, setLineForm] = useState({ label: "", color: "#38bdf8" });
   const [form, setForm] = useState<{
     affiliation: TacAffiliation;
-    markerType: TacMarkerCategory;
+    markerType: string;
     label: string;
-  }>({ affiliation: "friendly", markerType: "unit", label: "" });
+    useCustomSidc: boolean;
+    customSidc: string;
+  }>({
+    affiliation: "friendly",
+    markerType: "unit",
+    label: "",
+    useCustomSidc: false,
+    customSidc: "",
+  });
+
+  const natoCatalogRows = useMemo(() => {
+    const legacy = [
+      {
+        value: "unit",
+        label: "Shortcut · Infantry",
+        dimension: "Shortcuts",
+        search: "unit infantry shortcut",
+      },
+      {
+        value: "vehicle",
+        label: "Shortcut · Mechanized / vehicle",
+        dimension: "Shortcuts",
+        search: "vehicle mechanized shortcut",
+      },
+      {
+        value: "building",
+        label: "Shortcut · Installation",
+        dimension: "Shortcuts",
+        search: "building installation shortcut",
+      },
+      {
+        value: "equipment",
+        label: "Shortcut · Equipment / supply",
+        dimension: "Shortcuts",
+        search: "equipment supply shortcut",
+      },
+    ];
+    const rest = NATO_FRIENDLY_SIDCS.map((sidc) => {
+      const sym = new ms.Symbol(sidc, { size: 14, fill: true });
+      const meta = sym.getMetadata();
+      const fid = meta.functionid ?? "";
+      const dim = String(meta.dimension || "Symbol");
+      const label = fid ? `${dim} · ${fid}` : sidc;
+      return {
+        value: sidc,
+        label,
+        dimension: dim,
+        search: `${sidc} ${fid} ${dim}`.toLowerCase(),
+      };
+    });
+    return [...legacy, ...rest];
+  }, []);
+
+  const symbolChoiceLabel = useMemo(() => {
+    const row = natoCatalogRows.find((r) => r.value === form.markerType);
+    return row?.label ?? form.markerType;
+  }, [natoCatalogRows, form.markerType]);
+
+  const catalogDimensions = useMemo(() => {
+    const set = new Set(natoCatalogRows.map((r) => r.dimension));
+    const preferred = [
+      "Shortcuts",
+      "Ground",
+      "Air",
+      "Sea Surface",
+      "Sea Subsurface",
+      "Space",
+      "Activity",
+      "Symbol",
+    ];
+    const head = preferred.filter((d) => set.has(d));
+    const tail = Array.from(set)
+      .filter((d) => !preferred.includes(d))
+      .sort();
+    return [...head, ...tail];
+  }, [natoCatalogRows]);
 
   const { data: mapsPayload } = useQuery<{ maps: { id: string; label: string }[] }>({
     queryKey: ["/api/terrain/maps"],
@@ -164,6 +329,12 @@ export default function TacticalTerrainMap() {
 
   useEffect(() => {
     setGeo({});
+  }, [mapKey]);
+
+  useEffect(() => {
+    setLineDrawMode(false);
+    setLineVertices([]);
+    setLineDialogOpen(false);
   }, [mapKey]);
 
   const fetchLayer = useCallback(async (fileSuffix: string): Promise<Fc | null> => {
@@ -228,13 +399,28 @@ export default function TacticalTerrainMap() {
     };
   }, [mapKey, layers.structures, fetchLayer]);
 
+  /** World X/Z from exporter metadata (game meters). Leaflet CRS.Simple: lat = Z, lng = X. */
   const bounds = useMemo(() => {
-    const maxX = meta?.bounds?.max?.[0] ?? meta?.size?.x ?? 8192;
-    const maxZ = meta?.bounds?.max?.[2] ?? meta?.size?.z ?? 8192;
+    if (meta?.bounds?.min && meta?.bounds?.max) {
+      const minX = Number(meta.bounds.min[0] ?? 0);
+      const minZ = Number(meta.bounds.min[2] ?? 0);
+      const maxX = Number(meta.bounds.max[0] ?? minX + 8192);
+      const maxZ = Number(meta.bounds.max[2] ?? minZ + 8192);
+      const sw = L.latLng(minZ, minX);
+      const ne = L.latLng(maxZ, maxX);
+      return L.latLngBounds(sw, ne);
+    }
+    const maxX = meta?.size?.x ?? 8192;
+    const maxZ = meta?.size?.z ?? 8192;
     const mx = Math.max(256, maxX);
     const mz = Math.max(256, maxZ);
     return L.latLngBounds(L.latLng(0, 0), L.latLng(mz, mx));
   }, [meta]);
+
+  const maxBounds = useMemo(() => {
+    if (!bounds.isValid()) return bounds;
+    return bounds.pad(0.06);
+  }, [bounds]);
 
   const { data: markers = [], isLoading: markersLoading } = useQuery<TacticalMapMarker[]>({
     queryKey: ["/api/tactical-markers", mapKey],
@@ -243,20 +429,33 @@ export default function TacticalTerrainMap() {
     enabled: !!mapKey,
   });
 
+  const { data: lines = [], isLoading: linesLoading } = useQuery<TacticalMapLine[]>({
+    queryKey: ["/api/tactical-lines", mapKey],
+    queryFn: () =>
+      apiRequest("GET", `/api/tactical-lines?mapKey=${encodeURIComponent(mapKey)}`),
+    enabled: !!mapKey,
+  });
+
   const createMut = useMutation({
     mutationFn: (body: {
       mapKey: string;
       gameX: number;
       gameZ: number;
-      markerType: TacMarkerCategory;
+      markerType: string;
       affiliation: TacAffiliation;
       label: string;
+      customSidc?: string;
     }) => apiRequest("POST", "/api/tactical-markers", body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/tactical-markers", mapKey] });
       setDialogOpen(false);
       setPending(null);
-      setForm((f) => ({ ...f, label: "" }));
+      setForm((f) => ({
+        ...f,
+        label: "",
+        useCustomSidc: false,
+        customSidc: "",
+      }));
       setPlaceMode(false);
     },
   });
@@ -266,13 +465,71 @@ export default function TacticalTerrainMap() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-markers", mapKey] }),
   });
 
-  const onMapClick = (ll: L.LatLng) => {
+  const updateMarkerPosMut = useMutation({
+    mutationFn: (body: { id: number; gameX: number; gameZ: number }) =>
+      apiRequest("PATCH", `/api/tactical-markers/${body.id}`, {
+        gameX: body.gameX,
+        gameZ: body.gameZ,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-markers", mapKey] }),
+  });
+
+  const createLineMut = useMutation({
+    mutationFn: (body: {
+      mapKey: string;
+      points: [number, number][];
+      label: string;
+      color: string;
+    }) => apiRequest("POST", "/api/tactical-lines", body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tactical-lines", mapKey] });
+      setLineDialogOpen(false);
+      setLineVertices([]);
+      setLineDrawMode(false);
+      setLineForm({ label: "", color: "#38bdf8" });
+    },
+  });
+
+  const deleteLineMut = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/tactical-lines/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/tactical-lines", mapKey] }),
+  });
+
+  const onMapPlaceClick = (ll: L.LatLng) => {
     setPending(ll);
     setDialogOpen(true);
   };
 
+  const onMapLineClick = (ll: L.LatLng) => {
+    setLineVertices((v) => [...v, [ll.lng, ll.lat]]);
+  };
+
   const submitMarker = () => {
     if (!pending || !mapKey) return;
+    const custom =
+      form.useCustomSidc && form.customSidc.trim().length === 15
+        ? form.customSidc.trim().toUpperCase()
+        : undefined;
+    if (form.useCustomSidc) {
+      const u = form.customSidc.trim().toUpperCase();
+      if (u.length !== 15 || !/^S[F][A-Z0-9*\-]{13}$/.test(u)) {
+        toast({
+          title: "Invalid custom SIDC",
+          description: "Use 15 characters with 2nd letter F (friendly template).",
+          variant: "destructive",
+        });
+        return;
+      }
+      const sym = new ms.Symbol(u, { size: 20, fill: true });
+      if (!sym.isValid()) {
+        toast({
+          title: "Unsupported SIDC",
+          description: "milsymbol rejected this code.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
     createMut.mutate({
       mapKey,
       gameX: pending.lng,
@@ -280,10 +537,37 @@ export default function TacticalTerrainMap() {
       markerType: form.markerType,
       affiliation: form.affiliation,
       label: form.label,
+      customSidc: custom,
     });
   };
 
-  const previewSidc = sidcForMarker(form.affiliation, form.markerType);
+  const previewSidc = useMemo(() => {
+    if (form.useCustomSidc) {
+      const u = form.customSidc.trim().toUpperCase();
+      if (u.length === 15 && /^S[F][A-Z0-9*\-]{13}$/.test(u)) {
+        const sym = new ms.Symbol(u, { size: 36, fill: true });
+        if (sym.isValid()) return sidcForAffiliation(u, form.affiliation);
+      }
+    }
+    return (
+      resolveMarkerSidc(form.affiliation, form.markerType) ?? "SUGPUCI---****U"
+    );
+  }, [
+    form.useCustomSidc,
+    form.customSidc,
+    form.affiliation,
+    form.markerType,
+  ]);
+
+  const submitLine = () => {
+    if (!mapKey || lineVertices.length < 2) return;
+    createLineMut.mutate({
+      mapKey,
+      points: lineVertices,
+      label: lineForm.label.trim(),
+      color: lineForm.color,
+    });
+  };
 
   const currentLabel = maps.find((m) => m.id === mapKey)?.label ?? mapKey;
 
@@ -293,6 +577,7 @@ export default function TacticalTerrainMap() {
       <LayerToggle id="roads" label="Roads" checked={layers.roads} onChange={(v) => setLayers((l) => ({ ...l, roads: v }))} />
       <LayerToggle id="pois" label="POIs" checked={layers.pois} onChange={(v) => setLayers((l) => ({ ...l, pois: v }))} />
       <LayerToggle id="contours" label="Contours" checked={layers.contours} onChange={(v) => setLayers((l) => ({ ...l, contours: v }))} />
+      <LayerToggle id="grid" label="Grid & coords" checked={layers.grid} onChange={(v) => setLayers((l) => ({ ...l, grid: v }))} />
       <div className="flex items-center gap-2">
         <Checkbox
           id="structures"
@@ -356,23 +641,44 @@ export default function TacticalTerrainMap() {
               </SelectContent>
             </Select>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant={placeMode ? "default" : "outline"}
-            className="h-11 sm:h-9 w-full sm:w-auto text-[11px] tracking-wider touch-manipulation shrink-0"
-            onClick={() => {
-              setPlaceMode((p) => !p);
-              if (placeMode) setPending(null);
-            }}
-          >
-            {placeMode ? "TAP MAP TO PLACE" : "PLACE MARKER"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:shrink-0">
+            <Button
+              type="button"
+              size="sm"
+              variant={placeMode ? "default" : "outline"}
+              className="h-11 sm:h-9 w-full sm:w-auto text-[11px] tracking-wider touch-manipulation"
+              onClick={() => {
+                setLineDrawMode(false);
+                setLineVertices([]);
+                setPlaceMode((p) => !p);
+                if (placeMode) setPending(null);
+              }}
+            >
+              {placeMode ? "TAP MAP TO PLACE" : "PLACE MARKER"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={lineDrawMode ? "default" : "outline"}
+              className="h-11 sm:h-9 w-full sm:w-auto text-[11px] tracking-wider touch-manipulation gap-1.5"
+              onClick={() => {
+                setPlaceMode(false);
+                setPending(null);
+                setLineDrawMode((d) => {
+                  if (d) setLineVertices([]);
+                  return !d;
+                });
+              }}
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              {lineDrawMode ? "DRAWING LINE" : "DRAW LINE"}
+            </Button>
+          </div>
         </div>
         <p className="text-[9px] text-muted-foreground leading-snug">
           Active: <span className="text-foreground font-mono">{currentLabel}</span>
           {" · "}
-          NATO APP-6 symbols · game X/Z (m). Others see updates instantly via WebSocket.
+          Drag your markers (or admin) to move · BLUFOR/OPFOR/neutral/unknown · APP-6 · lines · game X/Z (m).
         </p>
       </div>
 
@@ -400,19 +706,51 @@ export default function TacticalTerrainMap() {
             }`}
           >
           {mapKey ? (
+            <>
             <MapContainer
               key={mapKey}
               crs={L.CRS.Simple}
               bounds={bounds}
-              minZoom={-2}
-              maxZoom={2}
-              maxBounds={bounds}
-              maxBoundsViscosity={1}
+              boundsOptions={{ padding: [20, 20], maxZoom: 10 }}
+              minZoom={-4}
+              maxZoom={10}
+              maxBounds={maxBounds}
+              maxBoundsViscosity={0.85}
               className="h-full w-full min-h-[inherit] [&.leaflet-container]:bg-[hsl(150_15%_10%)] [&.leaflet-container]:outline-none"
               style={{ minHeight: mobileShell ? "min(58dvh,560px)" : 420 }}
               zoomControl
             >
-              <MapClickHandler enabled={placeMode} onClick={onMapClick} />
+              <FitBoundsOnBounds bounds={bounds} padFraction={0.02} />
+              <GameGridOverlay enabled={layers.grid} />
+              <MapCursorCoords onCoords={setCursorCoords} />
+              <MapInteractionHandler
+                placeEnabled={placeMode}
+                lineEnabled={lineDrawMode}
+                onPlaceClick={onMapPlaceClick}
+                onLineClick={onMapLineClick}
+              />
+              {lines.map((ln) => (
+                <Polyline
+                  key={ln.id}
+                  positions={ln.points.map(([x, z]) => [z, x] as L.LatLngTuple)}
+                  pathOptions={{
+                    color: ln.color,
+                    weight: 3,
+                    opacity: 0.92,
+                  }}
+                />
+              ))}
+              {lineVertices.length >= 2 ? (
+                <Polyline
+                  positions={lineVertices.map(([x, z]) => [z, x] as L.LatLngTuple)}
+                  pathOptions={{
+                    color: lineForm.color,
+                    weight: 3,
+                    opacity: 0.85,
+                    dashArray: "8 6",
+                  }}
+                />
+              ) : null}
               {geo.water && layers.water ? (
                 <GeoJSON
                   data={geo.water}
@@ -465,70 +803,198 @@ export default function TacticalTerrainMap() {
                   }
                 />
               ) : null}
-              {markers.map((m) => (
-                <Marker
-                  key={m.id}
-                  position={[m.gameZ, m.gameX]}
-                  icon={makeNatoDivIcon(m.sidc)}
-                />
-              ))}
+              {markers.map((m) => {
+                const canMove = canDeleteMarker(m, user?.username, user?.role);
+                return (
+                  <Marker
+                    key={m.id}
+                    position={[m.gameZ, m.gameX]}
+                    icon={makeNatoDivIcon(m.sidc, m.label)}
+                    draggable={canMove}
+                    eventHandlers={
+                      canMove
+                        ? {
+                            dragend: (e) => {
+                              const ll = e.target.getLatLng();
+                              updateMarkerPosMut.mutate({
+                                id: m.id,
+                                gameX: ll.lng,
+                                gameZ: ll.lat,
+                              });
+                            },
+                          }
+                        : undefined
+                    }
+                  />
+                );
+              })}
             </MapContainer>
+            {lineDrawMode ? (
+              <div className="pointer-events-auto absolute top-2 left-2 right-2 z-[600] flex flex-wrap items-center gap-2 rounded-md border border-border bg-card/95 px-2 py-2 shadow-md backdrop-blur-sm">
+                <span className="text-[10px] font-mono text-muted-foreground">
+                  Line · {lineVertices.length} point{lineVertices.length === 1 ? "" : "s"}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 text-[10px]"
+                  disabled={lineVertices.length === 0}
+                  onClick={() => setLineVertices((v) => v.slice(0, -1))}
+                >
+                  <Undo2 className="h-3 w-3 mr-1" />
+                  Undo
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 text-[10px]"
+                  disabled={lineVertices.length < 2}
+                  onClick={() => {
+                    if (lineVertices.length < 2) {
+                      toast({
+                        title: "Need at least 2 points",
+                        description: "Tap the map to add vertices.",
+                        variant: "destructive",
+                      });
+                    } else {
+                      setLineDialogOpen(true);
+                    }
+                  }}
+                >
+                  Finish line
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-[10px] ml-auto"
+                  onClick={() => {
+                    setLineDrawMode(false);
+                    setLineVertices([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : null}
+            </>
+          ) : null}
+          {mapKey ? (
+            <div
+              className={`pointer-events-none absolute bottom-2 left-2 z-[500] rounded border border-border/60 bg-black/70 px-2 py-1 font-mono text-[9px] text-green-400/95 shadow-sm max-w-[min(100%,22rem)] ${
+                layers.grid ? "" : "opacity-90"
+              }`}
+              aria-live="polite"
+            >
+              {layers.grid
+                ? cursorCoords ?? "Move pointer — grid spacing follows zoom (meters)"
+                : cursorCoords ?? "Enable “Grid & coords” for overlay"}
+            </div>
           ) : null}
         </div>
 
         <div
-          className={`w-full lg:w-[280px] shrink-0 flex flex-col gap-2 border border-border rounded-md bg-card/40 p-2 overflow-hidden ${
-            mobileShell ? "max-h-[36dvh] min-h-[140px]" : "max-h-[50vh] lg:max-h-none"
+          className={`w-full lg:w-[300px] shrink-0 flex flex-col gap-3 border border-border rounded-md bg-card/40 p-2 overflow-hidden ${
+            mobileShell ? "max-h-[40dvh] min-h-[160px]" : "max-h-[50vh] lg:max-h-none"
           }`}
         >
-          <div className="text-[10px] font-bold tracking-widest text-muted-foreground px-0.5">
-            MARKERS · {currentLabel}
-          </div>
-          <div className="text-[9px] text-muted-foreground px-0.5">
-            {markersLoading ? "Loading…" : `${markers.length} on this map only`}
-          </div>
-          <div className="flex-1 overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
-            {markers.map((m) => {
-              const canDel = canDeleteMarker(m, user?.username, user?.role);
-              return (
-                <div
-                  key={m.id}
-                  className="flex items-start gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50"
-                >
+          <div>
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground px-0.5">
+              MARKERS · {currentLabel}
+            </div>
+            <div className="text-[9px] text-muted-foreground px-0.5">
+              {markersLoading ? "Loading…" : `${markers.length} on this map`}
+            </div>
+            <div className="mt-1 max-h-[min(28dvh,240px)] lg:max-h-[min(32dvh,280px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
+              {markers.map((m) => {
+                const canDel = canDeleteMarker(m, user?.username, user?.role);
+                return (
                   <div
-                    className="shrink-0 w-9 h-9 flex items-center justify-center overflow-hidden"
-                    dangerouslySetInnerHTML={{
-                      __html: new ms.Symbol(m.sidc, { size: 24, fill: true }).asSVG(),
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-mono text-green-400/90 truncate">{m.label || m.markerType}</div>
-                    <div className="text-muted-foreground text-[9px]">
-                      {m.affiliation} · {m.createdBy}
+                    key={m.id}
+                    className="flex items-start gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50"
+                  >
+                    <div
+                      className="shrink-0 w-9 h-9 flex items-center justify-center overflow-hidden"
+                      dangerouslySetInnerHTML={{
+                        __html: symbolSvg(m.sidc, 24, m.label),
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-green-400/90 truncate">
+                        {m.label || (m.markerType.startsWith("custom:") ? "Custom SIDC" : m.markerType)}
+                      </div>
+                      <div className="text-muted-foreground text-[9px]">
+                        {affiliationUiLabel(m.affiliation)} · {m.createdBy}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground/80 font-mono">
+                        X {m.gameX.toFixed(0)} · Z {m.gameZ.toFixed(0)}
+                      </div>
                     </div>
-                    <div className="text-[9px] text-muted-foreground/80 font-mono">
-                      X {m.gameX.toFixed(0)} · Z {m.gameZ.toFixed(0)}
-                    </div>
+                    {canDel ? (
+                      <button
+                        type="button"
+                        className="shrink-0 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                        title={
+                          m.createdBy === user?.username
+                            ? "Remove your marker"
+                            : "Remove (admin/owner)"
+                        }
+                        onClick={() => deleteMut.mutate(m.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="shrink-0 w-10" aria-hidden />
+                    )}
                   </div>
-                  {canDel ? (
-                    <button
-                      type="button"
-                      className="shrink-0 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
-                      title={
-                        m.createdBy === user?.username
-                          ? "Remove your marker"
-                          : "Remove (admin/owner)"
-                      }
-                      onClick={() => deleteMut.mutate(m.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  ) : (
-                    <span className="shrink-0 w-10" aria-hidden />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-border/60 pt-2">
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground px-0.5">
+              LINES · {currentLabel}
+            </div>
+            <div className="text-[9px] text-muted-foreground px-0.5">
+              {linesLoading ? "Loading…" : `${lines.length} polylines`}
+            </div>
+            <div className="mt-1 max-h-[min(22dvh,200px)] lg:max-h-[min(26dvh,220px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
+              {lines.map((ln) => {
+                const canDel = canDeleteLine(ln, user?.username, user?.role);
+                return (
+                  <div
+                    key={ln.id}
+                    className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50"
+                  >
+                    <div
+                      className="shrink-0 w-6 h-1 rounded-sm"
+                      style={{ backgroundColor: ln.color }}
+                      title={ln.color}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-sky-400/90 truncate">
+                        {ln.label || `Line (${ln.points.length} pts)`}
+                      </div>
+                      <div className="text-muted-foreground text-[9px]">{ln.createdBy}</div>
+                    </div>
+                    {canDel ? (
+                      <button
+                        type="button"
+                        className="shrink-0 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                        title="Remove line"
+                        onClick={() => deleteLineMut.mutate(ln.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <span className="shrink-0 w-10" aria-hidden />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -537,7 +1003,9 @@ export default function TacticalTerrainMap() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-sm tracking-wider">ADD NATO MARKER</DialogTitle>
+            <DialogTitle className="text-sm tracking-wider">
+              ADD MARKER (JOINT SYMBOLOGY)
+            </DialogTitle>
           </DialogHeader>
           {pending && (
             <div className="text-[10px] text-muted-foreground font-mono">
@@ -555,48 +1023,127 @@ export default function TacticalTerrainMap() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                  <SelectItem value="hostile">Hostile</SelectItem>
+                  <SelectItem value="friendly">Friendly (BLUFOR)</SelectItem>
+                  <SelectItem value="hostile">Hostile (OPFOR)</SelectItem>
                   <SelectItem value="neutral">Neutral</SelectItem>
                   <SelectItem value="unknown">Unknown</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2 rounded border border-border/60 px-2 py-1.5 bg-secondary/20">
+              <Checkbox
+                id="tac-custom-sidc"
+                checked={form.useCustomSidc}
+                onCheckedChange={(c) =>
+                  setForm((f) => ({ ...f, useCustomSidc: c === true }))
+                }
+              />
+              <label htmlFor="tac-custom-sidc" className="text-[10px] cursor-pointer leading-tight">
+                Custom 15-char friendly-template SIDC (any valid milsymbol / APP-6C letter code)
+              </label>
+            </div>
+            {form.useCustomSidc ? (
+              <div className="space-y-1">
+                <Label className="text-[10px] font-mono">SIDC (2nd char must be F)</Label>
+                <Input
+                  className="h-9 text-xs font-mono tracking-wider"
+                  value={form.customSidc}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      customSidc: e.target.value.toUpperCase().slice(0, 15),
+                    }))
+                  }
+                  placeholder="SFGPUCI---****F"
+                  maxLength={15}
+                />
+              </div>
+            ) : null}
             <div className="space-y-1">
-              <Label className="text-[10px]">TYPE</Label>
-              <Select
-                value={form.markerType}
-                onValueChange={(v) => setForm((f) => ({ ...f, markerType: v as TacMarkerCategory }))}
-              >
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unit">Unit</SelectItem>
-                  <SelectItem value="vehicle">Vehicle</SelectItem>
-                  <SelectItem value="building">Building / Installation</SelectItem>
-                  <SelectItem value="equipment">Equipment / Supply</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label className="text-[10px]">SYMBOL (catalog or shortcut)</Label>
+              <Popover open={symbolPickerOpen} onOpenChange={setSymbolPickerOpen} modal>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={form.useCustomSidc}
+                    className="h-9 w-full justify-between gap-2 px-2 font-normal"
+                  >
+                    <span className="truncate text-left text-[10px] leading-tight">
+                      {symbolChoiceLabel}
+                    </span>
+                    <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[min(calc(100vw-2rem),440px)] p-0"
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                >
+                  <Command className="rounded-lg border-0">
+                    <CommandInput placeholder="Search name, function ID, or SIDC…" className="h-9" />
+                    <CommandList className="max-h-[min(55dvh,320px)]">
+                      <CommandEmpty>No symbol matches.</CommandEmpty>
+                      {catalogDimensions.map((dim) => (
+                        <CommandGroup key={dim} heading={dim}>
+                          {natoCatalogRows
+                            .filter((r) => r.dimension === dim)
+                            .map((r) => {
+                              const iconSidc =
+                                resolveMarkerSidc(form.affiliation, r.value) ??
+                                "SUGPUCI---****U";
+                              return (
+                              <CommandItem
+                                key={r.value}
+                                value={`${r.label} ${r.value} ${r.search}`}
+                                onSelect={() => {
+                                  setForm((f) => ({ ...f, markerType: r.value }));
+                                  setSymbolPickerOpen(false);
+                                }}
+                                className="gap-2 text-xs"
+                              >
+                                <span
+                                  className="shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden"
+                                  dangerouslySetInnerHTML={{
+                                    __html: symbolSvg(iconSidc, 22),
+                                  }}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate font-medium">{r.label}</div>
+                                  <div className="truncate font-mono text-[9px] text-muted-foreground">
+                                    {r.value}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            );
+                            })}
+                        </CommandGroup>
+                      ))}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">LABEL (OPTIONAL)</Label>
+              <Label className="text-[10px]">
+                DESIGNATION / BUILDING # (optional — drawn on symbol)
+              </Label>
               <Input
                 className="h-9 text-xs font-mono"
                 value={form.label}
                 onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                placeholder="e.g. 1-A / OBJ BLUE"
+                placeholder="e.g. 12 · BLDG A · OBJ BLUE"
               />
             </div>
             <div className="flex items-center gap-2 border border-border rounded p-2 bg-secondary/30">
               <div
                 className="w-12 h-12 shrink-0 flex items-center justify-center"
                 dangerouslySetInnerHTML={{
-                  __html: new ms.Symbol(previewSidc, { size: 36, fill: true }).asSVG(),
+                  __html: symbolSvg(previewSidc, 36, form.label),
                 }}
-                />
+              />
               <div className="text-[9px] text-muted-foreground leading-snug">
-                Symbol follows STANAG APP-6 / MIL-STD-2525 letter SIDC (milsymbol). Server assigns SIDC from affiliation + type.
+                Preview uses your affiliation (BLUFOR/OPFOR/neutral/unknown). Catalog + custom SIDC are validated with milsymbol. Designation appears as APP-6 unique designation when supported.
               </div>
             </div>
           </div>
@@ -606,6 +1153,61 @@ export default function TacticalTerrainMap() {
             </Button>
             <Button size="sm" onClick={submitMarker} disabled={!pending || createMut.isPending}>
               PLACE
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={lineDialogOpen} onOpenChange={setLineDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm tracking-wider">SAVE LINE</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="text-[10px] text-muted-foreground font-mono">
+              {lineVertices.length} vertices · game X/Z (m)
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">LABEL (OPTIONAL)</Label>
+              <Input
+                className="h-9 text-xs font-mono"
+                value={lineForm.label}
+                onChange={(e) => setLineForm((f) => ({ ...f, label: e.target.value }))}
+                placeholder="Phase line · MSR · boundary…"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">COLOR</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="color"
+                  className="h-9 w-14 cursor-pointer border border-border p-1 bg-background"
+                  value={lineForm.color}
+                  onChange={(e) => setLineForm((f) => ({ ...f, color: e.target.value }))}
+                />
+                <Input
+                  className="h-9 text-xs font-mono flex-1"
+                  value={lineForm.color}
+                  onChange={(e) => setLineForm((f) => ({ ...f, color: e.target.value }))}
+                  placeholder="#38bdf8"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLineDialogOpen(false)}
+            >
+              Back
+            </Button>
+            <Button
+              size="sm"
+              onClick={submitLine}
+              disabled={lineVertices.length < 2 || createLineMut.isPending}
+            >
+              SAVE LINE
             </Button>
           </DialogFooter>
         </DialogContent>

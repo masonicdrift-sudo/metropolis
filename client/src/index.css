@@ -105,6 +105,13 @@
   border: none !important;
 }
 
+.leaflet-marker-draggable .tac-nato-leaflet-icon {
+  cursor: grab;
+}
+.leaflet-marker-draggable.leaflet-drag-target .tac-nato-leaflet-icon {
+  cursor: grabbing;
+}
+
 /* ── Scan-line overlay ─────────────────────────────────────────── */
 .scanlines::before {
   content: '';

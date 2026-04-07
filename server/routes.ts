@@ -12,7 +12,8 @@ import {
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
   ROLE_RANK,
 } from "@shared/schema";
-import { sidcForMarker } from "@shared/natoSidc";
+import ms from "milsymbol";
+import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
 
 const TERRAIN_DIR = path.resolve(process.cwd(), "TDL_TerrainExport", "TDL_TerrainExport");
 
@@ -71,9 +72,32 @@ const tacticalMarkerPostSchema = z.object({
   mapKey: z.string().min(1).max(120),
   gameX: z.number(),
   gameZ: z.number(),
-  markerType: z.enum(["unit", "vehicle", "building", "equipment"]),
+  /** Legacy: unit | vehicle | building | equipment, or a friendly-template SIDC from the NATO catalog. Ignored when customSidc is set. */
+  markerType: z.string().min(1).max(120),
   affiliation: z.enum(["friendly", "hostile", "neutral", "unknown"]),
   label: z.string().max(200).optional().default(""),
+  /** Optional 15-char friendly-template letter SIDC (2nd char F); validated with milsymbol. */
+  customSidc: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().length(15).regex(/^[A-Za-z0-9*\-]+$/).optional(),
+  ),
+});
+
+const tacticalMarkerPatchSchema = z.object({
+  gameX: z.number(),
+  gameZ: z.number(),
+});
+
+const tacticalLinePostSchema = z.object({
+  mapKey: z.string().min(1).max(120),
+  points: z.array(z.tuple([z.number(), z.number()])).min(2).max(500),
+  label: z.string().max(200).optional().default(""),
+  color: z
+    .string()
+    .max(32)
+    .regex(/^#[0-9A-Fa-f]{3,8}$/)
+    .optional()
+    .default("#38bdf8"),
 });
 
 // Rate limiter: max 10 login attempts per 15 minutes per IP
@@ -889,13 +913,34 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const parsed = tacticalMarkerPostSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const b = parsed.data;
-    const sidc = sidcForMarker(b.affiliation, b.markerType);
+    let sidc: string | null;
+    let markerTypeStored = b.markerType;
+    if (b.customSidc) {
+      const u = b.customSidc.trim().toUpperCase();
+      if (!/^S[F][A-Z0-9*\-]{13}$/.test(u)) {
+        return res.status(400).json({
+          error:
+            "customSidc must be a 15-character friendly-template letter SIDC (2nd character F, per APP-6 / 2525C)",
+        });
+      }
+      const sym = new ms.Symbol(u, { size: 16, fill: true });
+      if (!sym.isValid()) {
+        return res.status(400).json({ error: "customSidc is not supported by milsymbol" });
+      }
+      sidc = sidcForAffiliation(u, b.affiliation);
+      markerTypeStored = `custom:${u}`;
+    } else {
+      sidc = resolveMarkerSidc(b.affiliation, b.markerType);
+      if (!sidc) {
+        return res.status(400).json({ error: "Invalid markerType (unknown legacy type or SIDC preset)" });
+      }
+    }
     const row = storage.createTacticalMarker({
       mapKey: b.mapKey,
       gameX: b.gameX,
       gameZ: b.gameZ,
       sidc,
-      markerType: b.markerType,
+      markerType: markerTypeStored,
       affiliation: b.affiliation,
       label: b.label.trim(),
       createdBy: req.session.username!,
@@ -903,6 +948,28 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     wsPush("TACTICAL_MARKERS", { mapKey: b.mapKey });
     res.status(201).json(row);
+  });
+
+  app.patch("/api/tactical-markers/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = tacticalMarkerPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const result = storage.tryUpdateTacticalMarkerPosition(
+      id,
+      parsed.data.gameX,
+      parsed.data.gameZ,
+      req.session.username!,
+      req.session.role || "",
+    );
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the placer or an admin/owner can move this marker" });
+      }
+      return res.status(404).json({ error: "Marker not found" });
+    }
+    wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });
+    res.json(result.marker);
   });
 
   app.delete("/api/tactical-markers/:id", requireAuth, (req, res) => {
@@ -916,6 +983,48 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Marker not found" });
     }
     wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });
+    res.status(204).send();
+  });
+
+  app.get("/api/tactical-lines", requireAuth, (req, res) => {
+    const raw = req.query.mapKey;
+    const mapKey =
+      typeof raw === "string"
+        ? raw
+        : Array.isArray(raw) && typeof raw[0] === "string"
+          ? raw[0]
+          : "";
+    if (!mapKey) return res.status(400).json({ error: "mapKey query required" });
+    res.json(storage.getTacticalLines(mapKey));
+  });
+
+  app.post("/api/tactical-lines", requireAuth, (req, res) => {
+    const parsed = tacticalLinePostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const b = parsed.data;
+    const line = storage.createTacticalLine({
+      mapKey: b.mapKey,
+      points: b.points,
+      label: b.label.trim(),
+      color: b.color,
+      createdBy: req.session.username!,
+      createdAt: new Date().toISOString(),
+    });
+    wsPush("TACTICAL_LINES", { mapKey: b.mapKey });
+    res.status(201).json(line);
+  });
+
+  app.delete("/api/tactical-lines/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const result = storage.tryDeleteTacticalLine(id, req.session.username!, req.session.role || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the author or an admin/owner can remove this line" });
+      }
+      return res.status(404).json({ error: "Line not found" });
+    }
+    wsPush("TACTICAL_LINES", { mapKey: result.mapKey });
     res.status(204).send();
   });
 

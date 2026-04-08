@@ -116,6 +116,7 @@ export default function Intel() {
   const [filter, setFilter] = useState("all");
   const [linkDraft, setLinkDraft] = useState({ bType: "isofac", bId: "", relation: "related", note: "" });
   const [releaseMark, setReleaseMark] = useState("");
+  const [requestNote, setRequestNote] = useState("");
 
   const { data: reports = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel") });
 
@@ -158,6 +159,11 @@ export default function Intel() {
   const releaseMut = useMutation({
     mutationFn: () => apiRequest("POST", `/api/intel/${viewing!.id}/release`, { releasability: releaseMark.trim() }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/intel"] }),
+  });
+
+  const requestActionMut = useMutation({
+    mutationFn: (body: { actionType: string; note: string }) => apiRequest("POST", `/api/intel/${viewing!.id}/request-action`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/approvals"] }),
   });
 
   const categories = ["all", "HUMINT", "SIGINT", "IMINT", "OSINT", "CYBER"];
@@ -346,6 +352,26 @@ export default function Intel() {
                     Released {new Date(viewing.releasedAt).toLocaleString()} by {viewing.releasedBy || "—"} · {viewing.releasability}
                   </div>
                 ) : null}
+              </div>
+
+              <div className="border-t border-border/60 pt-2">
+                <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-1">REQUEST ACTION (COLLECTION)</div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+                  <Input
+                    className="h-8 text-[10px] font-mono sm:col-span-3"
+                    placeholder="Describe requested action (tasking/collection/exploitation)…"
+                    value={requestNote}
+                    onChange={(e) => setRequestNote(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 text-[10px] bg-blue-900 hover:bg-blue-800 tracking-wider"
+                    onClick={() => requestActionMut.mutate({ actionType: "collection_request", note: requestNote.trim() })}
+                    disabled={!requestNote.trim() || requestActionMut.isPending}
+                  >
+                    REQUEST
+                  </Button>
+                </div>
               </div>
 
               {/* Link analysis (inline) */}

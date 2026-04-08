@@ -32,7 +32,7 @@ export default function FileVault() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
@@ -137,6 +137,7 @@ export default function FileVault() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-[9px] font-bold tracking-widest border px-1.5 py-0.5 rounded ${cls}`}>{doc.classification}</span>
+                  {doc.docNumber ? <span className="text-[9px] font-mono text-muted-foreground tracking-wider">#{doc.docNumber}</span> : null}
                   <span className="text-[10px] font-bold text-muted-foreground tracking-wider">{doc.type.replace(/_/g," ")}</span>
                   <span className="text-xs font-bold">{doc.title}</span>
                   <span className={`text-[9px] font-bold tracking-wider ${STATUS_COLOR[doc.status] || ""}`}>{doc.status}</span>

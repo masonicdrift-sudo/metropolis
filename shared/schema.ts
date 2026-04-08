@@ -113,6 +113,8 @@ export type AccessCode = typeof accessCodes.$inferSelect;
 // ─── ISOFAC Documents ──────────────────────────────────────────────────────────
 export const isofacDocs = sqliteTable("isofac_docs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit document number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   type: text("type").notNull(), // OPORD | IMINT | … | RADIO_LOG | CUSTOM
   title: text("title").notNull(),
   classification: text("classification").notNull().default("UNCLASS"),
@@ -137,6 +139,8 @@ export type IsofacDoc = typeof isofacDocs.$inferSelect;
 // ─── Radio Commo Cards ──────────────────────────────────────────────────
 export const commoCards = sqliteTable("commo_cards", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit tracking number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   title: text("title").notNull(),             // e.g. "COMMO CARD - 24FEB2026"
   effectiveDate: text("effective_date").notNull(),
   // Crypto
@@ -212,6 +216,8 @@ export type Unit = typeof units.$inferSelect;
 // ─── Operations ──────────────────────────────────────────────────────────────
 export const operations = sqliteTable("operations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit tracking number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   name: text("name").notNull(),
   type: text("type").notNull(), // recon, strike, logistics, MEDEVAC, ISR
   priority: text("priority").notNull().default("medium"), // critical, high, medium, low
@@ -271,6 +277,8 @@ export type CommsLog = typeof commsLog.$inferSelect;
 // ─── Assets / Equipment ───────────────────────────────────────────────────────
 export const assets = sqliteTable("assets", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit tracking number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   name: text("name").notNull(),
   type: text("type").notNull(), // vehicle, aircraft, weapon, comms_gear, sensor, supply
   status: text("status").notNull().default("operational"), // operational, degraded, maintenance, destroyed
@@ -300,6 +308,8 @@ export type Perstat = typeof perstat.$inferSelect;
 // ─── After Action Reports ─────────────────────────────────────────────────────
 export const afterActionReports = sqliteTable("after_action_reports", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit tracking number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   title: text("title").notNull(),
   operationId: integer("operation_id").default(0),
   operationName: text("operation_name").default(""),
@@ -372,10 +382,16 @@ export const calendarEvents = sqliteTable("calendar_events", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   /** YYYY-MM-DD (local date string from client) */
   eventDate: text("event_date").notNull(),
+  /** Optional end date (YYYY-MM-DD). If blank, eventDate is used. */
+  endDate: text("end_date").notNull().default(""),
   title: text("title").notNull(),
   notes: text("notes").notNull().default(""),
   /** Optional HH:mm for display/sort within the day */
   startTime: text("start_time").default(""),
+  /** Optional HH:mm. */
+  endTime: text("end_time").notNull().default(""),
+  /** Visual color coding for calendar chips (hex or token). */
+  color: text("color").notNull().default("blue"),
   createdBy: text("created_by").notNull(),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
@@ -524,6 +540,8 @@ export type Broadcast = typeof broadcasts.$inferSelect;
 // ─── Threat Markers ───────────────────────────────────────────────────────────
 export const threats = sqliteTable("threats", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Server-generated 6-digit tracking number (e.g. "042391"). */
+  docNumber: text("doc_number").notNull().default(""),
   label: text("label").notNull(),
   category: text("category").notNull(), // IED, enemy_force, sniper, artillery, drone, cyber
   confidence: text("confidence").notNull().default("possible"), // confirmed, probable, possible

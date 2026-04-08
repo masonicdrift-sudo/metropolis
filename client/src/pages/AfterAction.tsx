@@ -126,6 +126,7 @@ function AarCard({ aar, canAdmin, onDelete }: { aar: AfterActionReport; canAdmin
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <FileText size={12} className="text-green-400 shrink-0" />
+            {aar.docNumber ? <span className="text-[10px] font-mono text-muted-foreground/70">#{aar.docNumber}</span> : null}
             <span className="text-xs font-bold tracking-wider">{aar.title}</span>
             <span className={`text-[9px] font-bold tracking-wider ${cls}`}>{aar.classification}</span>
           </div>

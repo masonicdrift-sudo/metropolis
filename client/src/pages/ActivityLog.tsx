@@ -27,7 +27,8 @@ export default function ActivityLogPage() {
   const { toast } = useToast();
   const mobile = useIsMobile();
 
-  const isStaff = user?.role === "admin" || user?.role === "owner";
+  const isStaff = user?.accessLevel === "admin" || user?.accessLevel === "owner";
+  const canSeeIp = user?.accessLevel === "owner";
   const [filters, setFilters] = useState({
     actorUsername: "",
     entityType: "",
@@ -136,7 +137,7 @@ export default function ActivityLogPage() {
                 <span className="text-[9px] font-bold text-green-400">{r.actorUsername}</span>
                 <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{r.action}</span>
                 <span className="text-[9px] text-muted-foreground">{r.entityType}{r.entityId ? `#${r.entityId}` : ""}</span>
-                <span className="text-[9px] text-muted-foreground/70 ml-auto">{r.ip ? `IP ${r.ip}` : ""}</span>
+                <span className="text-[9px] text-muted-foreground/70 ml-auto">{canSeeIp && r.ip ? `IP ${r.ip}` : ""}</span>
               </div>
               {r.summary && (
                 <div className="text-[11px] font-mono text-foreground/90 mt-1 line-clamp-2">{r.summary}</div>

@@ -923,6 +923,32 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     res.json(op);
   });
+
+  // Request approval for operation planning changes (admin/owner)
+  app.post("/api/operations/:id/request-approval", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getOperation(id);
+    if (!before) return res.status(404).json({ error: "Not found" });
+    const patch = typeof req.body === "object" && req.body ? req.body : {};
+    const now = new Date().toISOString();
+    const approval = storage.createApproval({
+      entityType: "operations_plan",
+      entityId: String(id),
+      action: "UPDATE",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: "",
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ patch }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested op plan approval for ${before.name} (${id})`, after: approval });
+    res.status(202).json({ ok: true, approvalId: approval.id });
+  });
   app.delete("/api/operations/:id", requireAuth, (req, res) => {
     const id = Number(req.params.id);
     const before = storage.getOperation(id);
@@ -999,6 +1025,33 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     wsPush("APPROVALS");
     appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested intel release approval for ${id} (${before.title})`, after: approval });
+    res.status(202).json({ ok: true, approvalId: approval.id });
+  });
+
+  // Request action on an intel report (collection/tasking) (admin/owner -> approval)
+  app.post("/api/intel/:id/request-action", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const report = storage.getIntelReport(id);
+    if (!report) return res.status(404).json({ error: "Not found" });
+    const actionType = typeof req.body?.actionType === "string" ? req.body.actionType : "collection_request";
+    const note = typeof req.body?.note === "string" ? req.body.note : "";
+    const now = new Date().toISOString();
+    const approval = storage.createApproval({
+      entityType: "intel_action",
+      entityId: String(id),
+      action: "REQUEST_ACTION",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: note,
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ actionType }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested intel action: ${id} (${report.title})`, after: approval });
     res.status(202).json({ ok: true, approvalId: approval.id });
   });
   // Add image to intel report
@@ -1139,6 +1192,33 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     wsPush("THREAT");
     appendActivity(req, { action: "DELETE", entityType: "threats", entityId: id, summary: `Deleted threat ${id}`, before });
     res.status(204).send();
+  });
+
+  // Request action on a threat-board target (admin/owner -> approval)
+  app.post("/api/threats/:id/request-action", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const threat = storage.getThreats().find((x) => x.id === id);
+    if (!threat) return res.status(404).json({ error: "Not found" });
+    const actionType = typeof req.body?.actionType === "string" ? req.body.actionType : "action_request";
+    const note = typeof req.body?.note === "string" ? req.body.note : "";
+    const now = new Date().toISOString();
+    const approval = storage.createApproval({
+      entityType: "threat_action",
+      entityId: String(id),
+      action: "REQUEST_ACTION",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: note,
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ actionType }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested threat action: ${threat.label} (${id})`, after: approval });
+    res.status(202).json({ ok: true, approvalId: approval.id });
   });
 
   const THREAT_LEVELS = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"] as const;
@@ -1298,9 +1378,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   // ── Shared calendar (team events) ────────────────────────────────────────────
   const calendarEventPostSchema = z.object({
     eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().default(""),
     title: z.string().min(1).max(200),
     notes: z.string().max(4000).optional().default(""),
     startTime: z.string().max(16).optional().default(""),
+    endTime: z.string().max(16).optional().default(""),
+    color: z.string().min(1).max(32).optional().default("blue"),
   });
   const calendarEventPatchSchema = calendarEventPostSchema.partial();
 
@@ -1334,6 +1417,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const now = new Date().toISOString();
     const row = storage.createCalendarEvent({
       ...parsed.data,
+      endDate: parsed.data.endDate || "",
+      endTime: parsed.data.endTime || "",
+      color: parsed.data.color || "blue",
       createdBy: req.session.username!,
       createdAt: now,
       updatedAt: now,
@@ -1381,8 +1467,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const parsed = activityQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const q = parsed.data;
-    res.json(
-      storage.getActivity({
+    const rows = storage.getActivity({
         fromTs: q.fromTs,
         toTs: q.toTs,
         actorUsername: q.actorUsername,
@@ -1390,7 +1475,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         action: q.action,
         limit: q.limit,
         offset: q.offset,
-      }),
+      });
+    const isOwner = req.session.accessLevel === "owner";
+    res.json(
+      isOwner
+        ? rows
+        : rows.map((r) => ({
+            ...r,
+            ip: "",
+          })),
     );
   });
 
@@ -1680,6 +1773,71 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
           storage.releaseIntelReport(Number(row.entityId), String(payload.releasability), row.requestedBy);
           wsPush("INTEL");
         }
+      } catch {}
+    }
+    if (row.entityType === "operations_plan" && row.action === "UPDATE") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        const patch = payload?.patch && typeof payload.patch === "object" ? payload.patch : {};
+        const before = storage.getOperation(Number(row.entityId));
+        const updated = storage.updateOperation(Number(row.entityId), patch);
+        if (updated) {
+          wsPush("OPERATION");
+          appendActivity(req, {
+            action: "UPDATE",
+            entityType: "operations",
+            entityId: updated.id,
+            summary: `Approved op plan update: ${updated.name}`,
+            before,
+            after: updated,
+          });
+        }
+      } catch {}
+    }
+    if (row.entityType === "intel_action" && row.action === "REQUEST_ACTION") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        const actionType = typeof payload?.actionType === "string" ? payload.actionType : "collection_request";
+        const report = storage.getIntelReport(Number(row.entityId));
+        const title = report ? report.title : `Intel ${row.entityId}`;
+        const sr = storage.createSupportRequest({
+          title: `Intel action: ${title}`,
+          category: "intel",
+          priority: "high",
+          status: "open",
+          assignedTo: "",
+          dueAt: "",
+          details: `${actionType}\n\n${row.requestedNote || ""}`.trim(),
+          createdBy: row.requestedBy,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        wsPush("SUPPORT_REQUESTS");
+        appendActivity(req, { action: "CREATE", entityType: "support_request", entityId: sr.id, summary: `Created support request from intel action approval`, after: sr });
+      } catch {}
+    }
+    if (row.entityType === "threat_action" && row.action === "REQUEST_ACTION") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        const actionType = typeof payload?.actionType === "string" ? payload.actionType : "action_request";
+        const threat = storage.getThreats().find((x) => x.id === Number(row.entityId));
+        const label = threat ? threat.label : `Threat ${row.entityId}`;
+        const priority =
+          threat?.confidence === "confirmed" ? "critical" : threat?.confidence === "probable" ? "high" : "medium";
+        const sr = storage.createSupportRequest({
+          title: `Target action: ${label}`,
+          category: "fires",
+          priority,
+          status: "open",
+          assignedTo: "",
+          dueAt: "",
+          details: `${actionType}\n\n${row.requestedNote || ""}`.trim(),
+          createdBy: row.requestedBy,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        wsPush("SUPPORT_REQUESTS");
+        appendActivity(req, { action: "CREATE", entityType: "support_request", entityId: sr.id, summary: `Created support request from threat action approval`, after: sr });
       } catch {}
     }
     wsPush("APPROVALS");

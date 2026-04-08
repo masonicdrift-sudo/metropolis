@@ -245,7 +245,10 @@ function CardView({ card }: { card: CommoCard }) {
           <h2 className="text-base font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             {card.title}
           </h2>
-          <div className="text-[9px] text-muted-foreground tracking-widest mt-0.5">EFF: {card.effectiveDate} ▪ CLASSIFICATION: RESTRICTED</div>
+          <div className="text-[9px] text-muted-foreground tracking-widest mt-0.5">
+            {card.docNumber ? `#${card.docNumber} ▪ ` : ""}
+            EFF: {card.effectiveDate} ▪ CLASSIFICATION: RESTRICTED
+          </div>
         </div>
         {card.active && (
           <span className="badge-active text-[9px] px-2 py-1 rounded font-bold tracking-wider flex items-center gap-1">
@@ -415,7 +418,10 @@ export default function CommoCardPage() {
               }`}>
               <div className="flex items-center gap-1 mb-0.5">
                 {c.active && <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />}
-                <span className="font-mono font-bold text-[10px] truncate tracking-wider">{c.title}</span>
+                <span className="font-mono font-bold text-[10px] truncate tracking-wider">
+                  {c.docNumber ? <span className="text-muted-foreground/70">#{c.docNumber} </span> : null}
+                  {c.title}
+                </span>
               </div>
               <div className="text-[9px] text-muted-foreground/60">EFF: {c.effectiveDate}</div>
             </button>

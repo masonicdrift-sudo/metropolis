@@ -33,8 +33,8 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/operations"] }); toast({ title: "Operation created" }); onClose(); },
   });
   const update = useMutation({
-    mutationFn: (data: Partial<InsertOperation>) => apiRequest("PATCH", `/api/operations/${op?.id}`, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/operations"] }); toast({ title: "Operation updated" }); onClose(); },
+    mutationFn: (data: Partial<InsertOperation>) => apiRequest("POST", `/api/operations/${op?.id}/request-approval`, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); toast({ title: "Approval requested", description: "Operation changes pending approval." }); onClose(); },
   });
 
   const submit = () => {
@@ -183,8 +183,8 @@ export default function Operations() {
   const { data: ops = [], isLoading } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations") });
 
   const advance = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) => apiRequest("PATCH", `/api/operations/${id}`, { status }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/operations"] }),
+    mutationFn: ({ id, status }: { id: number; status: string }) => apiRequest("POST", `/api/operations/${id}/request-approval`, { status }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); toast({ title: "Approval requested", description: "Status change pending approval." }); },
   });
   const del = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/operations/${id}`),
@@ -249,7 +249,10 @@ export default function Operations() {
             <tbody className="divide-y divide-border">
               {filtered.map(op => (
                 <tr key={op.id} className={`hover:bg-secondary/20 transition-colors ${priorityBg[op.priority] || ""}`} data-testid={`op-row-${op.id}`}>
-                  <td className="px-3 py-2 font-bold tracking-wider" data-label="OP NAME">{op.name}</td>
+                  <td className="px-3 py-2 font-bold tracking-wider" data-label="OP NAME">
+                    {op.docNumber ? <span className="font-mono text-[10px] text-muted-foreground/70 mr-2">#{op.docNumber}</span> : null}
+                    {op.name}
+                  </td>
                   <td className="px-3 py-2" data-label="TYPE"><span className="text-[10px] text-muted-foreground uppercase">{op.type}</span></td>
                   <td className="px-3 py-2" data-label="STATUS"><span className={`badge-${op.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{op.status}</span></td>
                   <td className="px-3 py-2" data-label="PRIORITY"><span className={`badge-${op.priority} text-[9px] px-2 py-0.5 rounded tracking-wider uppercase`}>{op.priority}</span></td>

@@ -50,6 +50,7 @@ const db = drizzle(sqlite, { schema });
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS isofac_docs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_number TEXT NOT NULL DEFAULT '',
     type TEXT NOT NULL,
     title TEXT NOT NULL,
     classification TEXT NOT NULL DEFAULT 'UNCLASS',
@@ -75,6 +76,7 @@ sqlite.exec(`
   );
   CREATE TABLE IF NOT EXISTS commo_cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doc_number TEXT NOT NULL DEFAULT '',
     title TEXT NOT NULL,
     effective_date TEXT NOT NULL,
     primary_key TEXT NOT NULL DEFAULT '',
@@ -121,9 +123,61 @@ try {
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE commo_cards ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE operations ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE threats ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE assets ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE after_action_reports ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN end_date TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN end_time TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN color TEXT NOT NULL DEFAULT 'blue'`); } catch {}
+
+// Backfill ISOFAC doc_number where missing
+try {
+  const existing = new Set<string>(
+    (sqlite.prepare(`SELECT doc_number FROM isofac_docs WHERE doc_number != ''`).all() as any[]).map((r) => String(r.doc_number)),
+  );
+  const needs = sqlite.prepare(`SELECT id FROM isofac_docs WHERE doc_number = ''`).all() as any[];
+  const gen = () => {
+    // 6-digit, zero-padded, non-zero range
+    const n = Math.floor(100000 + Math.random() * 900000);
+    return String(n).padStart(6, "0");
+  };
+  for (const r of needs) {
+    let num = gen();
+    let tries = 0;
+    while (existing.has(num) && tries < 50) { num = gen(); tries++; }
+    existing.add(num);
+    sqlite.prepare(`UPDATE isofac_docs SET doc_number = ? WHERE id = ?`).run(num, r.id);
+  }
+} catch {}
+
+function backfillDocNumber(table: "commo_cards" | "operations" | "threats" | "assets" | "after_action_reports") {
+  try {
+    const existing = new Set<string>(
+      (sqlite.prepare(`SELECT doc_number FROM ${table} WHERE doc_number != ''`).all() as any[]).map((r) => String(r.doc_number)),
+    );
+    const needs = sqlite.prepare(`SELECT id FROM ${table} WHERE doc_number = ''`).all() as any[];
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    for (const r of needs) {
+      let num = gen();
+      let tries = 0;
+      while (existing.has(num) && tries < 50) { num = gen(); tries++; }
+      existing.add(num);
+      sqlite.prepare(`UPDATE ${table} SET doc_number = ? WHERE id = ?`).run(num, r.id);
+    }
+  } catch {}
+}
+
+backfillDocNumber("commo_cards");
+backfillDocNumber("operations");
+backfillDocNumber("threats");
+backfillDocNumber("assets");
+backfillDocNumber("after_action_reports");
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_markers (
@@ -359,9 +413,12 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS calendar_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     event_date TEXT NOT NULL,
+    end_date TEXT NOT NULL DEFAULT '',
     title TEXT NOT NULL,
     notes TEXT NOT NULL DEFAULT '',
     start_time TEXT DEFAULT '',
+    end_time TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT 'blue',
     created_by TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -732,6 +789,7 @@ export interface IStorage {
   ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
   // Approvals
   getApprovals(status?: string): Approval[];
+  getApproval(id: number): Approval | undefined;
   createApproval(a: InsertApproval): Approval;
   approveApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
   rejectApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
@@ -782,7 +840,24 @@ export class Storage implements IStorage {
   // ISOFAC
   getIsofacDocs() { return db.select().from(schema.isofacDocs).orderBy(desc(schema.isofacDocs.id)).all(); }
   getIsofacDoc(id: number) { return db.select().from(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).get(); }
-  createIsofacDoc(d: InsertIsofacDoc) { return db.insert(schema.isofacDocs).values(d).returning().get(); }
+  createIsofacDoc(d: InsertIsofacDoc) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (d as any).docNumber ? String((d as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db
+          .select({ n: schema.isofacDocs.docNumber })
+          .from(schema.isofacDocs)
+          .where(and(gte(schema.isofacDocs.docNumber, "000000"), lte(schema.isofacDocs.docNumber, "999999")))
+          .all()
+          .map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.isofacDocs).values({ ...(d as any), docNumber }).returning().get();
+  }
   updateIsofacDoc(id: number, d: Partial<InsertIsofacDoc>) {
     return db.update(schema.isofacDocs).set({ ...d, updatedAt: new Date().toISOString() })
       .where(eq(schema.isofacDocs.id, id)).returning().get();
@@ -848,7 +923,19 @@ export class Storage implements IStorage {
   // Commo Cards
   getCommoCards() { return db.select().from(schema.commoCards).orderBy(desc(schema.commoCards.id)).all(); }
   getCommoCard(id: number) { return db.select().from(schema.commoCards).where(eq(schema.commoCards.id, id)).get(); }
-  createCommoCard(c: InsertCommoCard) { return db.insert(schema.commoCards).values(c).returning().get(); }
+  createCommoCard(c: InsertCommoCard) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (c as any).docNumber ? String((c as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db.select({ n: schema.commoCards.docNumber }).from(schema.commoCards).all().map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.commoCards).values({ ...(c as any), docNumber }).returning().get();
+  }
   updateCommoCard(id: number, c: Partial<InsertCommoCard>) {
     return db.update(schema.commoCards).set(c).where(eq(schema.commoCards.id, id)).returning().get();
   }
@@ -1081,7 +1168,19 @@ export class Storage implements IStorage {
   // Operations
   getOperations() { return db.select().from(schema.operations).all(); }
   getOperation(id: number) { return db.select().from(schema.operations).where(eq(schema.operations.id, id)).get(); }
-  createOperation(o: InsertOperation) { return db.insert(schema.operations).values(o).returning().get(); }
+  createOperation(o: InsertOperation) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (o as any).docNumber ? String((o as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db.select({ n: schema.operations.docNumber }).from(schema.operations).all().map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.operations).values({ ...(o as any), docNumber }).returning().get();
+  }
   updateOperation(id: number, o: Partial<InsertOperation>) {
     return db.update(schema.operations).set(o).where(eq(schema.operations.id, id)).returning().get();
   }
@@ -1127,7 +1226,19 @@ export class Storage implements IStorage {
   // Assets
   getAssets() { return db.select().from(schema.assets).all(); }
   getAsset(id: number) { return db.select().from(schema.assets).where(eq(schema.assets.id, id)).get(); }
-  createAsset(a: InsertAsset) { return db.insert(schema.assets).values(a).returning().get(); }
+  createAsset(a: InsertAsset) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (a as any).docNumber ? String((a as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db.select({ n: schema.assets.docNumber }).from(schema.assets).all().map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.assets).values({ ...(a as any), docNumber }).returning().get();
+  }
   updateAsset(id: number, a: Partial<InsertAsset>) {
     return db.update(schema.assets).set(a).where(eq(schema.assets.id, id)).returning().get();
   }
@@ -1135,7 +1246,19 @@ export class Storage implements IStorage {
 
   // Threats
   getThreats() { return db.select().from(schema.threats).orderBy(desc(schema.threats.id)).all(); }
-  createThreat(t: InsertThreat) { return db.insert(schema.threats).values(t).returning().get(); }
+  createThreat(t: InsertThreat) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (t as any).docNumber ? String((t as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db.select({ n: schema.threats.docNumber }).from(schema.threats).all().map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.threats).values({ ...(t as any), docNumber }).returning().get();
+  }
   updateThreat(id: number, t: Partial<InsertThreat>) {
     return db.update(schema.threats).set(t).where(eq(schema.threats.id, id)).returning().get();
   }
@@ -1156,7 +1279,19 @@ export class Storage implements IStorage {
   // After Action Reports
   getAars() { return db.select().from(schema.afterActionReports).orderBy(desc(schema.afterActionReports.id)).all(); }
   getAar(id: number) { return db.select().from(schema.afterActionReports).where(eq(schema.afterActionReports.id, id)).get(); }
-  createAar(a: InsertAar) { return db.insert(schema.afterActionReports).values(a).returning().get(); }
+  createAar(a: InsertAar) {
+    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
+    let docNumber = (a as any).docNumber ? String((a as any).docNumber) : "";
+    if (!docNumber) {
+      const existing = new Set<string>(
+        db.select({ n: schema.afterActionReports.docNumber }).from(schema.afterActionReports).all().map((r) => String(r.n || "")),
+      );
+      docNumber = gen();
+      let tries = 0;
+      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
+    }
+    return db.insert(schema.afterActionReports).values({ ...(a as any), docNumber }).returning().get();
+  }
   updateAar(id: number, a: Partial<InsertAar>) {
     return db.update(schema.afterActionReports).set(a).where(eq(schema.afterActionReports.id, id)).returning().get();
   }
@@ -1381,6 +1516,10 @@ export class Storage implements IStorage {
       .from(schema.approvals)
       .orderBy(desc(schema.approvals.requestedAt), desc(schema.approvals.id))
       .all();
+  }
+
+  getApproval(id: number) {
+    return db.select().from(schema.approvals).where(eq(schema.approvals.id, id)).get();
   }
 
   createApproval(a: InsertApproval) {

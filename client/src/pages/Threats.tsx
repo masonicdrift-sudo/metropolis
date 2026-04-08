@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { Threat, InsertThreat } from "@shared/schema";
 import { useState } from "react";
-import { Plus, Target, Trash2, ShieldOff } from "lucide-react";
+import { Plus, Target, Trash2, ShieldOff, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +64,9 @@ function ThreatForm({ onClose }: { onClose: () => void }) {
 export default function Threats() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const [reqOpen, setReqOpen] = useState(false);
+  const [reqThreat, setReqThreat] = useState<Threat | null>(null);
+  const [reqNote, setReqNote] = useState("");
   const [open, setOpen] = useState(false);
   const [showActive, setShowActive] = useState(true);
 
@@ -72,6 +75,10 @@ export default function Threats() {
   const neutralize = useMutation({
     mutationFn: (id: number) => apiRequest("PATCH", `/api/threats/${id}`, { active: false }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/threats"] }); toast({ title: "Threat neutralized" }); },
+  });
+  const requestAction = useMutation({
+    mutationFn: (body: { id: number; note: string }) => apiRequest("POST", `/api/threats/${body.id}/request-action`, { actionType: "target_action", note: body.note }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); toast({ title: "Action requested", description: "Pending approval." }); },
   });
   const del = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/threats/${id}`),
@@ -139,6 +146,7 @@ export default function Threats() {
                 <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                   <span className={`badge-${t.confidence} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase`}>{t.confidence}</span>
                   <span className="text-[9px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded uppercase">{t.category.replace("_"," ")}</span>
+                  {t.docNumber ? <span className="text-[9px] font-mono text-muted-foreground/70">#{t.docNumber}</span> : null}
                   {!t.active && <span className="text-[9px] text-green-600 font-bold tracking-wider">NEUTRALIZED</span>}
                 </div>
                 <div className="text-xs font-bold">{t.label}</div>
@@ -148,6 +156,14 @@ export default function Threats() {
                   <button onClick={() => neutralize.mutate(t.id)} title="Mark neutralized"
                     className="p-1 text-muted-foreground hover:text-green-400" data-testid={`neutralize-${t.id}`}><ShieldOff size={11} /></button>
                 )}
+                  <button
+                    onClick={() => { setReqThreat(t); setReqNote(""); setReqOpen(true); }}
+                    title="Request action (approval)"
+                    className="p-1 text-muted-foreground hover:text-blue-400"
+                    data-testid={`request-action-${t.id}`}
+                  >
+                    <Send size={11} />
+                  </button>
                 <button onClick={() => del.mutate(t.id)} className="p-1 text-muted-foreground hover:text-red-400" data-testid={`delete-threat-${t.id}`}><Trash2 size={11} /></button>
               </div>
             </div>
@@ -162,6 +178,34 @@ export default function Threats() {
           <div className="col-span-2 py-10 text-center text-xs text-green-400 tracking-wider">NO ACTIVE THREATS DETECTED</div>
         )}
       </div>
+
+      <Dialog open={reqOpen} onOpenChange={(o) => { setReqOpen(o); if (!o) setReqThreat(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="text-sm tracking-widest">REQUEST ACTION</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <div className="text-[10px] text-muted-foreground font-mono">
+              {reqThreat ? `TARGET: ${reqThreat.label} (${reqThreat.grid})` : ""}
+            </div>
+            <Label className="text-[10px] tracking-wider">REQUEST NOTE</Label>
+            <Textarea value={reqNote} onChange={(e) => setReqNote(e.target.value)} className="text-xs h-20" placeholder="Requested action / desired effects / timing…" />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => setReqOpen(false)}>CANCEL</Button>
+              <Button
+                size="sm"
+                className="text-xs bg-blue-900 hover:bg-blue-800"
+                disabled={!reqThreat || !reqNote.trim() || requestAction.isPending}
+                onClick={() => {
+                  if (!reqThreat) return;
+                  requestAction.mutate({ id: reqThreat.id, note: reqNote.trim() });
+                  setReqOpen(false);
+                }}
+              >
+                SUBMIT
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,20 +1,47 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { EntityLink } from "@shared/schema";
+import type { Casualty, EntityLink, IntelReport, IsofacDoc, Operation, Threat } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link2, Plus, Trash2 } from "lucide-react";
 
 function entityLabel(type: string, id: string): string {
   return `${type}:${id}`;
+}
+
+type EntityType = "operations" | "intel" | "isofac" | "threats" | "casualties";
+type EntityOption = { id: string; label: string };
+
+const ENTITY_TYPES: { value: EntityType; label: string }[] = [
+  { value: "intel", label: "INTEL" },
+  { value: "operations", label: "OPERATIONS" },
+  { value: "isofac", label: "ISOFAC" },
+  { value: "threats", label: "THREATS" },
+  { value: "casualties", label: "CASUALTIES" },
+];
+
+function optionsFor(type: EntityType, data: unknown): EntityOption[] {
+  if (type === "intel") {
+    return ((data as IntelReport[]) || []).map((r) => ({ id: String(r.id), label: `${r.id} — ${r.title}` }));
+  }
+  if (type === "operations") {
+    return ((data as Operation[]) || []).map((o) => ({ id: String(o.id), label: `${o.id} — ${o.name}` }));
+  }
+  if (type === "isofac") {
+    return ((data as IsofacDoc[]) || []).map((d) => ({ id: String(d.id), label: `${d.id} — ${d.type} — ${d.title}` }));
+  }
+  if (type === "threats") {
+    return ((data as Threat[]) || []).map((t) => ({ id: String(t.id), label: `${t.id} — ${t.category} — ${t.label}` }));
+  }
+  return ((data as Casualty[]) || []).map((c) => ({ id: String(c.id), label: `${c.id} — ${c.precedence.toUpperCase()} — ${c.displayName}` }));
 }
 
 export default function LinkAnalysisPage() {
@@ -23,12 +50,12 @@ export default function LinkAnalysisPage() {
   const { user } = useAuth();
   const mobile = useIsMobile();
 
-  const [target, setTarget] = useState({ type: "intel", id: "" });
+  const [target, setTarget] = useState<{ type: EntityType; id: string }>({ type: "intel", id: "" });
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    aType: "intel",
+    aType: "intel" as EntityType,
     aId: "",
-    bType: "isofac",
+    bType: "isofac" as EntityType,
     bId: "",
     relation: "related",
     note: "",
@@ -45,8 +72,30 @@ export default function LinkAnalysisPage() {
     enabled: !!user && !!target.type && !!target.id.trim(),
   });
 
+  const { data: intel = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel"), enabled: !!user });
+  const { data: operations = [] } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations"), enabled: !!user });
+  const { data: isofac = [] } = useQuery<IsofacDoc[]>({ queryKey: ["/api/isofac"], queryFn: () => apiRequest("GET", "/api/isofac"), enabled: !!user });
+  const { data: threats = [] } = useQuery<Threat[]>({ queryKey: ["/api/threats"], queryFn: () => apiRequest("GET", "/api/threats"), enabled: !!user });
+  const { data: casualties = [] } = useQuery<Casualty[]>({ queryKey: ["/api/casualties"], queryFn: () => apiRequest("GET", "/api/casualties"), enabled: !!user });
+
+  const dataFor = (t: EntityType) => {
+    if (t === "intel") return intel;
+    if (t === "operations") return operations;
+    if (t === "isofac") return isofac;
+    if (t === "threats") return threats;
+    return casualties;
+  };
+
   const createMut = useMutation({
-    mutationFn: (body: typeof form) => apiRequest("POST", "/api/entity-links", body),
+    mutationFn: (body: typeof form) =>
+      apiRequest("POST", "/api/entity-links", {
+        aType: body.aType,
+        aId: body.aId,
+        bType: body.bType,
+        bId: body.bId,
+        relation: body.relation,
+        note: body.note,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/entity-links"] });
       toast({ title: "Link created" });
@@ -88,11 +137,25 @@ export default function LinkAnalysisPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <Label className="text-[9px] tracking-wider text-muted-foreground">TARGET TYPE</Label>
-            <Input className="h-8 text-xs font-mono" value={target.type} onChange={(e) => setTarget((t) => ({ ...t, type: e.target.value }))} placeholder="intel" />
+            <Select value={target.type} onValueChange={(v) => setTarget((t) => ({ ...t, type: v as EntityType, id: "" }))}>
+              <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ENTITY_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <Label className="text-[9px] tracking-wider text-muted-foreground">TARGET ID</Label>
-            <Input className="h-8 text-xs font-mono" value={target.id} onChange={(e) => setTarget((t) => ({ ...t, id: e.target.value }))} placeholder="123" />
+            <Label className="text-[9px] tracking-wider text-muted-foreground">TARGET</Label>
+            <Select value={target.id} onValueChange={(v) => setTarget((t) => ({ ...t, id: v }))}>
+              <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue placeholder="Select item…" /></SelectTrigger>
+              <SelectContent className="max-h-[min(70dvh,320px)]">
+                {optionsFor(target.type, dataFor(target.type)).map((o) => (
+                  <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -147,36 +210,68 @@ export default function LinkAnalysisPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-[10px]">A TYPE</Label>
-                <Input className="h-9 text-xs font-mono" value={form.aType} onChange={(e) => setForm((f) => ({ ...f, aType: e.target.value }))} placeholder="intel" />
+                <Select value={form.aType} onValueChange={(v) => setForm((f) => ({ ...f, aType: v as EntityType, aId: "" }))}>
+                  <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px]">A ID</Label>
-                <Input className="h-9 text-xs font-mono" value={form.aId} onChange={(e) => setForm((f) => ({ ...f, aId: e.target.value }))} placeholder="123" />
+                <Label className="text-[10px]">A ENTITY</Label>
+                <Select value={form.aId} onValueChange={(v) => setForm((f) => ({ ...f, aId: v }))}>
+                  <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent className="max-h-[min(70dvh,320px)]">
+                    {optionsFor(form.aType, dataFor(form.aType)).map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-[10px]">B TYPE</Label>
-                <Input className="h-9 text-xs font-mono" value={form.bType} onChange={(e) => setForm((f) => ({ ...f, bType: e.target.value }))} placeholder="isofac" />
+                <Select value={form.bType} onValueChange={(v) => setForm((f) => ({ ...f, bType: v as EntityType, bId: "" }))}>
+                  <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ENTITY_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px]">B ID</Label>
-                <Input className="h-9 text-xs font-mono" value={form.bId} onChange={(e) => setForm((f) => ({ ...f, bId: e.target.value }))} placeholder="45" />
+                <Label className="text-[10px]">B ENTITY</Label>
+                <Select value={form.bId} onValueChange={(v) => setForm((f) => ({ ...f, bId: v }))}>
+                  <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectContent className="max-h-[min(70dvh,320px)]">
+                    {optionsFor(form.bType, dataFor(form.bType)).map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-[10px]">RELATION</Label>
-                <Input className="h-9 text-xs font-mono" value={form.relation} onChange={(e) => setForm((f) => ({ ...f, relation: e.target.value }))} placeholder="related" />
+                <Select value={form.relation} onValueChange={(v) => setForm((f) => ({ ...f, relation: v }))}>
+                  <SelectTrigger className="h-9 text-xs font-mono touch-manipulation min-h-[44px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["related", "supports", "derivedFrom"].map((r) => (
+                      <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-[10px]">NOTE (OPTIONAL)</Label>
-                <Input className="h-9 text-xs font-mono" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="Why linked" />
+                <Textarea className="text-xs font-mono min-h-[2.5rem]" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="Why linked" />
               </div>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px]">DETAILS (OPTIONAL)</Label>
-              <Textarea className="text-xs font-mono min-h-[6rem]" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="Context / rationale / source…" />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
@@ -185,21 +280,19 @@ export default function LinkAnalysisPage() {
               size="sm"
               className="bg-green-800 hover:bg-green-700"
               onClick={() => {
-                if (!form.aType.trim() || !form.aId.trim() || !form.bType.trim() || !form.bId.trim()) {
-                  toast({ title: "Fill A/B type and id", variant: "destructive" });
+                if (!form.aId.trim() || !form.bId.trim()) {
+                  toast({ title: "Select A and B entities", variant: "destructive" });
                   return;
                 }
                 createMut.mutate({
                   ...form,
-                  aType: form.aType.trim(),
                   aId: form.aId.trim(),
-                  bType: form.bType.trim(),
                   bId: form.bId.trim(),
                   relation: form.relation.trim() || "related",
                   note: form.note.trim(),
                 });
               }}
-              disabled={createMut.isPending}
+              disabled={createMut.isPending || !form.aId || !form.bId}
             >
               Create
             </Button>

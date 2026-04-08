@@ -1476,6 +1476,7 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
             </div>
             <h2 className="text-base font-bold tracking-wider font-mono text-foreground uppercase">{doc.title}</h2>
             <div className="text-[9px] text-muted-foreground/60 mt-0.5 flex flex-wrap gap-3">
+              {doc.docNumber ? <span>DOC #: <span className="font-mono text-muted-foreground/80">#{doc.docNumber}</span></span> : null}
               <span>BY: {doc.createdBy}</span>
               {doc.opName && <span>OP: {doc.opName}</span>}
               {doc.targetGrid && <span className="grid-coord">{doc.targetGrid}</span>}
@@ -1614,7 +1615,10 @@ function DocCard({ doc, active, onClick }: { doc: IsofacDoc; active: boolean; on
       <div className="flex items-start gap-1.5">
         <TypeIcon size={10} className={`shrink-0 mt-0.5 ${active ? typeInfo?.color : ""}`} />
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-bold font-mono truncate tracking-wider">{doc.title}</div>
+          <div className="text-[10px] font-bold font-mono truncate tracking-wider">
+            {doc.docNumber ? <span className="text-muted-foreground/70">#{doc.docNumber} </span> : null}
+            {doc.title}
+          </div>
           <div className="flex items-center gap-1 mt-0.5">
             <span className="text-[8px] text-muted-foreground/50">{typeInfo?.label || doc.type}</span>
             <span className={`text-[8px] font-bold ${

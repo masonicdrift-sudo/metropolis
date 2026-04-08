@@ -446,6 +446,7 @@ export default function UserManagement() {
               <th className="text-left px-4 py-2">MOS</th>
               <th className="text-left px-4 py-2">RANK</th>
               <th className="text-left px-4 py-2">UNIT</th>
+              <th className="text-left px-4 py-2">TACTICAL ROLE</th>
               <th className="text-left px-4 py-2">ACCESS</th>
               <th className="text-left px-4 py-2">LAST LOGIN</th>
               <th className="text-left px-4 py-2">ACTIONS</th>
@@ -491,6 +492,11 @@ export default function UserManagement() {
                     ? <span className="text-[10px] font-mono font-bold text-green-400 tracking-wider">{u.assignedUnit}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">UNASSIGNED</span>}
                 </td>
+                <td className="px-4 py-3" data-label="TACTICAL ROLE">
+                  {u.role?.trim()
+                    ? <span className="text-[10px] font-mono font-bold text-cyan-300/90 tracking-wider">{u.role}</span>
+                    : <span className="text-muted-foreground/40 text-[10px]">—</span>}
+                </td>
                 <td className="px-4 py-3" data-label="ACCESS">
                   <span className={`text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase ${
                     u.accessLevel === "owner" ? "bg-orange-900/30 text-orange-400 border border-orange-800/40" :
@@ -518,7 +524,7 @@ export default function UserManagement() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
             )}
           </tbody>
         </table>

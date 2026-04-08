@@ -175,6 +175,7 @@ export default function Assets() {
               <div>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className={`badge-${a.status} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase`}>{a.status}</span>
+                  {a.docNumber ? <span className="text-[9px] font-mono text-muted-foreground/70">#{a.docNumber}</span> : null}
                 </div>
                 <div className="text-xs font-bold leading-tight">{a.name}</div>
                 <div className="text-[10px] text-muted-foreground">{a.type.replace("_"," ").toUpperCase()}</div>

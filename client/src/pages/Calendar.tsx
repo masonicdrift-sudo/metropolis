@@ -24,6 +24,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const EVENT_COLORS: { key: string; label: string; cls: string }[] = [
+  { key: "blue", label: "BLUE", cls: "bg-blue-950/40 border-blue-900/40 text-blue-200/90 hover:bg-blue-900/40" },
+  { key: "black", label: "BLACK", cls: "bg-black/30 border-white/10 text-slate-200/90 hover:bg-black/40" },
+  { key: "red", label: "RED", cls: "bg-red-950/40 border-red-900/40 text-red-200/90 hover:bg-red-900/40" },
+  { key: "amber", label: "AMBER", cls: "bg-amber-950/35 border-amber-900/40 text-amber-200/90 hover:bg-amber-900/35" },
+  { key: "green", label: "GREEN", cls: "bg-emerald-950/35 border-emerald-900/40 text-emerald-200/90 hover:bg-emerald-900/35" },
+  { key: "purple", label: "PURPLE", cls: "bg-purple-950/35 border-purple-900/40 text-purple-200/90 hover:bg-purple-900/35" },
+] as const;
 
 function ymd(d: Date): string {
   return format(d, "yyyy-MM-dd");
@@ -38,7 +48,7 @@ export default function CalendarPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
-  const [form, setForm] = useState({ title: "", notes: "", startTime: "" });
+  const [form, setForm] = useState({ title: "", notes: "", startTime: "", endDate: "", endTime: "", color: "blue" });
 
   const range = useMemo(() => {
     const ms = startOfMonth(cursor);
@@ -79,7 +89,7 @@ export default function CalendarPage() {
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
   const createMut = useMutation({
-    mutationFn: (body: { eventDate: string; title: string; notes: string; startTime: string }) =>
+    mutationFn: (body: { eventDate: string; endDate: string; title: string; notes: string; startTime: string; endTime: string; color: string }) =>
       apiRequest("POST", "/api/calendar-events", body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/calendar-events"] });
@@ -90,7 +100,7 @@ export default function CalendarPage() {
   });
 
   const updateMut = useMutation({
-    mutationFn: (body: { id: number; patch: Partial<{ title: string; notes: string; startTime: string; eventDate: string }> }) =>
+    mutationFn: (body: { id: number; patch: Partial<{ title: string; notes: string; startTime: string; eventDate: string; endDate: string; endTime: string; color: string }> }) =>
       apiRequest("PATCH", `/api/calendar-events/${body.id}`, body.patch),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/calendar-events"] });
@@ -114,13 +124,13 @@ export default function CalendarPage() {
     setDialogOpen(false);
     setEditing(null);
     setSelectedDate(null);
-    setForm({ title: "", notes: "", startTime: "" });
+    setForm({ title: "", notes: "", startTime: "", endDate: "", endTime: "", color: "blue" });
   };
 
   const openNew = (dateStr: string) => {
     setSelectedDate(dateStr);
     setEditing(null);
-    setForm({ title: "", notes: "", startTime: "" });
+    setForm({ title: "", notes: "", startTime: "", endDate: dateStr, endTime: "", color: "blue" });
     setDialogOpen(true);
   };
 
@@ -131,6 +141,9 @@ export default function CalendarPage() {
       title: ev.title,
       notes: ev.notes || "",
       startTime: ev.startTime || "",
+      endDate: (ev.endDate || ev.eventDate) as any,
+      endTime: ev.endTime || "",
+      color: ev.color || "blue",
     });
     setDialogOpen(true);
   };
@@ -151,14 +164,20 @@ export default function CalendarPage() {
           notes: form.notes.trim(),
           startTime: form.startTime.trim(),
           eventDate: selectedDate,
+          endDate: form.endDate.trim(),
+          endTime: form.endTime.trim(),
+          color: form.color,
         },
       });
     } else {
       createMut.mutate({
         eventDate: selectedDate,
+        endDate: form.endDate.trim(),
         title: form.title.trim(),
         notes: form.notes.trim(),
         startTime: form.startTime.trim(),
+        endTime: form.endTime.trim(),
+        color: form.color,
       });
     }
   };
@@ -259,6 +278,12 @@ export default function CalendarPage() {
                 </div>
                 <div className="flex-1 flex flex-col gap-0.5 min-h-0 overflow-hidden">
                   {dayEvents.slice(0, mobile ? 2 : 3).map((ev) => (
+                    (() => {
+                      const colorCls = (EVENT_COLORS.find((c) => c.key === (ev.color || "blue"))?.cls) || EVENT_COLORS[0].cls;
+                      const endStr = (ev.endDate && ev.endDate !== ev.eventDate) ? `→${ev.endDate}` : "";
+                      const timeStr = `${ev.startTime ? `${ev.startTime}` : ""}${ev.endTime ? `-${ev.endTime}` : ""}`.trim();
+                      const meta = `${timeStr ? `${timeStr} ` : ""}${endStr}`;
+                      return (
                     <button
                       key={ev.id}
                       type="button"
@@ -266,11 +291,16 @@ export default function CalendarPage() {
                         e.stopPropagation();
                         openEdit(ev);
                       }}
-                      className="text-[8px] sm:text-[9px] leading-tight px-1 py-0.5 rounded bg-green-950/50 border border-green-900/40 text-green-200/90 truncate cursor-pointer hover:bg-green-900/40 text-left w-full"
+                      className={cn(
+                        "text-[8px] sm:text-[9px] leading-tight px-1 py-0.5 rounded border truncate cursor-pointer text-left w-full",
+                        colorCls,
+                      )}
                     >
-                      {ev.startTime ? `${ev.startTime} ` : ""}
+                      {meta ? `${meta} ` : ""}
                       {ev.title}
                     </button>
+                      );
+                    })()
                   ))}
                   {dayEvents.length > (mobile ? 2 : 3) && (
                     <span className="text-[8px] text-muted-foreground pl-0.5">+{dayEvents.length - (mobile ? 2 : 3)}</span>
@@ -329,6 +359,15 @@ export default function CalendarPage() {
               />
             </div>
             <div className="space-y-1">
+              <Label className="text-[10px]">END DATE (YYYY-MM-DD)</Label>
+              <Input
+                className="h-9 text-xs font-mono"
+                value={form.endDate}
+                onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                placeholder={selectedDate || "2026-04-07"}
+              />
+            </div>
+            <div className="space-y-1">
               <Label className="text-[10px]">START TIME (OPTIONAL, HH:MM)</Label>
               <Input
                 className="h-9 text-xs font-mono"
@@ -336,6 +375,30 @@ export default function CalendarPage() {
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
                 placeholder="0900 or 09:00"
               />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">END TIME (OPTIONAL, HH:MM)</Label>
+              <Input
+                className="h-9 text-xs font-mono"
+                value={form.endTime}
+                onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+                placeholder="1030 or 10:30"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px]">COLOR</Label>
+              <Select value={form.color} onValueChange={(v) => setForm((f) => ({ ...f, color: v }))}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Select color" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_COLORS.map((c) => (
+                    <SelectItem key={c.key} value={c.key}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label className="text-[10px]">TITLE</Label>
@@ -357,7 +420,7 @@ export default function CalendarPage() {
             </div>
             {editing && (
               <div className="text-[9px] text-muted-foreground">
-                Created by {editing.createdBy}
+                Scheduled by {editing.createdBy}
                 {canEdit(editing) ? null : " — you can only view this event"}
               </div>
             )}

@@ -100,8 +100,10 @@ function ThreatLevelCard({
   onSetManual: (l: ThreatLevel) => void;
   saving: boolean;
 }) {
+  /* GUARDED uses arbitrary greens — global CSS remaps Tailwind green-* to blue */
   const colors: Record<string, string> = {
-    LOW: "bg-blue-600", GUARDED: "bg-blue-500",
+    LOW: "bg-blue-600",
+    GUARDED: "bg-[#22c55e]",
     ELEVATED: "bg-yellow-500", HIGH: "bg-orange-500", SEVERE: "bg-red-500",
   };
   const levels: ThreatLevel[] = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"];
@@ -109,7 +111,7 @@ function ThreatLevelCard({
   return (
     <div className="bg-card border border-border rounded p-3">
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="text-[10px] text-muted-foreground tracking-[0.12em]">THREAT LEVEL</div>
+        <div className="text-[10px] text-muted-foreground tracking-[0.12em]">SECURITY POSTURE</div>
         <span className={`text-[8px] font-bold tracking-wider px-1.5 py-0.5 rounded border shrink-0 ${
           mode === "manual" ? "border-yellow-700/50 text-yellow-400 bg-yellow-950/30" : "border-border text-muted-foreground"
         }`}>
@@ -126,6 +128,7 @@ function ThreatLevelCard({
         level === "SEVERE" ? "text-red-400" :
         level === "HIGH" ? "text-orange-400" :
         level === "ELEVATED" ? "text-yellow-400" :
+        level === "GUARDED" ? "text-[#4ade80]" :
         "text-blue-400"
       }`}>{level}</div>
       {mode === "manual" && (

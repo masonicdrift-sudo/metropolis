@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { IntelReport, InsertIntelReport } from "@shared/schema";
+import type { EntityLink, IntelReport, InsertIntelReport } from "@shared/schema";
 import { useState } from "react";
-import { Plus, ShieldAlert, Trash2, CheckCircle, Eye, Image as ImageIcon, Upload, X } from "lucide-react";
+import { Plus, ShieldAlert, Trash2, CheckCircle, Eye, Image as ImageIcon, Upload, X, Link2 } from "lucide-react";
 import { useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 function IntelForm({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
@@ -109,9 +110,12 @@ function IntelImageUploader({ reportId, onUploaded }: { reportId: number; onUplo
 export default function Intel() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<IntelReport | null>(null);
   const [filter, setFilter] = useState("all");
+  const [linkDraft, setLinkDraft] = useState({ bType: "isofac", bId: "", relation: "related", note: "" });
+  const [releaseMark, setReleaseMark] = useState("");
 
   const { data: reports = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel") });
 
@@ -122,6 +126,38 @@ export default function Intel() {
   const del = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/intel/${id}`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/intel"] }); toast({ title: "Report deleted" }); },
+  });
+
+  const { data: links = [] } = useQuery<EntityLink[]>({
+    queryKey: ["/api/entity-links", "intel", viewing?.id],
+    queryFn: () => apiRequest("GET", `/api/entity-links?type=intel&id=${encodeURIComponent(String(viewing!.id))}`),
+    enabled: !!user && !!viewing,
+  });
+
+  const createLink = useMutation({
+    mutationFn: (body: { bType: string; bId: string; relation: string; note: string }) =>
+      apiRequest("POST", "/api/entity-links", {
+        aType: "intel",
+        aId: String(viewing!.id),
+        bType: body.bType,
+        bId: body.bId,
+        relation: body.relation,
+        note: body.note,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "intel", viewing?.id] }),
+  });
+
+  const deleteLink = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/entity-links/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "intel", viewing?.id] }),
+  });
+
+  const canDeleteLink = (l: EntityLink) =>
+    !!user && (l.createdBy === user.username || user.accessLevel === "admin" || user.accessLevel === "owner");
+
+  const releaseMut = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/intel/${viewing!.id}/release`, { releasability: releaseMark.trim() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/intel"] }),
   });
 
   const categories = ["all", "HUMINT", "SIGINT", "IMINT", "OSINT", "CYBER"];
@@ -147,7 +183,12 @@ export default function Intel() {
               <Plus size={12} /> FILE REPORT
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+            <DialogContent
+              className="max-w-lg"
+              onOpenAutoFocus={() =>
+                setLinkDraft({ bType: "isofac", bId: "", relation: "related", note: "" })
+              }
+            >
             <DialogHeader><DialogTitle className="text-sm tracking-widest">FILE INTEL REPORT</DialogTitle></DialogHeader>
             <IntelForm onClose={() => setOpen(false)} />
           </DialogContent>
@@ -187,7 +228,16 @@ export default function Intel() {
               </div>
               <div className="flex gap-1 shrink-0 flex-wrap">
                 <IntelImageUploader reportId={r.id} onUploaded={() => {}} />
-                <button onClick={() => setViewing(r)} className="p-1 text-muted-foreground hover:text-foreground" data-testid={`view-intel-${r.id}`}><Eye size={11} /></button>
+                <button
+                  onClick={() => {
+                    setViewing(r);
+                    setReleaseMark(r.releasability || "");
+                  }}
+                  className="p-1 text-muted-foreground hover:text-foreground"
+                  data-testid={`view-intel-${r.id}`}
+                >
+                  <Eye size={11} />
+                </button>
                 {!r.verified && <button onClick={() => verify.mutate(r.id)} className="p-1 text-muted-foreground hover:text-green-400" data-testid={`verify-intel-${r.id}`}><CheckCircle size={11} /></button>}
                 <button onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400" data-testid={`delete-intel-${r.id}`}><Trash2 size={11} /></button>
               </div>
@@ -226,7 +276,12 @@ export default function Intel() {
 
       {/* View detail dialog */}
       {viewing && (
-        <Dialog open={!!viewing} onOpenChange={v => !v && setViewing(null)}>
+        <Dialog
+          open={!!viewing}
+          onOpenChange={(v) => {
+            if (!v) setViewing(null);
+          }}
+        >
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-xs tracking-widest flex items-center gap-2">
@@ -267,6 +322,100 @@ export default function Intel() {
                   );
                 } catch { return null; }
               })()}
+
+              <div className="border-t border-border/60 pt-2">
+                <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-1">PARTNER SHARING</div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+                  <Input
+                    className="h-8 text-[10px] font-mono sm:col-span-3"
+                    placeholder="REL TO USA/FVEY"
+                    value={releaseMark}
+                    onChange={(e) => setReleaseMark(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                    onClick={() => releaseMut.mutate()}
+                    disabled={!releaseMark.trim() || releaseMut.isPending}
+                  >
+                    RELEASE
+                  </Button>
+                </div>
+                {viewing.releasedAt ? (
+                  <div className="text-[9px] text-muted-foreground mt-2">
+                    Released {new Date(viewing.releasedAt).toLocaleString()} by {viewing.releasedBy || "—"} · {viewing.releasability}
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Link analysis (inline) */}
+              <div className="border-t border-border/60 pt-2">
+                <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-1 flex items-center gap-1">
+                  <Link2 size={9} /> LINKS
+                </div>
+                <div className="space-y-1.5">
+                  {links.length === 0 ? (
+                    <div className="text-[9px] text-muted-foreground/60">No links yet.</div>
+                  ) : (
+                    links.map((l) => (
+                      <div key={l.id} className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50">
+                        <div className="flex-1 min-w-0 font-mono text-[9px] truncate">
+                          {l.aType}:{l.aId} ↔ {l.bType}:{l.bId} · {l.relation}
+                        </div>
+                        {canDeleteLink(l) ? (
+                          <button
+                            type="button"
+                            className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                            title="Remove link"
+                            onClick={() => deleteLink.mutate(l.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        ) : null}
+                      </div>
+                    ))
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                    <Input
+                      className="h-8 text-[10px] font-mono"
+                      placeholder="bType (e.g. isofac)"
+                      value={linkDraft.bType}
+                      onChange={(e) => setLinkDraft((d) => ({ ...d, bType: e.target.value }))}
+                    />
+                    <Input
+                      className="h-8 text-[10px] font-mono"
+                      placeholder="bId (e.g. 12)"
+                      value={linkDraft.bId}
+                      onChange={(e) => setLinkDraft((d) => ({ ...d, bId: e.target.value }))}
+                    />
+                    <Input
+                      className="h-8 text-[10px] font-mono"
+                      placeholder="relation"
+                      value={linkDraft.relation}
+                      onChange={(e) => setLinkDraft((d) => ({ ...d, relation: e.target.value }))}
+                    />
+                    <Button
+                      size="sm"
+                      className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                      onClick={() => {
+                        const bt = linkDraft.bType.trim();
+                        const bi = linkDraft.bId.trim();
+                        if (!bt || !bi) return;
+                        createLink.mutate({
+                          bType: bt,
+                          bId: bi,
+                          relation: linkDraft.relation.trim() || "related",
+                          note: linkDraft.note.trim(),
+                        });
+                      }}
+                      disabled={!linkDraft.bType.trim() || !linkDraft.bId.trim() || createLink.isPending}
+                    >
+                      ADD LINK
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

@@ -10,7 +10,7 @@ import { z } from "zod";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
-  ROLE_RANK,
+  ACCESS_RANK,
 } from "@shared/schema";
 import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
@@ -140,6 +140,82 @@ const tacticalBuildingLabelPostSchema = z.object({
   strokeColor: z.string().max(48).optional().default("#94a3b8"),
 });
 
+// ── Activity Log / Links / Support Requests ───────────────────────────────────
+const activityQuerySchema = z.object({
+  fromTs: z.string().optional(),
+  toTs: z.string().optional(),
+  actorUsername: z.string().optional(),
+  entityType: z.string().optional(),
+  action: z.string().optional(),
+  limit: z.preprocess((v) => (typeof v === "string" ? Number(v) : v), z.number().optional()),
+  offset: z.preprocess((v) => (typeof v === "string" ? Number(v) : v), z.number().optional()),
+});
+
+const entityLinkPostSchema = z.object({
+  aType: z.string().min(1).max(64),
+  aId: z.string().min(1).max(128),
+  bType: z.string().min(1).max(64),
+  bId: z.string().min(1).max(128),
+  relation: z.string().min(1).max(32).optional().default("related"),
+  note: z.string().max(800).optional().default(""),
+});
+
+const supportRequestPostSchema = z.object({
+  title: z.string().min(1).max(200),
+  category: z.string().max(40).optional().default("general"),
+  priority: z.enum(["routine", "priority", "immediate", "flash"]).optional().default("routine"),
+  status: z.enum(["open", "triaging", "in_progress", "closed"]).optional().default("open"),
+  assignedTo: z.string().max(64).optional().default(""),
+  dueAt: z.string().max(64).optional().default(""),
+  details: z.string().max(8000).optional().default(""),
+});
+const supportRequestPatchSchema = supportRequestPostSchema.partial();
+
+// ── Medical / Casualty ────────────────────────────────────────────────────────
+const casualtyPostSchema = z.object({
+  displayName: z.string().min(1).max(120),
+  unit: z.string().max(120).optional().default(""),
+  patientId: z.string().max(120).optional().default(""),
+  classification: z.enum(["UNCLASS", "CUI", "SECRET", "TS"]).optional().default("UNCLASS"),
+  status: z.enum(["open", "evac_requested", "evac_enroute", "evac_complete", "closed"]).optional().default("open"),
+  precedence: z.enum(["urgent", "priority", "routine"]).optional().default("routine"),
+  injury: z.string().max(800).optional().default(""),
+  locationGrid: z.string().max(64).optional().default(""),
+  incidentAt: z.string().min(1).max(64),
+  notes: z.string().max(8000).optional().default(""),
+});
+const casualtyPatchSchema = casualtyPostSchema.partial();
+
+const casualtyEvacUpsertSchema = z.object({
+  casualtyId: z.number(),
+  callSign: z.string().max(64).optional().default(""),
+  pickupGrid: z.string().max(64).optional().default(""),
+  hlzName: z.string().max(120).optional().default(""),
+  destination: z.string().max(120).optional().default(""),
+  platform: z.string().max(120).optional().default(""),
+  requestedAt: z.string().max(64).optional().default(""),
+  eta: z.string().max(64).optional().default(""),
+  nineLineJson: z.string().max(50000).optional().default(""),
+});
+
+const casualtyTreatmentPostSchema = z.object({
+  casualtyId: z.number(),
+  ts: z.string().min(1).max(64),
+  note: z.string().min(1).max(4000),
+});
+
+const approvalPostSchema = z.object({
+  entityType: z.string().min(1).max(64),
+  entityId: z.string().min(1).max(128),
+  action: z.string().min(1).max(32),
+  requestedNote: z.string().max(2000).optional().default(""),
+  payloadJson: z.string().max(50000).optional().default(""),
+});
+
+const approvalDecisionSchema = z.object({
+  decisionNote: z.string().max(2000).optional().default(""),
+});
+
 // Rate limiter: max 10 login attempts per 15 minutes per IP
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -162,6 +238,42 @@ function safeUser(user: any) {
 function wsPush(type: string, extra?: object) {
   const broadcast = (global as any).__wsBroadcast;
   if (broadcast) broadcast({ type, ...extra });
+}
+
+function appendActivity(
+  req: Request,
+  e: {
+    action: string;
+    entityType: string;
+    entityId?: string | number;
+    summary?: string;
+    before?: unknown;
+    after?: unknown;
+  },
+) {
+  try {
+    const ip =
+      typeof req.headers["x-forwarded-for"] === "string"
+        ? req.headers["x-forwarded-for"].split(",")[0].trim()
+        : req.socket.remoteAddress || "";
+    const ua = typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : "";
+    storage.appendActivity({
+      ts: new Date().toISOString(),
+      actorUsername: req.session.username || "unknown",
+      actorRole: req.session.accessLevel || "user",
+      action: e.action,
+      entityType: e.entityType,
+      entityId: e.entityId != null ? String(e.entityId) : "",
+      summary: e.summary || "",
+      beforeJson: e.before !== undefined ? JSON.stringify(e.before) : "",
+      afterJson: e.after !== undefined ? JSON.stringify(e.after) : "",
+      ip,
+      userAgent: ua,
+    });
+    wsPush("ACTIVITY");
+  } catch {
+    // Never block the primary action if audit logging fails
+  }
 }
 
 /** @username tokens in message text (matches client parsing). */
@@ -214,14 +326,14 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 // Middleware: require admin or higher
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
-  if ((ROLE_RANK[req.session.role || ""] ?? 0) < ROLE_RANK.admin) return res.status(403).json({ error: "Forbidden" });
+  if ((ACCESS_RANK[req.session.accessLevel || ""] ?? 0) < ACCESS_RANK.admin) return res.status(403).json({ error: "Forbidden" });
   next();
 }
 
 // Middleware: require owner role only
 function requireOwner(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
-  if (req.session.role !== "owner") return res.status(403).json({ error: "Forbidden — Owner only" });
+  if (req.session.accessLevel !== "owner") return res.status(403).json({ error: "Forbidden — Owner only" });
   next();
 }
 
@@ -235,21 +347,30 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     const { username, password } = req.body;
     // Generic error — never reveal whether username or password was wrong
-    if (!username || !password) return res.status(401).json({ error: "Invalid credentials" });
+    if (!username || !password) {
+      appendActivity(req, { action: "LOGIN_FAIL", entityType: "user_session", summary: "Login failed (missing credentials)" });
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
     const user = storage.getUserByUsername(username);
     // Always run bcrypt compare to prevent timing attacks (even if user not found)
     const dummyHash = "$2a$10$invalidhashfortimingprotection000000000000000000000000";
     const valid = user ? bcrypt.compareSync(password, user.passwordHash) : bcrypt.compareSync(password, dummyHash);
-    if (!user || !valid) return res.status(401).json({ error: "Invalid credentials" });
+    if (!user || !valid) {
+      appendActivity(req, { action: "LOGIN_FAIL", entityType: "user_session", summary: `Login failed for ${String(username).trim().slice(0, 48)}` });
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
     storage.updateLastLogin(user.id);
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.role = user.role;
+    req.session.accessLevel = user.accessLevel;
+    req.session.tacticalRole = user.role || "";
+    appendActivity(req, { action: "LOGIN", entityType: "user_session", entityId: user.id, summary: `Login: ${user.username}`, after: { username: user.username, accessLevel: user.accessLevel } });
     // Only return safe fields — never the hash
     res.json({
       id: user.id,
       username: user.username,
-      role: user.role,
+      accessLevel: user.accessLevel,
+      role: user.role || "",
       rank: user.rank || "",
       assignedUnit: user.assignedUnit || "",
       milIdNumber: user.milIdNumber || "",
@@ -258,6 +379,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   app.post("/api/auth/logout", (req, res) => {
+    appendActivity(req, { action: "LOGOUT", entityType: "user_session", entityId: req.session?.userId || "", summary: `Logout: ${req.session?.username || "unknown"}` });
     req.session.destroy(() => res.json({ ok: true }));
   });
 
@@ -304,7 +426,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json({
       id: user.id,
       username: user.username,
-      role: user.role,
+      accessLevel: user.accessLevel,
+      role: user.role || "",
       rank: user.rank || "",
       assignedUnit: user.assignedUnit || "",
       milIdNumber: user.milIdNumber || "",
@@ -327,7 +450,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     // Auto log in
     req.session.userId = user.id;
     req.session.username = user.username;
-    req.session.role = user.role;
+    req.session.accessLevel = user.accessLevel;
+    req.session.tacticalRole = user.role || "";
     res.status(201).json(safeUser(user));
   });
 
@@ -355,33 +479,44 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     );
   });
   app.post("/api/users", requireAdmin, (req, res) => {
-    const { username, password, role, rank, assignedUnit, milIdNumber, mos } = req.body;
+    const { username, password, accessLevel, role, rank, assignedUnit, milIdNumber, mos } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Username and password required" });
     // Role creation rules:
     //  - Owner (rank 3): can create Owner, Admin, Operator
     //  - Admin (rank 2): can create Admin and Operator, NOT Owner
     //  - Operator (rank 1): cannot create anyone (blocked by requireAdmin above)
-    const requestedRole = role || "user";
-    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    const targetRank = ROLE_RANK[requestedRole] ?? 0;
+    const requestedAccess = accessLevel || "user";
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const targetRank = ACCESS_RANK[requestedAccess] ?? 0;
     if (targetRank > callerRank) return res.status(403).json({ error: "Cannot create a user with a role higher than your own" });
     const exists = storage.getUserByUsername(username);
     if (exists) return res.status(409).json({ error: "Username already exists" });
-    const user = storage.createUser(username, password, requestedRole, {
+    const user = storage.createUser(username, password, requestedAccess, {
       rank: typeof rank === "string" ? rank : "",
       assignedUnit: typeof assignedUnit === "string" ? assignedUnit : "",
       milIdNumber:
         typeof milIdNumber === "string" ? milIdNumber.trim().slice(0, 64) : "",
       mos: typeof mos === "string" ? mos.trim().slice(0, 32) : "",
     });
+    if (typeof role === "string") {
+      storage.updateUserById(user.id, { role: role.trim().slice(0, 64) });
+    }
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "user",
+      entityId: user.id,
+      summary: `Created user: ${user.username} (${user.accessLevel})`,
+      after: { id: user.id, username: user.username, accessLevel: user.accessLevel, role: user.role || "" },
+    });
     res.status(201).json(safeUser(user));
   });
   // Owner-only: edit any user's username, role, or reset password
   app.patch("/api/users/:id", requireOwner, (req, res) => {
     const id = Number(req.params.id);
-    const { username, role, password } = req.body;
+    const { username, accessLevel, role, password } = req.body;
     const target = storage.getUserById(id);
     if (!target) return res.status(404).json({ error: "User not found" });
+    const beforeSafe = { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" };
     // Build update payload
     const updates: Record<string, any> = {};
     if (username && username !== target.username) {
@@ -389,8 +524,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       if (exists) return res.status(409).json({ error: "Username already taken" });
       updates.username = username;
     }
-    if (role && ROLE_RANK[role] !== undefined) {
-      updates.role = role;
+    if (accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
+      updates.accessLevel = accessLevel;
+    }
+    if (typeof role === "string") {
+      updates.role = role.trim().slice(0, 64);
     }
     if (typeof req.body.rank !== "undefined") {
       updates.rank = req.body.rank;
@@ -416,6 +554,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (Object.keys(updates).length === 0) return res.status(400).json({ error: "Nothing to update" });
     const updated = storage.updateUserById(id, updates); wsPush("USER");
     const { passwordHash, ...safe } = updated as any;
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "user",
+      entityId: id,
+      summary: `Updated user: ${beforeSafe.username} → ${(safe as any).username || beforeSafe.username}`,
+      before: beforeSafe,
+      after: { id: (safe as any).id, username: (safe as any).username, accessLevel: (safe as any).accessLevel, role: (safe as any).role || "" },
+    });
     res.json(safe);
   });
 
@@ -425,10 +571,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     // Check target user's role — you can only delete users with lower rank than you
     const target = storage.getUserById(id);
     if (!target) return res.status(404).json({ error: "User not found" });
-    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    const targetRank = ROLE_RANK[target.role] ?? 0;
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const targetRank = ACCESS_RANK[target.accessLevel] ?? 0;
     if (targetRank >= callerRank) return res.status(403).json({ error: "Cannot delete a user with equal or higher role" });
     storage.deleteUser(id);
+    appendActivity(req, { action: "DELETE", entityType: "user", entityId: id, summary: `Deleted user: ${target.username} (${target.accessLevel})`, before: { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" } });
     res.status(204).send();
   });
 
@@ -463,15 +610,75 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       tags: req.body.tags || "[]",
     });
     wsPush("ISOFAC");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "isofac",
+      entityId: idoc2.id,
+      summary: `Created ISOFAC doc: ${idoc2.title}`,
+      after: { id: idoc2.id, type: idoc2.type, title: idoc2.title, status: idoc2.status, classification: idoc2.classification },
+    });
     res.status(201).json(idoc2);
   });
   app.patch("/api/isofac/:id", requireAuth, (req, res) => {
-    const doc = storage.updateIsofacDoc(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getIsofacDoc(id);
+    const doc = storage.updateIsofacDoc(id, req.body);
     if (!doc) return res.status(404).json({ error: "Not found" });
-    wsPush("ISOFAC"); res.json(doc);
+    wsPush("ISOFAC");
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "isofac",
+      entityId: doc.id,
+      summary: `Updated ISOFAC doc: ${doc.title}`,
+      before: before ? { id: before.id, type: before.type, title: before.title, status: before.status, classification: before.classification } : undefined,
+      after: { id: doc.id, type: doc.type, title: doc.title, status: doc.status, classification: doc.classification },
+    });
+    res.json(doc);
+  });
+
+  app.post("/api/isofac/:id/release", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const releasability = typeof req.body?.releasability === "string" ? req.body.releasability.trim() : "";
+    if (!releasability) return res.status(400).json({ error: "releasability required" });
+    const before = storage.getIsofacDoc(id);
+    if (!before) return res.status(404).json({ error: "Not found" });
+    // Tactical default: require 2-person integrity for partner release (admin/owner only approve).
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    if (!isStaff) {
+      return res.status(403).json({ error: "Only admin/owner can request partner release (approval required)" });
+    }
+    const now = new Date().toISOString();
+    const approval = storage.createApproval({
+      entityType: "isofac_release",
+      entityId: String(id),
+      action: "RELEASE",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: "",
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ releasability }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested ISOFAC release approval for doc ${id} (${before.title})` , after: approval });
+    res.status(202).json({ ok: true, approvalId: approval.id });
   });
   app.delete("/api/isofac/:id", requireAdmin, (req, res) => {
-    storage.deleteIsofacDoc(Number(req.params.id)); wsPush("ISOFAC");
+    const id = Number(req.params.id);
+    const before = storage.getIsofacDoc(id);
+    storage.deleteIsofacDoc(id);
+    wsPush("ISOFAC");
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "isofac",
+      entityId: id,
+      summary: `Deleted ISOFAC doc: ${before?.title ?? id}`,
+      before: before ? { id: before.id, type: before.type, title: before.title, status: before.status, classification: before.classification } : undefined,
+    });
     res.status(204).send();
   });
 
@@ -550,8 +757,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const id = Number(req.params.id);
     const group = storage.getGroup(id);
     if (!group) return res.status(404).json({ error: "Not found" });
-    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    if (group.createdBy !== req.session.username && callerRank < ROLE_RANK.admin)
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    if (group.createdBy !== req.session.username && callerRank < ACCESS_RANK.admin)
       return res.status(403).json({ error: "Only group creator or admin can add members" });
     const { username } = req.body;
     const updated = storage.addGroupMember(id, username);
@@ -570,8 +777,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const id = Number(req.params.id);
     const group = storage.getGroup(id);
     if (!group) return res.status(404).json({ error: "Not found" });
-    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    if (group.createdBy !== req.session.username && callerRank < ROLE_RANK.admin)
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    if (group.createdBy !== req.session.username && callerRank < ACCESS_RANK.admin)
       return res.status(403).json({ error: "Only group creator or admin can delete" });
     storage.deleteGroup(id);
     res.status(204).send();
@@ -689,15 +896,45 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/operations", requireAuth, (req, res) => {
     const parsed = insertOperationSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const op = storage.createOperation(parsed.data); wsPush("OPERATION"); res.status(201).json(op);
+    const op = storage.createOperation(parsed.data);
+    wsPush("OPERATION");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "operations",
+      entityId: op.id,
+      summary: `Created operation: ${op.name}`,
+      after: op,
+    });
+    res.status(201).json(op);
   });
   app.patch("/api/operations/:id", requireAuth, (req, res) => {
-    const op = storage.updateOperation(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getOperation(id);
+    const op = storage.updateOperation(id, req.body);
     if (!op) return res.status(404).json({ error: "Not found" });
-    wsPush("OPERATION"); res.json(op);
+    wsPush("OPERATION");
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "operations",
+      entityId: op.id,
+      summary: `Updated operation: ${op.name}`,
+      before,
+      after: op,
+    });
+    res.json(op);
   });
   app.delete("/api/operations/:id", requireAuth, (req, res) => {
-    storage.deleteOperation(Number(req.params.id)); wsPush("OPERATION");
+    const id = Number(req.params.id);
+    const before = storage.getOperation(id);
+    storage.deleteOperation(id);
+    wsPush("OPERATION");
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "operations",
+      entityId: id,
+      summary: `Deleted operation: ${before?.name ?? id}`,
+      before,
+    });
     res.status(204).send();
   });
 
@@ -706,12 +943,63 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/intel", requireAuth, (req, res) => {
     const parsed = insertIntelReportSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const ir = storage.createIntelReport(parsed.data); wsPush("INTEL"); res.status(201).json(ir);
+    const ir = storage.createIntelReport(parsed.data);
+    wsPush("INTEL");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "intel",
+      entityId: ir.id,
+      summary: `Created intel: ${ir.title}`,
+      after: ir,
+    });
+    res.status(201).json(ir);
   });
   app.patch("/api/intel/:id", requireAuth, (req, res) => {
-    const report = storage.updateIntelReport(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getIntelReport(id);
+    const report = storage.updateIntelReport(id, req.body);
     if (!report) return res.status(404).json({ error: "Not found" });
-    wsPush("INTEL"); res.json(report);
+    wsPush("INTEL");
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "intel",
+      entityId: report.id,
+      summary: `Updated intel: ${report.title}`,
+      before,
+      after: report,
+    });
+    res.json(report);
+  });
+
+  app.post("/api/intel/:id/release", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const releasability = typeof req.body?.releasability === "string" ? req.body.releasability.trim() : "";
+    if (!releasability) return res.status(400).json({ error: "releasability required" });
+    const before = storage.getIntelReport(id);
+    if (!before) return res.status(404).json({ error: "Not found" });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    if (!isStaff) {
+      return res.status(403).json({ error: "Only admin/owner can request partner release (approval required)" });
+    }
+    const now = new Date().toISOString();
+    const approval = storage.createApproval({
+      entityType: "intel_release",
+      entityId: String(id),
+      action: "RELEASE",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: "",
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ releasability }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested intel release approval for ${id} (${before.title})`, after: approval });
+    res.status(202).json({ ok: true, approvalId: approval.id });
   });
   // Add image to intel report
   app.post("/api/intel/:id/images", requireAuth, (req, res) => {
@@ -733,7 +1021,17 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(updated);
   });
   app.delete("/api/intel/:id", requireAuth, (req, res) => {
-    storage.deleteIntelReport(Number(req.params.id)); wsPush("INTEL");
+    const id = Number(req.params.id);
+    const before = storage.getIntelReport(id);
+    storage.deleteIntelReport(id);
+    wsPush("INTEL");
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "intel",
+      entityId: id,
+      summary: `Deleted intel: ${before?.title ?? id}`,
+      before,
+    });
     res.status(204).send();
   });
 
@@ -742,19 +1040,48 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/comms", requireAuth, (req, res) => {
     const parsed = insertCommsLogSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const cl = storage.createCommsEntry(parsed.data); wsPush("COMMS"); res.status(201).json(cl);
+    const cl = storage.createCommsEntry(parsed.data);
+    wsPush("COMMS");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "comms",
+      entityId: cl.id,
+      summary: `Created comms message ${cl.id} (${cl.fromCallsign}→${cl.toCallsign})`,
+      after: { ...cl, message: "<redacted>" },
+    });
+    res.status(201).json(cl);
   });
   app.patch("/api/comms/:id/ack", requireAuth, (req, res) => {
-    const entry = storage.acknowledgeComms(Number(req.params.id));
+    const id = Number(req.params.id);
+    const before = storage.getCommsLog().find((m) => m.id === id);
+    const entry = storage.acknowledgeComms(id);
     if (!entry) return res.status(404).json({ error: "Not found" });
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "comms",
+      entityId: id,
+      summary: `Acknowledged comms message ${id}`,
+      before: before ? { ...before, message: "<redacted>" } : undefined,
+      after: { ...entry, message: "<redacted>" },
+    });
     res.json(entry);
   });
   app.delete("/api/comms/:id", requireOwner, (req, res) => {
-    storage.deleteCommsEntry(Number(req.params.id));
+    const id = Number(req.params.id);
+    const before = storage.getCommsLog().find((m) => m.id === id);
+    storage.deleteCommsEntry(id);
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "comms",
+      entityId: id,
+      summary: `Deleted comms message ${id}`,
+      before: before ? { ...before, message: "<redacted>" } : undefined,
+    });
     res.status(204).send();
   });
-  app.delete("/api/comms", requireOwner, (_, res) => {
+  app.delete("/api/comms", requireOwner, (req, res) => {
     storage.clearCommsLog();
+    appendActivity(req, { action: "DELETE", entityType: "comms", entityId: "", summary: "Cleared comms log" });
     res.status(204).send();
   });
 
@@ -763,15 +1090,26 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/assets", requireAuth, (req, res) => {
     const parsed = insertAssetSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const asset = storage.createAsset(parsed.data); wsPush("ASSET"); res.status(201).json(asset);
+    const asset = storage.createAsset(parsed.data);
+    wsPush("ASSET");
+    appendActivity(req, { action: "CREATE", entityType: "assets", entityId: asset.id, summary: `Created asset: ${asset.name}`, after: asset });
+    res.status(201).json(asset);
   });
   app.patch("/api/assets/:id", requireAuth, (req, res) => {
-    const asset = storage.updateAsset(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getAsset(id);
+    const asset = storage.updateAsset(id, req.body);
     if (!asset) return res.status(404).json({ error: "Not found" });
-    wsPush("ASSET"); res.json(asset);
+    wsPush("ASSET");
+    appendActivity(req, { action: "UPDATE", entityType: "assets", entityId: asset.id, summary: `Updated asset: ${asset.name}`, before, after: asset });
+    res.json(asset);
   });
   app.delete("/api/assets/:id", requireAuth, (req, res) => {
-    storage.deleteAsset(Number(req.params.id)); wsPush("ASSET");
+    const id = Number(req.params.id);
+    const before = storage.getAsset(id);
+    storage.deleteAsset(id);
+    wsPush("ASSET");
+    appendActivity(req, { action: "DELETE", entityType: "assets", entityId: id, summary: `Deleted asset: ${before?.name ?? id}`, before });
     res.status(204).send();
   });
 
@@ -780,15 +1118,26 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/threats", requireAuth, (req, res) => {
     const parsed = insertThreatSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
-    const threat = storage.createThreat(parsed.data); wsPush("THREAT"); res.status(201).json(threat);
+    const threat = storage.createThreat(parsed.data);
+    wsPush("THREAT");
+    appendActivity(req, { action: "CREATE", entityType: "threats", entityId: threat.id, summary: `Created threat: ${threat.label}`, after: threat });
+    res.status(201).json(threat);
   });
   app.patch("/api/threats/:id", requireAuth, (req, res) => {
-    const t = storage.updateThreat(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getThreats().find((x) => x.id === id);
+    const t = storage.updateThreat(id, req.body);
     if (!t) return res.status(404).json({ error: "Not found" });
-    wsPush("THREAT"); res.json(t);
+    wsPush("THREAT");
+    appendActivity(req, { action: "UPDATE", entityType: "threats", entityId: t.id, summary: `Updated threat: ${t.label}`, before, after: t });
+    res.json(t);
   });
   app.delete("/api/threats/:id", requireAuth, (req, res) => {
-    storage.deleteTheat(Number(req.params.id)); wsPush("THREAT");
+    const id = Number(req.params.id);
+    const before = storage.getThreats().find((x) => x.id === id);
+    storage.deleteTheat(id);
+    wsPush("THREAT");
+    appendActivity(req, { action: "DELETE", entityType: "threats", entityId: id, summary: `Deleted threat ${id}`, before });
     res.status(204).send();
   });
 
@@ -842,7 +1191,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const { username, dutyStatus, notes } = req.body;
     const target = username || req.session.username!;
     // Only admin+ can set other users; normal user can only set themselves
-    if (target !== req.session.username && (require("@shared/schema").ROLE_RANK[req.session.role || ""] ?? 0) < 2)
+    if (target !== req.session.username && (ACCESS_RANK[req.session.accessLevel || ""] ?? 0) < ACCESS_RANK.admin)
       return res.status(403).json({ error: "Forbidden" });
     const ps = storage.upsertPerstat(target, dutyStatus || "active", notes || ""); wsPush("PERSTAT"); res.json(ps);
   });
@@ -879,15 +1228,24 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       operationId: Number(req.params.id),
       createdAt: new Date().toISOString(),
     });
-    wsPush("OP_TASK", { operationId: Number(req.params.id) }); res.status(201).json(task);
+    wsPush("OP_TASK", { operationId: Number(req.params.id) });
+    appendActivity(req, { action: "CREATE", entityType: "tasks", entityId: task.id, summary: `Created task for op ${task.operationId}: ${task.title}`, after: task });
+    res.status(201).json(task);
   });
   app.patch("/api/tasks/:id", requireAuth, (req, res) => {
-    const task = storage.updateOpTask(Number(req.params.id), req.body);
+    const id = Number(req.params.id);
+    const before = storage.getOpTask(id);
+    const task = storage.updateOpTask(id, req.body);
     if (!task) return res.status(404).json({ error: "Not found" });
-    wsPush("OP_TASK", { operationId: task.operationId }); res.json(task);
+    wsPush("OP_TASK", { operationId: task.operationId });
+    appendActivity(req, { action: "UPDATE", entityType: "tasks", entityId: task.id, summary: `Updated task ${task.id}`, before, after: task });
+    res.json(task);
   });
   app.delete("/api/tasks/:id", requireAdmin, (req, res) => {
-    storage.deleteOpTask(Number(req.params.id)); wsPush("OP_TASK");
+    const id = Number(req.params.id);
+    storage.deleteOpTask(id);
+    wsPush("OP_TASK");
+    appendActivity(req, { action: "DELETE", entityType: "tasks", entityId: id, summary: `Deleted task ${id}` });
     res.status(204).send();
   });
 
@@ -908,8 +1266,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   // ── Training Records ──────────────────────────────────────────────────────────
   app.get("/api/training", requireAuth, (req, res) => {
     const me = req.session.username!;
-    const callerRank = ROLE_RANK[req.session.role || ""] ?? 0;
-    const isStaff = callerRank >= ROLE_RANK.admin;
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
     const rawU = req.query.username;
     const qUser =
       typeof rawU === "string"
@@ -935,6 +1293,410 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.delete("/api/training/:id", requireAdmin, (req, res) => {
     storage.deleteTrainingRecord(Number(req.params.id)); wsPush("TRAINING");
     res.status(204).send();
+  });
+
+  // ── Shared calendar (team events) ────────────────────────────────────────────
+  const calendarEventPostSchema = z.object({
+    eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    title: z.string().min(1).max(200),
+    notes: z.string().max(4000).optional().default(""),
+    startTime: z.string().max(16).optional().default(""),
+  });
+  const calendarEventPatchSchema = calendarEventPostSchema.partial();
+
+  app.get("/api/calendar-events", requireAuth, (req, res) => {
+    const rawFrom = req.query.from;
+    const rawTo = req.query.to;
+    const from =
+      typeof rawFrom === "string"
+        ? rawFrom
+        : Array.isArray(rawFrom) && typeof rawFrom[0] === "string"
+          ? rawFrom[0]
+          : undefined;
+    const to =
+      typeof rawTo === "string"
+        ? rawTo
+        : Array.isArray(rawTo) && typeof rawTo[0] === "string"
+          ? rawTo[0]
+          : undefined;
+    if (from && to) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+        return res.status(400).json({ error: "from and to must be YYYY-MM-DD" });
+      }
+      return res.json(storage.getCalendarEvents(from, to));
+    }
+    res.json(storage.getCalendarEvents());
+  });
+
+  app.post("/api/calendar-events", requireAuth, (req, res) => {
+    const parsed = calendarEventPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createCalendarEvent({
+      ...parsed.data,
+      createdBy: req.session.username!,
+      createdAt: now,
+      updatedAt: now,
+    });
+    wsPush("CALENDAR");
+    appendActivity(req, { action: "CREATE", entityType: "calendar", entityId: row.id, summary: `Created calendar event: ${row.title} (${row.eventDate})`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.patch("/api/calendar-events/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = calendarEventPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const existing = storage.getCalendarEvent(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    if (existing.createdBy !== req.session.username && !isStaff) {
+      return res.status(403).json({ error: "Only the author or an admin/owner can edit this event" });
+    }
+    const row = storage.updateCalendarEvent(id, parsed.data);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("CALENDAR");
+    appendActivity(req, { action: "UPDATE", entityType: "calendar", entityId: row.id, summary: `Updated calendar event: ${row.title} (${row.eventDate})`, before: existing, after: row });
+    res.json(row);
+  });
+
+  app.delete("/api/calendar-events/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getCalendarEvent(id);
+    const result = storage.tryDeleteCalendarEvent(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") return res.status(403).json({ error: "Only the author or an admin/owner can delete this event" });
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("CALENDAR");
+    appendActivity(req, { action: "DELETE", entityType: "calendar", entityId: id, summary: `Deleted calendar event ${id}`, before });
+    res.status(204).send();
+  });
+
+  // ── Activity Log (admin/owner) ───────────────────────────────────────────────
+  app.get("/api/activity", requireAdmin, (req, res) => {
+    const parsed = activityQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const q = parsed.data;
+    res.json(
+      storage.getActivity({
+        fromTs: q.fromTs,
+        toTs: q.toTs,
+        actorUsername: q.actorUsername,
+        entityType: q.entityType,
+        action: q.action,
+        limit: q.limit,
+        offset: q.offset,
+      }),
+    );
+  });
+
+  // ── Link Analysis ────────────────────────────────────────────────────────────
+  app.get("/api/entity-links", requireAuth, (req, res) => {
+    const rawType = req.query.type;
+    const rawId = req.query.id;
+    const type =
+      typeof rawType === "string"
+        ? rawType
+        : Array.isArray(rawType) && typeof rawType[0] === "string"
+          ? rawType[0]
+          : "";
+    const id =
+      typeof rawId === "string"
+        ? rawId
+        : Array.isArray(rawId) && typeof rawId[0] === "string"
+          ? rawId[0]
+          : "";
+    if (!type || !id) return res.status(400).json({ error: "type and id query required" });
+    res.json(storage.getLinksForEntity(type, id));
+  });
+
+  app.post("/api/entity-links", requireAuth, (req, res) => {
+    const parsed = entityLinkPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createEntityLink({
+      ...parsed.data,
+      createdBy: req.session.username!,
+      createdAt: now,
+    });
+    wsPush("LINKS");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "links",
+      entityId: row.id,
+      summary: `Linked ${row.aType}:${row.aId} ↔ ${row.bType}:${row.bId} (${row.relation})`,
+      after: row,
+    });
+    res.status(201).json(row);
+  });
+
+  app.delete("/api/entity-links/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getEntityLink(id);
+    const result = storage.tryDeleteEntityLink(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") return res.status(403).json({ error: "Only the author or an admin/owner can delete this link" });
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("LINKS");
+    appendActivity(req, { action: "DELETE", entityType: "links", entityId: id, summary: `Deleted link ${id}`, before });
+    res.status(204).send();
+  });
+
+  // ── Support Requests (Reachback) ─────────────────────────────────────────────
+  app.get("/api/support-requests", requireAuth, (_req, res) => {
+    res.json(storage.getSupportRequests());
+  });
+
+  app.post("/api/support-requests", requireAuth, (req, res) => {
+    const parsed = supportRequestPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createSupportRequest({
+      ...parsed.data,
+      createdBy: req.session.username!,
+      createdAt: now,
+      updatedAt: now,
+    });
+    wsPush("SUPPORT_REQUESTS");
+    appendActivity(req, { action: "CREATE", entityType: "support_requests", entityId: row.id, summary: `Created support request: ${row.title}`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.patch("/api/support-requests/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = supportRequestPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const existing = storage.getSupportRequest(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    const isAuthor = existing.createdBy === req.session.username;
+    const isAssignee = existing.assignedTo && existing.assignedTo === req.session.username;
+    if (!isAuthor && !isAssignee && !isStaff) {
+      return res.status(403).json({ error: "Only the author, assignee, or an admin/owner can update this request" });
+    }
+    const before = existing;
+    const row = storage.updateSupportRequest(id, parsed.data);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("SUPPORT_REQUESTS");
+    appendActivity(req, { action: "UPDATE", entityType: "support_requests", entityId: row.id, summary: `Updated support request: ${row.title}`, before, after: row });
+    res.json(row);
+  });
+
+  app.delete("/api/support-requests/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getSupportRequest(id);
+    const result = storage.tryDeleteSupportRequest(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") return res.status(403).json({ error: "Only the author or an admin/owner can delete this request" });
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("SUPPORT_REQUESTS");
+    appendActivity(req, { action: "DELETE", entityType: "support_requests", entityId: id, summary: `Deleted support request ${id}`, before });
+    res.status(204).send();
+  });
+
+  // ── Medical / Casualty Tracking ──────────────────────────────────────────────
+  app.get("/api/casualties", requireAuth, (_req, res) => {
+    res.json(storage.getCasualties());
+  });
+
+  app.get("/api/casualties/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const row = storage.getCasualty(id);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    res.json(row);
+  });
+
+  app.post("/api/casualties", requireAuth, (req, res) => {
+    const parsed = casualtyPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createCasualty({
+      displayName: parsed.data.displayName,
+      unit: parsed.data.unit,
+      patientId: parsed.data.patientId,
+      classification: parsed.data.classification,
+      status: parsed.data.status,
+      precedence: parsed.data.precedence,
+      injury: parsed.data.injury,
+      locationGrid: parsed.data.locationGrid,
+      incidentAt: parsed.data.incidentAt,
+      notes: parsed.data.notes,
+      createdBy: req.session.username!,
+      createdAt: now,
+      updatedAt: now,
+    });
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "CREATE", entityType: "casualty", entityId: row.id, summary: `Created casualty: ${row.displayName}`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.patch("/api/casualties/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const existing = storage.getCasualty(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const parsed = casualtyPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    if (existing.createdBy !== req.session.username && !isStaff) {
+      return res.status(403).json({ error: "Only the author or an admin/owner can edit this casualty" });
+    }
+    const row = storage.updateCasualty(id, parsed.data);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "UPDATE", entityType: "casualty", entityId: row.id, summary: `Updated casualty: ${row.displayName}`, before: existing, after: row });
+    res.json(row);
+  });
+
+  app.delete("/api/casualties/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getCasualty(id);
+    const result = storage.tryDeleteCasualty(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") return res.status(403).json({ error: "Only the author or an admin/owner can delete this casualty" });
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "DELETE", entityType: "casualty", entityId: id, summary: `Deleted casualty ${id}`, before });
+    res.status(204).send();
+  });
+
+  app.get("/api/casualties/:id/evac", requireAuth, (req, res) => {
+    const casualtyId = Number(req.params.id);
+    if (!Number.isFinite(casualtyId)) return res.status(400).json({ error: "Invalid id" });
+    res.json(storage.getCasualtyEvac(casualtyId) || null);
+  });
+
+  app.post("/api/casualties/evac", requireAuth, (req, res) => {
+    const parsed = casualtyEvacUpsertSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const row = storage.upsertCasualtyEvac(parsed.data);
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "UPDATE", entityType: "casualty_evac", entityId: row.id, summary: `Upserted evac for casualty ${row.casualtyId}`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.get("/api/casualties/:id/treatments", requireAuth, (req, res) => {
+    const casualtyId = Number(req.params.id);
+    if (!Number.isFinite(casualtyId)) return res.status(400).json({ error: "Invalid id" });
+    res.json(storage.getCasualtyTreatments(casualtyId));
+  });
+
+  app.post("/api/casualties/treatments", requireAuth, (req, res) => {
+    const parsed = casualtyTreatmentPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const row = storage.addCasualtyTreatment({
+      casualtyId: parsed.data.casualtyId,
+      ts: parsed.data.ts,
+      note: parsed.data.note,
+      performedBy: req.session.username!,
+    });
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "CREATE", entityType: "casualty_treatment", entityId: row.id, summary: `Added treatment note for casualty ${row.casualtyId}`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.delete("/api/casualties/treatments/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const result = storage.tryDeleteCasualtyTreatment(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") return res.status(403).json({ error: "Only the author or an admin/owner can delete this note" });
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("CASUALTIES");
+    appendActivity(req, { action: "DELETE", entityType: "casualty_treatment", entityId: id, summary: `Deleted treatment note ${id}` });
+    res.status(204).send();
+  });
+
+  // ── Approvals (admin/owner) ────────────────────────────────────────────────
+  app.get("/api/approvals", requireAdmin, (req, res) => {
+    const raw = req.query.status;
+    const status =
+      typeof raw === "string"
+        ? raw
+        : Array.isArray(raw) && typeof raw[0] === "string"
+          ? raw[0]
+          : undefined;
+    res.json(storage.getApprovals(status));
+  });
+
+  app.post("/api/approvals", requireAdmin, (req, res) => {
+    const parsed = approvalPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createApproval({
+      entityType: parsed.data.entityType,
+      entityId: parsed.data.entityId,
+      action: parsed.data.action,
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: parsed.data.requestedNote,
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: parsed.data.payloadJson,
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: row.id, summary: `Approval requested: ${row.entityType} ${row.entityId}`, after: row });
+    res.status(201).json(row);
+  });
+
+  app.post("/api/approvals/:id/approve", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = approvalDecisionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const row = storage.approveApproval(id, req.session.username!, parsed.data.decisionNote);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    // execute side-effect for known approvals
+    if (row.entityType === "isofac_release" && row.action === "RELEASE") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        if (payload?.releasability) {
+          storage.releaseIsofacDoc(Number(row.entityId), String(payload.releasability), row.requestedBy);
+          wsPush("ISOFAC");
+        }
+      } catch {}
+    }
+    if (row.entityType === "intel_release" && row.action === "RELEASE") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        if (payload?.releasability) {
+          storage.releaseIntelReport(Number(row.entityId), String(payload.releasability), row.requestedBy);
+          wsPush("INTEL");
+        }
+      } catch {}
+    }
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Approved: ${row.entityType} ${row.entityId}`, after: row });
+    res.json(row);
+  });
+
+  app.post("/api/approvals/:id/reject", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = approvalDecisionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const row = storage.rejectApproval(id, req.session.username!, parsed.data.decisionNote);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("APPROVALS");
+    appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Rejected: ${row.entityType} ${row.entityId}`, after: row });
+    res.json(row);
   });
 
   // ── Broadcasts (FLASH) ────────────────────────────────────────────────────────
@@ -1019,6 +1781,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       createdAt: new Date().toISOString(),
     });
     wsPush("TACTICAL_MARKERS", { mapKey: b.mapKey });
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "tac_marker",
+      entityId: row.id,
+      summary: `Placed TAC marker on ${b.mapKey} (${b.affiliation})`,
+      after: { id: row.id, mapKey: row.mapKey, gameX: row.gameX, gameZ: row.gameZ, markerType: row.markerType, affiliation: row.affiliation, label: row.label },
+    });
     res.status(201).json(row);
   });
 
@@ -1036,13 +1805,20 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Marker not found" });
     }
     wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "tac_marker",
+      entityId: id,
+      summary: `Moved TAC marker ${id} on ${result.mapKey}`,
+      after: { id: result.marker.id, mapKey: result.mapKey, gameX: result.marker.gameX, gameZ: result.marker.gameZ },
+    });
     res.json(result.marker);
   });
 
   app.delete("/api/tactical-markers/:id", requireAuth, (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-    const result = storage.tryDeleteTacticalMarker(id, req.session.username!, req.session.role || "");
+    const result = storage.tryDeleteTacticalMarker(id, req.session.username!, req.session.accessLevel || "");
     if (!result.ok) {
       if (result.reason === "forbidden") {
         return res.status(403).json({ error: "Only the placer or an admin/owner can remove this marker" });
@@ -1050,6 +1826,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Marker not found" });
     }
     wsPush("TACTICAL_MARKERS", { mapKey: result.mapKey });
+    appendActivity(req, { action: "DELETE", entityType: "tac_marker", entityId: id, summary: `Deleted TAC marker ${id} on ${result.mapKey}` });
     res.status(204).send();
   });
 
@@ -1078,13 +1855,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       createdAt: new Date().toISOString(),
     });
     wsPush("TACTICAL_LINES", { mapKey: b.mapKey });
+    appendActivity(req, { action: "CREATE", entityType: "tac_line", entityId: line.id, summary: `Created TAC line on ${b.mapKey}`, after: { id: line.id, mapKey: line.mapKey, label: line.label, color: line.color } });
     res.status(201).json(line);
   });
 
   app.delete("/api/tactical-lines/:id", requireAuth, (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-    const result = storage.tryDeleteTacticalLine(id, req.session.username!, req.session.role || "");
+    const result = storage.tryDeleteTacticalLine(id, req.session.username!, req.session.accessLevel || "");
     if (!result.ok) {
       if (result.reason === "forbidden") {
         return res.status(403).json({ error: "Only the author or an admin/owner can remove this line" });
@@ -1092,6 +1870,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Line not found" });
     }
     wsPush("TACTICAL_LINES", { mapKey: result.mapKey });
+    appendActivity(req, { action: "DELETE", entityType: "tac_line", entityId: id, summary: `Deleted TAC line ${id} on ${result.mapKey}` });
     res.status(204).send();
   });
 
@@ -1122,6 +1901,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       createdAt: new Date().toISOString(),
     });
     wsPush("TACTICAL_RANGE_RINGS", { mapKey: b.mapKey });
+    appendActivity(req, { action: "CREATE", entityType: "tac_ring", entityId: ring.id, summary: `Created TAC range ring on ${b.mapKey}`, after: { id: ring.id, mapKey: ring.mapKey, radiusMeters: ring.radiusMeters, color: ring.color, label: ring.label } });
     res.status(201).json(ring);
   });
 
@@ -1146,7 +1926,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       id,
       updates,
       req.session.username!,
-      req.session.role || "",
+      req.session.accessLevel || "",
     );
     if (!result.ok) {
       if (result.reason === "forbidden") {
@@ -1155,13 +1935,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Range ring not found" });
     }
     wsPush("TACTICAL_RANGE_RINGS", { mapKey: result.mapKey });
+    appendActivity(req, { action: "UPDATE", entityType: "tac_ring", entityId: id, summary: `Updated TAC range ring ${id} on ${result.mapKey}`, after: { id: result.ring.id, mapKey: result.mapKey, radiusMeters: result.ring.radiusMeters, color: result.ring.color, label: result.ring.label } });
     res.json(result.ring);
   });
 
   app.delete("/api/tactical-range-rings/:id", requireAuth, (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-    const result = storage.tryDeleteTacticalRangeRing(id, req.session.username!, req.session.role || "");
+    const result = storage.tryDeleteTacticalRangeRing(id, req.session.username!, req.session.accessLevel || "");
     if (!result.ok) {
       if (result.reason === "forbidden") {
         return res.status(403).json({ error: "Only the author or an admin/owner can remove this range ring" });
@@ -1169,6 +1950,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Range ring not found" });
     }
     wsPush("TACTICAL_RANGE_RINGS", { mapKey: result.mapKey });
+    appendActivity(req, { action: "DELETE", entityType: "tac_ring", entityId: id, summary: `Deleted TAC range ring ${id} on ${result.mapKey}` });
     res.status(204).send();
   });
 
@@ -1198,13 +1980,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       createdAt: new Date().toISOString(),
     });
     wsPush("TACTICAL_BUILDING_LABELS", { mapKey: b.mapKey });
+    appendActivity(req, { action: "CREATE", entityType: "tac_building_label", entityId: row.id, summary: `Upserted building label on ${b.mapKey}`, after: { id: row.id, mapKey: row.mapKey, featureKey: row.featureKey, label: row.label, fillColor: row.fillColor, strokeColor: row.strokeColor } });
     res.status(201).json(row);
   });
 
   app.delete("/api/tactical-building-labels/:id", requireAuth, (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-    const result = storage.tryDeleteTacticalBuildingLabel(id, req.session.username!, req.session.role || "");
+    const result = storage.tryDeleteTacticalBuildingLabel(id, req.session.username!, req.session.accessLevel || "");
     if (!result.ok) {
       if (result.reason === "forbidden") {
         return res.status(403).json({ error: "Only the author or an admin/owner can remove this label" });
@@ -1212,6 +1995,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Building label not found" });
     }
     wsPush("TACTICAL_BUILDING_LABELS", { mapKey: result.mapKey });
+    appendActivity(req, { action: "DELETE", entityType: "tac_building_label", entityId: id, summary: `Deleted building label ${id} on ${result.mapKey}` });
     res.status(204).send();
   });
 

@@ -6,14 +6,15 @@ import { Plus, Trash2, Users, ShieldCheck, User, Crown, Edit } from "lucide-reac
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { ARMY_RANKS } from "@shared/schema";
+import { ARMY_RANKS, TACTICAL_ROLE_PRESETS } from "@shared/schema";
 import type { Unit } from "@shared/schema";
 import { US_ARMY_MOS_OPTIONS, US_ARMY_MOS_BY_CODE } from "@shared/usArmyMos";
 
 interface AppUser {
   id: number;
   username: string;
-  role: string;
+  accessLevel: string;
+  role: string; // tactical role
   rank: string;
   assignedUnit: string;
   milIdNumber: string;
@@ -40,14 +41,16 @@ function rankColor(abbr: string) {
 }
 
 // ── Create User form ─────────────────────────────────────────────────────────
-function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; units: Unit[]; callerRole: string }) {
+function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void; units: Unit[]; callerAccess: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState({
     username: "",
     password: "",
     confirm: "",
-    role: "user",
+    accessLevel: "user",
+    role: "",
+    rolePreset: "",
     rank: "",
     assignedUnit: "",
     milIdNumber: "",
@@ -67,7 +70,8 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
     create.mutate({
       username: form.username.trim(),
       password: form.password,
-      role: form.role,
+      accessLevel: form.accessLevel,
+      role: (form.rolePreset && form.rolePreset !== "OTHER" ? form.rolePreset : form.role).trim(),
       rank: form.rank,
       assignedUnit: form.assignedUnit,
       milIdNumber: form.milIdNumber.trim(),
@@ -110,6 +114,51 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TACTICAL ROLE (OPTIONAL)</label>
+          <select
+            value={form.rolePreset}
+            onChange={(e) => set("rolePreset")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
+          >
+            <option value="">— Select —</option>
+            {TACTICAL_ROLE_PRESETS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          {(form.rolePreset === "OTHER" || (!form.rolePreset && !!form.role)) && (
+            <input
+              type="text"
+              value={form.role}
+              onChange={(e) => set("role")(e.target.value)}
+              placeholder="Custom role…"
+              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
+            />
+          )}
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ACCESS LEVEL</label>
+          <select
+            value={form.accessLevel}
+            onChange={(e) => set("accessLevel")(e.target.value)}
+            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 ${
+              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-green-400"
+            } touch-manipulation min-h-[44px]`}
+          >
+            <option value="user">USER — Standard access</option>
+            {(callerAccess === "admin" || callerAccess === "owner") && (
+              <option value="admin">ADMIN — Can manage users and content</option>
+            )}
+            {callerAccess === "owner" && (
+              <option value="owner">OWNER — Full system control</option>
+            )}
+          </select>
+          {form.accessLevel === "owner" && (
+            <div className="text-[9px] text-orange-400/70 mt-1 tracking-wider">⚠ Granting Owner access gives full system control.</div>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">MIL ID #</label>
           <input
             type="text"
@@ -134,24 +183,7 @@ function CreateUserForm({ onClose, units, callerRole }: { onClose: () => void; u
           </select>
         </div>
       </div>
-      <div>
-        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
-        <select value={form.role} onChange={e => set("role")(e.target.value)}
-          className={`w-full bg-secondary border border-border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
-            form.role === "owner" ? "text-orange-400" : form.role === "admin" ? "text-yellow-400" : "text-green-400"
-          }`}>
-          <option value="user">OPERATOR — Standard access</option>
-          {(callerRole === "admin" || callerRole === "owner") && (
-            <option value="admin">ADMIN — Can manage users and content</option>
-          )}
-          {callerRole === "owner" && (
-            <option value="owner">OWNER — Full system control</option>
-          )}
-        </select>
-        {form.role === "owner" && (
-          <div className="text-[9px] text-orange-400/70 mt-1 tracking-wider">⚠ Granting Owner role gives full system control.</div>
-        )}
-      </div>
+      {/* Access level + tactical role are set above */}
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
         <input type="password" value={form.password} onChange={e => set("password")(e.target.value)}
@@ -176,7 +208,9 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
   const { toast } = useToast();
   const [form, setForm] = useState({
     username: target.username,
-    role: target.role,
+    accessLevel: target.accessLevel,
+    role: target.role || "",
+    rolePreset: target.role || "",
     rank: target.rank || "",
     assignedUnit: target.assignedUnit || "",
     milIdNumber: target.milIdNumber || "",
@@ -194,7 +228,9 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
   const submit = () => {
     const payload: any = {};
     if (form.username !== target.username) payload.username = form.username.trim();
-    if (form.role !== target.role) payload.role = form.role;
+    if (form.accessLevel !== target.accessLevel) payload.accessLevel = form.accessLevel;
+    const nextRole = (form.rolePreset && form.rolePreset !== "OTHER" ? form.rolePreset : form.role).trim();
+    if (nextRole !== (target.role || "")) payload.role = nextRole;
     if (form.rank !== (target.rank || "")) payload.rank = form.rank;
     if (form.assignedUnit !== (target.assignedUnit || "")) payload.assignedUnit = form.assignedUnit;
     if (form.milIdNumber !== (target.milIdNumber || "")) payload.milIdNumber = form.milIdNumber;
@@ -215,6 +251,44 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
           className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ACCESS LEVEL</label>
+          <select
+            value={form.accessLevel}
+            onChange={(e) => set("accessLevel")(e.target.value)}
+            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
+              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-green-400"
+            } touch-manipulation min-h-[44px]`}
+          >
+            <option value="user">USER</option>
+            <option value="admin">ADMIN</option>
+            <option value="owner">OWNER</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TACTICAL ROLE (OPTIONAL)</label>
+          <select
+            value={form.rolePreset}
+            onChange={(e) => set("rolePreset")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
+          >
+            <option value="">— Select —</option>
+            {TACTICAL_ROLE_PRESETS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          {(form.rolePreset === "OTHER" || (!form.rolePreset && !!form.role)) && (
+            <input
+              type="text"
+              value={form.role}
+              onChange={(e) => set("role")(e.target.value)}
+              placeholder="Custom role…"
+              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
+            />
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
@@ -265,20 +339,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           </select>
         </div>
       </div>
-      <div>
-        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ROLE</label>
-        <select value={form.role} onChange={e => set("role")(e.target.value)}
-          className={`w-full bg-secondary border border-border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
-            form.role === "owner" ? "text-orange-400" : form.role === "admin" ? "text-yellow-400" : "text-green-400"
-          }`}>
-          <option value="user">OPERATOR — Standard access</option>
-          <option value="admin">ADMIN — Can manage users and content</option>
-          <option value="owner">OWNER — Full system control</option>
-        </select>
-        {form.role === "owner" && (
-          <div className="text-[9px] text-orange-400/70 mt-1 tracking-wider">⚠ Granting Owner role gives full system control— cannot be undone except by another Owner.</div>
-        )}
-      </div>
+      {/* Access level + tactical role are set above */}
       <div className="border-t border-border pt-3">
         <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep)</div>
         <div className="space-y-2">
@@ -335,7 +396,7 @@ export default function UserManagement() {
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>USER MANAGEMENT</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
-            {users.filter(u => u.role === "owner").length} OWNER ▪ {users.filter(u => u.role === "admin").length} ADMIN ▪ {users.filter(u => u.role === "user").length} OPERATORS
+            {users.filter(u => u.accessLevel === "owner").length} OWNER ▪ {users.filter(u => u.accessLevel === "admin").length} ADMIN ▪ {users.filter(u => u.accessLevel === "user").length} USERS
           </div>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -346,7 +407,7 @@ export default function UserManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-sm">
             <DialogHeader><DialogTitle className="text-sm tracking-widest">CREATE NEW USER</DialogTitle></DialogHeader>
-            <CreateUserForm onClose={() => setOpen(false)} units={units} callerRole={me?.role || "user"} />
+            <CreateUserForm onClose={() => setOpen(false)} units={units} callerAccess={me?.accessLevel || "user"} />
           </DialogContent>
         </Dialog>
       </div>
@@ -385,7 +446,7 @@ export default function UserManagement() {
               <th className="text-left px-4 py-2">MOS</th>
               <th className="text-left px-4 py-2">RANK</th>
               <th className="text-left px-4 py-2">UNIT</th>
-              <th className="text-left px-4 py-2">ROLE</th>
+              <th className="text-left px-4 py-2">ACCESS</th>
               <th className="text-left px-4 py-2">LAST LOGIN</th>
               <th className="text-left px-4 py-2">ACTIONS</th>
             </tr>
@@ -395,8 +456,8 @@ export default function UserManagement() {
               <tr key={u.id} className={`hover:bg-secondary/20 transition-colors ${u.username === me?.username ? "bg-green-950/10" : ""}`}>
                 <td className="px-4 py-3" data-label="USERNAME">
                   <div className="flex items-center gap-2">
-                    {u.role === "owner" ? <Crown size={12} className="text-orange-400 shrink-0" />
-                      : u.role === "admin" ? <ShieldCheck size={12} className="text-yellow-400 shrink-0" />
+                    {u.accessLevel === "owner" ? <Crown size={12} className="text-orange-400 shrink-0" />
+                      : u.accessLevel === "admin" ? <ShieldCheck size={12} className="text-yellow-400 shrink-0" />
                       : <User size={12} className="text-green-400 shrink-0" />}
                     <span className="font-mono font-bold tracking-wider">{u.username}</span>
                     {u.username === me?.username && <span className="text-[9px] text-green-500">(YOU)</span>}
@@ -430,26 +491,26 @@ export default function UserManagement() {
                     ? <span className="text-[10px] font-mono font-bold text-green-400 tracking-wider">{u.assignedUnit}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">UNASSIGNED</span>}
                 </td>
-                <td className="px-4 py-3" data-label="ROLE">
+                <td className="px-4 py-3" data-label="ACCESS">
                   <span className={`text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase ${
-                    u.role === "owner" ? "bg-orange-900/30 text-orange-400 border border-orange-800/40" :
-                    u.role === "admin" ? "badge-standby" : "badge-active"
-                  }`}>{u.role === "owner" ? "OWNER" : u.role === "admin" ? "ADMIN" : "OPERATOR"}</span>
+                    u.accessLevel === "owner" ? "bg-orange-900/30 text-orange-400 border border-orange-800/40" :
+                    u.accessLevel === "admin" ? "badge-standby" : "badge-active"
+                  }`}>{u.accessLevel === "owner" ? "OWNER" : u.accessLevel === "admin" ? "ADMIN" : "USER"}</span>
                 </td>
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="LAST LOGIN">{formatDate(u.lastLogin || "")}</td>
                 <td className="px-4 py-3" data-label="ACTIONS">
                   <div className="flex items-center gap-1">
-                    {me?.role === "owner" && (
+                    {me?.accessLevel === "owner" && (
                       <button onClick={() => setEditUser(u)} className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Edit">
                         <Edit size={11} />
                       </button>
                     )}
-                    {u.username !== me?.username && u.role !== "owner" && (
+                    {u.username !== me?.username && u.accessLevel !== "owner" && (
                       <button onClick={() => del.mutate(u.id)} className="p-1 text-muted-foreground hover:text-red-400 transition-colors">
                         <Trash2 size={12} />
                       </button>
                     )}
-                    {u.role === "owner" && u.username !== me?.username && (
+                    {u.accessLevel === "owner" && u.username !== me?.username && (
                       <span className="text-[9px] text-orange-400/50 tracking-wider">PROTECTED</span>
                     )}
                   </div>

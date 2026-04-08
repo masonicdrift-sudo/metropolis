@@ -47,10 +47,20 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   BROADCAST:        [["/api/broadcasts"], ["/api/broadcasts/all"]],
   // ISOFAC / File Vault
   ISOFAC:           [["/api/isofac"]],
+  // Shared calendar
+  CALENDAR:         [["/api/calendar-events"]],
   // Commo Cards
   COMMO_CARD:       [["/api/commo-cards"]],
   // Users (role/rank/unit changes)
   USER:             [["/api/users"], ["/api/auth/me"]],
+  // Activity / Links / Support
+  ACTIVITY:         [["/api/activity"]],
+  LINKS:            [["/api/entity-links"]],
+  SUPPORT_REQUESTS: [["/api/support-requests"]],
+  // Medical / Casualty
+  CASUALTIES:       [["/api/casualties"]],
+  // Approvals
+  APPROVALS:        [["/api/approvals"]],
 };
 
 const WSContext = createContext<null>(null);

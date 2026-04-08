@@ -4,6 +4,9 @@ import { apiRequest } from "./queryClient";
 interface AuthUser {
   id: number;
   username: string;
+  /** Access level used for permissions (owner/admin/user). */
+  accessLevel: string;
+  /** Tactical position / duty role label (TL, GFC, etc). */
   role: string;
   rank: string;
   assignedUnit: string;

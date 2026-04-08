@@ -7,7 +7,10 @@ export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().default("user"), // owner | admin | user
+  /** Tactical position / duty role (not permissions). Examples: TL, SL, PSG, PL, CO, RTO, GFC. */
+  role: text("role").notNull().default(""), // tactical role label (free-text)
+  /** Account access level used for permissions. */
+  accessLevel: text("access_level").notNull().default("user"), // owner | admin | user
   rank: text("rank").default(""),              // Military rank e.g. SGT, CPT, LTC
   assignedUnit: text("assigned_unit").default(""), // Callsign of assigned unit
   /** DoD / service personnel identifier (display in user management). */
@@ -63,12 +66,34 @@ export const ARMY_RANKS = [
   { abbr: "18F",  full: "SF Intelligence Sergeant",   tier: "MOS" },
   { abbr: "68W",  full: "Combat Medic",               tier: "MOS" },
 ];
+
+// Tactical roles / duty positions (SF / SMU-style presets; free-text is still allowed)
+export const TACTICAL_ROLE_PRESETS = [
+  "DETACHMENT COMMANDER",
+  "ASSISTANT DETACHMENT COMMANDER",
+  "TEAM SERGEANT",
+  "ASSISTANT TEAM SERGEANT",
+  "JTAC",
+  "GROUND FORCE COMMANDER",
+  "RTO",
+  "MEDIC",
+  "BREACHER",
+  "SNIPER",
+  "ASSAULTER",
+  "INTELLIGENCE SERGEANT",
+  "COMMUNICATIONS SERGEANT",
+  "ENGINEER SERGEANT",
+  "WEAPONS SERGEANT",
+  "OPS NCO",
+  "SUPPORT",
+  "OTHER",
+] as const;
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Role hierarchy: owner > admin > user
-export const ROLE_RANK: Record<string, number> = { owner: 3, admin: 2, user: 1 };
+// Access hierarchy: owner > admin > user
+export const ACCESS_RANK: Record<string, number> = { owner: 3, admin: 2, user: 1 };
 
 // ─── Access Codes ─────────────────────────────────────────────────────────────
 export const accessCodes = sqliteTable("access_codes", {
@@ -100,6 +125,10 @@ export const isofacDocs = sqliteTable("isofac_docs", {
   opName: text("op_name").default(""),             // Associated operation name
   targetGrid: text("target_grid").default(""),
   tags: text("tags").notNull().default("[]"),       // JSON string array
+  // Partner sharing / releasability
+  releasability: text("releasability").notNull().default(""), // e.g., "REL TO USA/FVEY"
+  releasedAt: text("released_at").notNull().default(""), // ISO
+  releasedBy: text("released_by").notNull().default(""), // username
 });
 export const insertIsofacDocSchema = createInsertSchema(isofacDocs).omit({ id: true });
 export type InsertIsofacDoc = z.infer<typeof insertIsofacDocSchema>;
@@ -214,6 +243,10 @@ export const intelReports = sqliteTable("intel_reports", {
   relatedOpId: integer("related_op_id").default(0),
   // JSON array of {filename, originalName, url, mimeType}
   images: text("images").notNull().default("[]"),
+  // Partner sharing / releasability
+  releasability: text("releasability").notNull().default(""),
+  releasedAt: text("released_at").notNull().default(""), // ISO
+  releasedBy: text("released_by").notNull().default(""), // username
 });
 export const insertIntelReportSchema = createInsertSchema(intelReports).omit({ id: true });
 export type InsertIntelReport = z.infer<typeof insertIntelReportSchema>;
@@ -333,6 +366,145 @@ export const trainingRecords = sqliteTable("training_records", {
 export const insertTrainingSchema = createInsertSchema(trainingRecords).omit({ id: true });
 export type InsertTraining = z.infer<typeof insertTrainingSchema>;
 export type TrainingRecord = typeof trainingRecords.$inferSelect;
+
+// ─── Shared calendar (team events by day) ─────────────────────────────────────
+export const calendarEvents = sqliteTable("calendar_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** YYYY-MM-DD (local date string from client) */
+  eventDate: text("event_date").notNull(),
+  title: text("title").notNull(),
+  notes: text("notes").notNull().default(""),
+  /** Optional HH:mm for display/sort within the day */
+  startTime: text("start_time").default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({ id: true });
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+
+// ─── Activity Log (Audit) ─────────────────────────────────────────────────────
+export const activityLog = sqliteTable("activity_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  ts: text("ts").notNull(), // ISO timestamp
+  actorUsername: text("actor_username").notNull(),
+  actorRole: text("actor_role").notNull().default("user"),
+  action: text("action").notNull(), // CREATE | UPDATE | DELETE | LOGIN | LOGOUT | EXPORT | etc.
+  entityType: text("entity_type").notNull(), // operations | intel | isofac | comms | calendar | ...
+  entityId: text("entity_id").notNull().default(""),
+  summary: text("summary").notNull().default(""),
+  beforeJson: text("before_json").notNull().default(""),
+  afterJson: text("after_json").notNull().default(""),
+  ip: text("ip").notNull().default(""),
+  userAgent: text("user_agent").notNull().default(""),
+});
+export const insertActivityLogSchema = createInsertSchema(activityLog).omit({ id: true });
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLog.$inferSelect;
+
+// ─── Link Analysis (cross-entity links) ───────────────────────────────────────
+export const entityLinks = sqliteTable("entity_links", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  aType: text("a_type").notNull(),
+  aId: text("a_id").notNull(),
+  bType: text("b_type").notNull(),
+  bId: text("b_id").notNull(),
+  relation: text("relation").notNull().default("related"),
+  note: text("note").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+export const insertEntityLinkSchema = createInsertSchema(entityLinks).omit({ id: true });
+export type InsertEntityLink = z.infer<typeof insertEntityLinkSchema>;
+export type EntityLink = typeof entityLinks.$inferSelect;
+
+// ─── Support Requests (Reachback) ─────────────────────────────────────────────
+export const supportRequests = sqliteTable("support_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  category: text("category").notNull().default("general"), // intel | log | comms | fires | admin | it | other
+  priority: text("priority").notNull().default("routine"), // routine | priority | immediate | flash
+  status: text("status").notNull().default("open"), // open | triaging | in_progress | closed
+  assignedTo: text("assigned_to").notNull().default(""),
+  dueAt: text("due_at").notNull().default(""), // ISO timestamp
+  details: text("details").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertSupportRequestSchema = createInsertSchema(supportRequests).omit({ id: true });
+export type InsertSupportRequest = z.infer<typeof insertSupportRequestSchema>;
+export type SupportRequest = typeof supportRequests.$inferSelect;
+
+// ─── Change Approvals (2-person integrity) ────────────────────────────────────
+export const approvals = sqliteTable("approvals", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  entityType: text("entity_type").notNull(), // e.g. "isofac_release", "intel_release"
+  entityId: text("entity_id").notNull(),
+  action: text("action").notNull(), // RELEASE / PUBLISH / etc.
+  status: text("status").notNull().default("pending"), // pending | approved | rejected | cancelled
+  requestedBy: text("requested_by").notNull(),
+  requestedAt: text("requested_at").notNull(),
+  requestedNote: text("requested_note").notNull().default(""),
+  approvedBy: text("approved_by").notNull().default(""),
+  approvedAt: text("approved_at").notNull().default(""),
+  decisionNote: text("decision_note").notNull().default(""),
+  payloadJson: text("payload_json").notNull().default(""), // requested change details
+});
+export const insertApprovalSchema = createInsertSchema(approvals).omit({ id: true });
+export type InsertApproval = z.infer<typeof insertApprovalSchema>;
+export type Approval = typeof approvals.$inferSelect;
+
+// ─── Medical / Casualty Tracking ──────────────────────────────────────────────
+export const casualties = sqliteTable("casualties", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  displayName: text("display_name").notNull(), // e.g., "SPC DOE" or "UNK-1"
+  unit: text("unit").notNull().default(""),
+  /** Optional internal identifier (not SSN). */
+  patientId: text("patient_id").notNull().default(""),
+  classification: text("classification").notNull().default("UNCLASS"), // UNCLASS | CUI | SECRET | TS
+  status: text("status").notNull().default("open"), // open | evac_requested | evac_enroute | evac_complete | closed
+  precedence: text("precedence").notNull().default("routine"), // urgent | priority | routine
+  injury: text("injury").notNull().default(""), // mechanism / narrative
+  locationGrid: text("location_grid").notNull().default(""),
+  incidentAt: text("incident_at").notNull(), // ISO
+  notes: text("notes").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertCasualtySchema = createInsertSchema(casualties).omit({ id: true });
+export type InsertCasualty = z.infer<typeof insertCasualtySchema>;
+export type Casualty = typeof casualties.$inferSelect;
+
+export const casualtyEvac = sqliteTable("casualty_evac", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  casualtyId: integer("casualty_id").notNull(),
+  callSign: text("call_sign").notNull().default(""),
+  pickupGrid: text("pickup_grid").notNull().default(""),
+  hlzName: text("hlz_name").notNull().default(""),
+  destination: text("destination").notNull().default(""),
+  platform: text("platform").notNull().default(""), // e.g., "MEDEVAC HH-60"
+  requestedAt: text("requested_at").notNull().default(""), // ISO
+  eta: text("eta").notNull().default(""), // ISO or HH:mmZ
+  nineLineJson: text("nine_line_json").notNull().default(""), // optional structured 9-line
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertCasualtyEvacSchema = createInsertSchema(casualtyEvac).omit({ id: true, updatedAt: true });
+export type InsertCasualtyEvac = z.infer<typeof insertCasualtyEvacSchema>;
+export type CasualtyEvac = typeof casualtyEvac.$inferSelect;
+
+export const casualtyTreatments = sqliteTable("casualty_treatments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  casualtyId: integer("casualty_id").notNull(),
+  ts: text("ts").notNull(), // ISO
+  performedBy: text("performed_by").notNull(),
+  note: text("note").notNull(),
+});
+export const insertCasualtyTreatmentSchema = createInsertSchema(casualtyTreatments).omit({ id: true });
+export type InsertCasualtyTreatment = z.infer<typeof insertCasualtyTreatmentSchema>;
+export type CasualtyTreatment = typeof casualtyTreatments.$inferSelect;
 
 // ─── Flash Broadcasts ─────────────────────────────────────────────────────────
 export const broadcasts = sqliteTable("broadcasts", {

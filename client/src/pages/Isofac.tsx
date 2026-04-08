@@ -3,13 +3,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useState, useRef } from "react";
 import type { IsofacDoc } from "@shared/schema";
+import type { EntityLink } from "@shared/schema";
 import {
   FileText, Plus, Trash2, Edit, Paperclip, X,
   Eye, Shield, AlertTriangle, Target, Map,
   Crosshair, Activity, BookOpen, Save, Upload, ChevronDown, ChevronRight, Radio,
   NotebookTabs, ListOrdered, Users, IdCard, ListChecks, Satellite,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -1410,11 +1413,47 @@ function DocEditor({
 
 // ── Document viewer ──────────────────────────────────────────────────────────
 function DocViewer({ doc }: { doc: IsofacDoc }) {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [linkDraft, setLinkDraft] = useState({ bType: "intel", bId: "", relation: "related", note: "" });
+  const [releaseMark, setReleaseMark] = useState(doc.releasability || "");
   const typeInfo = DOC_TYPES.find(t => t.value === doc.type);
   const TypeIcon = typeInfo?.icon || FileText;
   const attachments: AttachmentInfo[] = JSON.parse(doc.attachments || "[]");
   const images = attachments.filter(a => a.mimeType?.startsWith("image/"));
   const files = attachments.filter(a => !a.mimeType?.startsWith("image/"));
+
+  const { data: links = [] } = useQuery<EntityLink[]>({
+    queryKey: ["/api/entity-links", "isofac", doc.id],
+    queryFn: () => apiRequest("GET", `/api/entity-links?type=isofac&id=${encodeURIComponent(String(doc.id))}`),
+    enabled: !!user,
+  });
+
+  const createLink = useMutation({
+    mutationFn: (body: { bType: string; bId: string; relation: string; note: string }) =>
+      apiRequest("POST", "/api/entity-links", {
+        aType: "isofac",
+        aId: String(doc.id),
+        bType: body.bType,
+        bId: body.bId,
+        relation: body.relation,
+        note: body.note,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "isofac", doc.id] }),
+  });
+
+  const deleteLink = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/entity-links/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "isofac", doc.id] }),
+  });
+
+  const canDeleteLink = (l: EntityLink) =>
+    !!user && (l.createdBy === user.username || user.accessLevel === "admin" || user.accessLevel === "owner");
+
+  const releaseMut = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/isofac/${doc.id}/release`, { releasability: releaseMark.trim() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/isofac"] }),
+  });
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -1467,6 +1506,95 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
       {/* Body */}
       <div className="flex-1 overflow-y-auto px-5 py-4">
         <pre className="text-[11px] font-mono text-foreground/90 leading-relaxed whitespace-pre-wrap">{doc.content}</pre>
+
+        <div className="border-t border-border/60 mt-4 pt-3">
+          <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-2">PARTNER SHARING</div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-center">
+            <Input
+              className="h-8 text-[10px] font-mono sm:col-span-3"
+              placeholder="REL TO USA/FVEY"
+              value={releaseMark}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReleaseMark(e.target.value)}
+            />
+            <Button
+              size="sm"
+              className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+              onClick={() => releaseMut.mutate()}
+              disabled={!releaseMark.trim() || releaseMut.isPending}
+            >
+              RELEASE
+            </Button>
+          </div>
+          {doc.releasedAt ? (
+            <div className="text-[9px] text-muted-foreground mt-2">
+              Released {new Date(doc.releasedAt).toLocaleString()} by {doc.releasedBy || "—"} · {doc.releasability}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="border-t border-border/60 mt-4 pt-3">
+          <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-1">
+            <Link2 size={9} /> LINKS
+          </div>
+          <div className="space-y-1.5">
+            {links.length === 0 ? (
+              <div className="text-[9px] text-muted-foreground/60">No links yet.</div>
+            ) : (
+              links.map((l) => (
+                <div key={l.id} className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50">
+                  <div className="flex-1 min-w-0 font-mono text-[9px] truncate">
+                    {l.aType}:{l.aId} ↔ {l.bType}:{l.bId} · {l.relation}
+                  </div>
+                  {canDeleteLink(l) ? (
+                    <button
+                      type="button"
+                      className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                      title="Remove link"
+                      onClick={() => deleteLink.mutate(l.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              ))
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="bType (e.g. intel)"
+                value={linkDraft.bType}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkDraft((d) => ({ ...d, bType: e.target.value }))}
+              />
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="bId"
+                value={linkDraft.bId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkDraft((d) => ({ ...d, bId: e.target.value }))}
+              />
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="relation"
+                value={linkDraft.relation}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLinkDraft((d) => ({ ...d, relation: e.target.value }))}
+              />
+              <Button
+                size="sm"
+                className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                onClick={() => {
+                  const bt = linkDraft.bType.trim();
+                  const bi = linkDraft.bId.trim();
+                  if (!bt || !bi) return;
+                  createLink.mutate({ bType: bt, bId: bi, relation: linkDraft.relation.trim() || "related", note: linkDraft.note.trim() });
+                  setLinkDraft((d) => ({ ...d, bId: "" }));
+                }}
+                disabled={!linkDraft.bType.trim() || !linkDraft.bId.trim() || createLink.isPending}
+              >
+                ADD LINK
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

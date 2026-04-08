@@ -26,7 +26,13 @@ import TrainingPage from "./pages/Training";
 import FileVault from "./pages/FileVault";
 import GridTool from "./pages/GridTool";
 import TacticalTerrainMap from "./pages/TacticalTerrainMap";
+import CalendarPage from "./pages/Calendar";
 import BroadcastsPage from "./pages/Broadcasts";
+import ActivityLogPage from "./pages/ActivityLog";
+import LinkAnalysisPage from "./pages/LinkAnalysis";
+import SupportRequestsPage from "./pages/SupportRequests";
+import MedicalCasualtyPage from "./pages/MedicalCasualty";
+import ApprovalsPage from "./pages/Approvals";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
@@ -40,17 +46,22 @@ import {
   Crosshair, Package, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, Signal, BookOpen,
   Settings, Menu, X, ChevronRight, UserCheck, FileText,
-  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map
+  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, LifeBuoy, ScrollText
 } from "lucide-react";
 
 // All nav items
 const NAV = [
   { path: "/",            label: "DASHBOARD",    icon: LayoutDashboard, short: "Home" },
+  { path: "/calendar",    label: "CALENDAR",     icon: CalendarDays,    short: "Cal" },
+  { path: "/support",     label: "SUPPORT",      icon: LifeBuoy,        short: "Support" },
+  { path: "/medical",     label: "MEDICAL",      icon: ShieldCheck,     short: "Med" },
   { path: "/operations",  label: "OPERATIONS",   icon: Crosshair,       short: "Ops" },
   { path: "/intel",       label: "INTELLIGENCE", icon: ShieldAlert,     short: "Intel" },
   { path: "/comms",       label: "COMMS",        icon: Radio,           short: "Comms" },
   { path: "/commo-card",  label: "COMMO CARD",   icon: Signal,          short: "Radio" },
   { path: "/isofac",      label: "ISOFAC",       icon: BookOpen,        short: "ISOFAC" },
+  { path: "/approvals",   label: "APPROVALS",    icon: ShieldCheck,     short: "Appr" },
+  { path: "/links",       label: "LINK ANALYSIS", icon: Link2,          short: "Links" },
   { path: "/file-vault",  label: "FILE VAULT",   icon: FolderOpen,      short: "Vault" },
   { path: "/assets",      label: "ASSETS",       icon: Package,         short: "Assets" },
   { path: "/threats",     label: "THREAT BOARD", icon: Target,          short: "Threats" },
@@ -63,6 +74,7 @@ const NAV = [
   { path: "/training",    label: "TRAINING",     icon: GraduationCap,   short: "Train" },
   { path: "/grid-tool",   label: "GRID TOOL",    icon: MapPin,          short: "Grid" },
   { path: "/terrain",     label: "TAC MAP",      icon: Map,             short: "Map" },
+  { path: "/activity",    label: "ACTIVITY LOG", icon: ScrollText,      short: "Audit" },
 ];
 
 // Mobile bottom tab — primary destinations + "More" opens full nav (Discord-style rail)
@@ -435,9 +447,15 @@ function AppRoutes() {
         <Route path="/file-vault" component={FileVault} />
         <Route path="/grid-tool" component={GridTool} />
         <Route path="/terrain" component={TacticalTerrainMap} />
-        <Route path="/broadcasts" component={(user.role === "admin" || user.role === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
-        <Route path="/users" component={(user.role === "admin" || user.role === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
-        <Route path="/access-codes" component={user.role === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
+        <Route path="/calendar" component={CalendarPage} />
+        <Route path="/support" component={SupportRequestsPage} />
+        <Route path="/medical" component={MedicalCasualtyPage} />
+        <Route path="/approvals" component={ApprovalsPage} />
+        <Route path="/links" component={LinkAnalysisPage} />
+        <Route path="/activity" component={ActivityLogPage} />
+        <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
+        <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
+        <Route path="/access-codes" component={user.accessLevel === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

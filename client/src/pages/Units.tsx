@@ -85,7 +85,7 @@ function StatusCycler({ unit, canEdit, onCycle }: { unit: Unit; canEdit: boolean
         {unit.status}<ChevronDown size={8} />
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-0 mt-0.5 bg-card border border-border rounded shadow-xl overflow-hidden min-w-[120px]">
+        <div className="absolute tac-menu top-full left-0 mt-0.5 bg-card border border-border rounded shadow-xl overflow-hidden min-w-[120px]">
           {statuses.map(s => (
             <button key={s} onClick={() => { onCycle(s); setOpen(false); }}
               className={`w-full text-left px-3 py-1.5 text-[10px] tracking-wider uppercase transition-colors hover:bg-secondary ${
@@ -102,7 +102,7 @@ export default function Units() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
-  const canEditStatus = user?.role === "admin" || user?.role === "owner";
+  const canEditStatus = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [open, setOpen] = useState(false);
   const [editUnit, setEditUnit] = useState<Unit | undefined>();
   const [filter, setFilter] = useState("all");

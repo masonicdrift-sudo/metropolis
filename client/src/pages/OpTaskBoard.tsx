@@ -112,7 +112,7 @@ function TaskCard({ task, canAdmin }: { task: OpTask; canAdmin: boolean }) {
               {task.status.replace("_", " ").toUpperCase()}<ChevronDown size={8} />
             </button>
             {statusOpen && (
-              <div className="absolute right-0 top-full mt-0.5 z-50 bg-card border border-border rounded shadow-xl min-w-[110px] overflow-hidden">
+              <div className="absolute right-0 top-full mt-0.5 tac-menu bg-card border border-border rounded shadow-xl min-w-[110px] overflow-hidden">
                 {["pending", "in_progress", "complete"].map(s => (
                   <button key={s} onClick={() => { updateStatus.mutate(s); setStatusOpen(false); }}
                     className={`w-full text-left px-2 py-1.5 text-[10px] tracking-wider hover:bg-secondary transition-colors ${s === task.status ? "text-green-400 font-bold" : "text-muted-foreground"}`}>
@@ -135,7 +135,7 @@ function TaskCard({ task, canAdmin }: { task: OpTask; canAdmin: boolean }) {
 
 export default function OpTaskBoard() {
   const { user } = useAuth();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [selectedOp, setSelectedOp] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 

@@ -438,7 +438,7 @@ export default function Messaging() {
   // Build username->role map
   const userMap = Object.fromEntries(allUsers.map(u => [u.username, u.role]));
   // Add self
-  if (user) userMap[user.username] = user.role;
+  if (user) userMap[user.username] = user.accessLevel;
 
   const knownUsernames = useMemo(
     () => new Set(allUsers.map((u) => u.username)),

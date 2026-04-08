@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, asc, gte, lte } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
 import type {
@@ -22,6 +22,14 @@ import type {
   OpTask, InsertOpTask,
   Award, InsertAward,
   TrainingRecord, InsertTraining,
+  CalendarEvent, InsertCalendarEvent,
+  ActivityLog, InsertActivityLog,
+  EntityLink, InsertEntityLink,
+  SupportRequest, InsertSupportRequest,
+  Approval, InsertApproval,
+  Casualty, InsertCasualty,
+  CasualtyEvac, InsertCasualtyEvac,
+  CasualtyTreatment, InsertCasualtyTreatment,
   Broadcast, InsertBroadcast,
   TacticalMapMarker,
   TacticalMapRangeRing,
@@ -53,7 +61,10 @@ sqlite.exec(`
     updated_at TEXT NOT NULL,
     op_name TEXT DEFAULT '',
     target_grid TEXT DEFAULT '',
-    tags TEXT NOT NULL DEFAULT '[]'
+    tags TEXT NOT NULL DEFAULT '[]',
+    releasability TEXT NOT NULL DEFAULT '',
+    released_at TEXT NOT NULL DEFAULT '',
+    released_by TEXT NOT NULL DEFAULT ''
   );
   CREATE TABLE IF NOT EXISTS group_chats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +107,23 @@ sqlite.exec(`
 try { sqlite.exec(`ALTER TABLE messages ADD COLUMN attachment TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN rank TEXT DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN assigned_unit TEXT DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN access_level TEXT NOT NULL DEFAULT 'user'`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN images TEXT NOT NULL DEFAULT '[]'`); } catch {}
+
+// Backfill access_level from older `role` values (owner/admin/user) when possible.
+try {
+  sqlite.exec(`
+    UPDATE users
+    SET access_level = role
+    WHERE access_level = 'user' AND role IN ('owner','admin','user');
+  `);
+} catch {}
+try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_markers (
@@ -246,7 +273,8 @@ sqlite.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user',
+    role TEXT NOT NULL DEFAULT '',
+    access_level TEXT NOT NULL DEFAULT 'user',
     created_at TEXT NOT NULL,
     last_login TEXT DEFAULT ''
   );
@@ -285,7 +313,10 @@ sqlite.exec(`
     summary TEXT NOT NULL,
     timestamp TEXT NOT NULL,
     verified INTEGER DEFAULT 0,
-    related_op_id INTEGER DEFAULT 0
+    related_op_id INTEGER DEFAULT 0,
+    releasability TEXT NOT NULL DEFAULT '',
+    released_at TEXT NOT NULL DEFAULT '',
+    released_by TEXT NOT NULL DEFAULT ''
   );
   CREATE TABLE IF NOT EXISTS comms_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -325,6 +356,123 @@ sqlite.exec(`
     setting_key TEXT PRIMARY KEY NOT NULL,
     value TEXT NOT NULL DEFAULT ''
   );
+  CREATE TABLE IF NOT EXISTS calendar_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_date TEXT NOT NULL,
+    title TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    start_time TEXT DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(event_date);
+
+  CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL,
+    actor_username TEXT NOT NULL,
+    actor_role TEXT NOT NULL DEFAULT 'user',
+    action TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL DEFAULT '',
+    before_json TEXT NOT NULL DEFAULT '',
+    after_json TEXT NOT NULL DEFAULT '',
+    ip TEXT NOT NULL DEFAULT '',
+    user_agent TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX IF NOT EXISTS idx_activity_ts ON activity_log(ts);
+  CREATE INDEX IF NOT EXISTS idx_activity_actor ON activity_log(actor_username, ts);
+  CREATE INDEX IF NOT EXISTS idx_activity_entity ON activity_log(entity_type, entity_id, ts);
+
+  CREATE TABLE IF NOT EXISTS entity_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    a_type TEXT NOT NULL,
+    a_id TEXT NOT NULL,
+    b_type TEXT NOT NULL,
+    b_id TEXT NOT NULL,
+    relation TEXT NOT NULL DEFAULT 'related',
+    note TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS uidx_entity_links ON entity_links(a_type, a_id, b_type, b_id, relation);
+  CREATE INDEX IF NOT EXISTS idx_entity_links_a ON entity_links(a_type, a_id);
+  CREATE INDEX IF NOT EXISTS idx_entity_links_b ON entity_links(b_type, b_id);
+
+  CREATE TABLE IF NOT EXISTS support_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    priority TEXT NOT NULL DEFAULT 'routine',
+    status TEXT NOT NULL DEFAULT 'open',
+    assigned_to TEXT NOT NULL DEFAULT '',
+    due_at TEXT NOT NULL DEFAULT '',
+    details TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_support_status ON support_requests(status, priority, created_at);
+
+  CREATE TABLE IF NOT EXISTS approvals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    requested_by TEXT NOT NULL,
+    requested_at TEXT NOT NULL,
+    requested_note TEXT NOT NULL DEFAULT '',
+    approved_by TEXT NOT NULL DEFAULT '',
+    approved_at TEXT NOT NULL DEFAULT '',
+    decision_note TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT ''
+  );
+  CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status, requested_at);
+
+  CREATE TABLE IF NOT EXISTS casualties (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    display_name TEXT NOT NULL,
+    unit TEXT NOT NULL DEFAULT '',
+    patient_id TEXT NOT NULL DEFAULT '',
+    classification TEXT NOT NULL DEFAULT 'UNCLASS',
+    status TEXT NOT NULL DEFAULT 'open',
+    precedence TEXT NOT NULL DEFAULT 'routine',
+    injury TEXT NOT NULL DEFAULT '',
+    location_grid TEXT NOT NULL DEFAULT '',
+    incident_at TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_casualties_status ON casualties(status, precedence, incident_at);
+
+  CREATE TABLE IF NOT EXISTS casualty_evac (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    casualty_id INTEGER NOT NULL,
+    call_sign TEXT NOT NULL DEFAULT '',
+    pickup_grid TEXT NOT NULL DEFAULT '',
+    hlz_name TEXT NOT NULL DEFAULT '',
+    destination TEXT NOT NULL DEFAULT '',
+    platform TEXT NOT NULL DEFAULT '',
+    requested_at TEXT NOT NULL DEFAULT '',
+    eta TEXT NOT NULL DEFAULT '',
+    nine_line_json TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_cas_evac_casualty ON casualty_evac(casualty_id);
+
+  CREATE TABLE IF NOT EXISTS casualty_treatments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    casualty_id INTEGER NOT NULL,
+    ts TEXT NOT NULL,
+    performed_by TEXT NOT NULL,
+    note TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_cas_treatments_casualty ON casualty_treatments(casualty_id, ts);
 `);
 
 // Seed 24FEB2026 Commo Card
@@ -420,7 +568,8 @@ if (!adminExists) {
   db.insert(schema.users).values({
     username: "Overlord",
     passwordHash: hash,
-    role: "admin",
+    accessLevel: "admin",
+    role: "",
     createdAt: new Date().toISOString(),
     lastLogin: "",
   }).run();
@@ -434,6 +583,7 @@ export interface IStorage {
   getIsofacDoc(id: number): IsofacDoc | undefined;
   createIsofacDoc(d: InsertIsofacDoc): IsofacDoc;
   updateIsofacDoc(id: number, d: Partial<InsertIsofacDoc>): IsofacDoc | undefined;
+  releaseIsofacDoc(id: number, releasability: string, releasedBy: string): IsofacDoc | undefined;
   deleteIsofacDoc(id: number): void;
   // Group Chats
   getGroupsForUser(username: string): GroupChat[];
@@ -472,7 +622,7 @@ export interface IStorage {
   createUser(
     username: string,
     password: string,
-    role: string,
+    accessLevel: string,
     profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
   ): User;
   deleteUser(id: number): void;
@@ -497,6 +647,7 @@ export interface IStorage {
   getIntelReport(id: number): IntelReport | undefined;
   createIntelReport(r: InsertIntelReport): IntelReport;
   updateIntelReport(id: number, r: Partial<InsertIntelReport>): IntelReport | undefined;
+  releaseIntelReport(id: number, releasability: string, releasedBy: string): IntelReport | undefined;
   deleteIntelReport(id: number): void;
   // Comms
   getCommsLog(): CommsLog[];
@@ -526,6 +677,7 @@ export interface IStorage {
   deleteAar(id: number): void;
   // Op Tasks
   getOpTasks(operationId: number): OpTask[];
+  getOpTask(id: number): OpTask | undefined;
   createOpTask(t: InsertOpTask): OpTask;
   updateOpTask(id: number, t: Partial<InsertOpTask>): OpTask | undefined;
   deleteOpTask(id: number): void;
@@ -538,6 +690,70 @@ export interface IStorage {
   createTrainingRecord(t: InsertTraining): TrainingRecord;
   updateTrainingRecord(id: number, t: Partial<InsertTraining>): TrainingRecord | undefined;
   deleteTrainingRecord(id: number): void;
+  // Calendar (shared)
+  getCalendarEvents(from?: string, to?: string): CalendarEvent[];
+  getCalendarEvent(id: number): CalendarEvent | undefined;
+  createCalendarEvent(e: InsertCalendarEvent): CalendarEvent;
+  updateCalendarEvent(id: number, e: Partial<InsertCalendarEvent>): CalendarEvent | undefined;
+  tryDeleteCalendarEvent(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
+  // Activity Log (append-only)
+  appendActivity(e: InsertActivityLog): ActivityLog;
+  getActivity(params?: {
+    fromTs?: string;
+    toTs?: string;
+    actorUsername?: string;
+    entityType?: string;
+    action?: string;
+    limit?: number;
+    offset?: number;
+  }): ActivityLog[];
+  // Link analysis
+  getLinksForEntity(type: string, id: string): EntityLink[];
+  getEntityLink(id: number): EntityLink | undefined;
+  createEntityLink(l: InsertEntityLink): EntityLink;
+  tryDeleteEntityLink(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
+  // Support requests
+  getSupportRequests(): SupportRequest[];
+  getSupportRequest(id: number): SupportRequest | undefined;
+  createSupportRequest(r: InsertSupportRequest): SupportRequest;
+  updateSupportRequest(id: number, r: Partial<InsertSupportRequest>): SupportRequest | undefined;
+  tryDeleteSupportRequest(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
+  // Approvals
+  getApprovals(status?: string): Approval[];
+  createApproval(a: InsertApproval): Approval;
+  approveApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
+  rejectApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
+  // Medical / Casualty
+  getCasualties(): Casualty[];
+  getCasualty(id: number): Casualty | undefined;
+  createCasualty(c: InsertCasualty): Casualty;
+  updateCasualty(id: number, c: Partial<InsertCasualty>): Casualty | undefined;
+  tryDeleteCasualty(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
+  getCasualtyEvac(casualtyId: number): CasualtyEvac | undefined;
+  upsertCasualtyEvac(e: InsertCasualtyEvac): CasualtyEvac;
+  getCasualtyTreatments(casualtyId: number): CasualtyTreatment[];
+  addCasualtyTreatment(t: InsertCasualtyTreatment): CasualtyTreatment;
+  tryDeleteCasualtyTreatment(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
   // Broadcasts
   getBroadcasts(): Broadcast[];
   getActiveBroadcasts(): Broadcast[];
@@ -570,6 +786,15 @@ export class Storage implements IStorage {
   updateIsofacDoc(id: number, d: Partial<InsertIsofacDoc>) {
     return db.update(schema.isofacDocs).set({ ...d, updatedAt: new Date().toISOString() })
       .where(eq(schema.isofacDocs.id, id)).returning().get();
+  }
+  releaseIsofacDoc(id: number, releasability: string, releasedBy: string) {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.isofacDocs)
+      .set({ releasability, releasedAt: now, releasedBy, updatedAt: now })
+      .where(eq(schema.isofacDocs.id, id))
+      .returning()
+      .get();
   }
   deleteIsofacDoc(id: number) { db.delete(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).run(); }
 
@@ -757,6 +982,7 @@ export class Storage implements IStorage {
       id: schema.users.id,
       username: schema.users.username,
       role: schema.users.role,
+      accessLevel: schema.users.accessLevel,
       rank: schema.users.rank,
       assignedUnit: schema.users.assignedUnit,
       milIdNumber: schema.users.milIdNumber,
@@ -774,14 +1000,15 @@ export class Storage implements IStorage {
   createUser(
     username: string,
     password: string,
-    role: string,
+    accessLevel: string,
     profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
   ) {
     const hash = bcrypt.hashSync(password, 10);
     return db.insert(schema.users).values({
       username,
       passwordHash: hash,
-      role,
+      accessLevel,
+      role: "",
       rank: profile?.rank ?? "",
       assignedUnit: profile?.assignedUnit ?? "",
       milIdNumber: profile?.milIdNumber ?? "",
@@ -867,6 +1094,14 @@ export class Storage implements IStorage {
   updateIntelReport(id: number, r: Partial<InsertIntelReport>) {
     return db.update(schema.intelReports).set(r).where(eq(schema.intelReports.id, id)).returning().get();
   }
+  releaseIntelReport(id: number, releasability: string, releasedBy: string) {
+    return db
+      .update(schema.intelReports)
+      .set({ releasability, releasedAt: new Date().toISOString(), releasedBy })
+      .where(eq(schema.intelReports.id, id))
+      .returning()
+      .get();
+  }
   deleteIntelReport(id: number) { db.delete(schema.intelReports).where(eq(schema.intelReports.id, id)).run(); }
 
   // Comms — message content encrypted at rest
@@ -931,6 +1166,9 @@ export class Storage implements IStorage {
   getOpTasks(operationId: number) {
     return db.select().from(schema.opTasks).where(eq(schema.opTasks.operationId, operationId)).all();
   }
+  getOpTask(id: number) {
+    return db.select().from(schema.opTasks).where(eq(schema.opTasks.id, id)).get();
+  }
   createOpTask(t: InsertOpTask) { return db.insert(schema.opTasks).values(t).returning().get(); }
   updateOpTask(id: number, t: Partial<InsertOpTask>) {
     return db.update(schema.opTasks).set(t).where(eq(schema.opTasks.id, id)).returning().get();
@@ -955,6 +1193,311 @@ export class Storage implements IStorage {
     return db.update(schema.trainingRecords).set(t).where(eq(schema.trainingRecords.id, id)).returning().get();
   }
   deleteTrainingRecord(id: number) { db.delete(schema.trainingRecords).where(eq(schema.trainingRecords.id, id)).run(); }
+
+  getCalendarEvent(id: number) {
+    return db.select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, id)).get();
+  }
+
+  getCalendarEvents(from?: string, to?: string): CalendarEvent[] {
+    if (from && to) {
+      return db
+        .select()
+        .from(schema.calendarEvents)
+        .where(
+          and(
+            gte(schema.calendarEvents.eventDate, from),
+            lte(schema.calendarEvents.eventDate, to),
+          ),
+        )
+        .orderBy(asc(schema.calendarEvents.eventDate), asc(schema.calendarEvents.startTime), asc(schema.calendarEvents.id))
+        .all();
+    }
+    return db
+      .select()
+      .from(schema.calendarEvents)
+      .orderBy(asc(schema.calendarEvents.eventDate), asc(schema.calendarEvents.startTime), asc(schema.calendarEvents.id))
+      .all();
+  }
+
+  createCalendarEvent(e: InsertCalendarEvent) {
+    return db.insert(schema.calendarEvents).values(e).returning().get();
+  }
+
+  updateCalendarEvent(id: number, e: Partial<InsertCalendarEvent>) {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.calendarEvents)
+      .set({ ...e, updatedAt: now })
+      .where(eq(schema.calendarEvents.id, id))
+      .returning()
+      .get();
+  }
+
+  tryDeleteCalendarEvent(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.calendarEvents).where(eq(schema.calendarEvents.id, id)).run();
+    return { ok: true };
+  }
+
+  appendActivity(e: InsertActivityLog) {
+    return db.insert(schema.activityLog).values(e).returning().get();
+  }
+
+  getActivity(params?: {
+    fromTs?: string;
+    toTs?: string;
+    actorUsername?: string;
+    entityType?: string;
+    action?: string;
+    limit?: number;
+    offset?: number;
+  }): ActivityLog[] {
+    const limit = Math.min(500, Math.max(1, params?.limit ?? 200));
+    const offset = Math.max(0, params?.offset ?? 0);
+    const where = and(
+      params?.fromTs ? gte(schema.activityLog.ts, params.fromTs) : undefined,
+      params?.toTs ? lte(schema.activityLog.ts, params.toTs) : undefined,
+      params?.actorUsername ? eq(schema.activityLog.actorUsername, params.actorUsername) : undefined,
+      params?.entityType ? eq(schema.activityLog.entityType, params.entityType) : undefined,
+      params?.action ? eq(schema.activityLog.action, params.action) : undefined,
+    );
+    // drizzle treats undefined in `and()` as no-op, ok.
+    return db
+      .select()
+      .from(schema.activityLog)
+      .where(where)
+      .orderBy(desc(schema.activityLog.ts), desc(schema.activityLog.id))
+      .limit(limit)
+      .offset(offset)
+      .all();
+  }
+
+  private canonicalizeLink(aType: string, aId: string, bType: string, bId: string) {
+    const a = `${aType}:${aId}`;
+    const b = `${bType}:${bId}`;
+    if (a.localeCompare(b, undefined, { sensitivity: "base" }) <= 0) {
+      return { aType, aId, bType, bId };
+    }
+    return { aType: bType, aId: bId, bType: aType, bId: aId };
+  }
+
+  getLinksForEntity(type: string, id: string): EntityLink[] {
+    const a = db
+      .select()
+      .from(schema.entityLinks)
+      .where(and(eq(schema.entityLinks.aType, type), eq(schema.entityLinks.aId, id)))
+      .all();
+    const b = db
+      .select()
+      .from(schema.entityLinks)
+      .where(and(eq(schema.entityLinks.bType, type), eq(schema.entityLinks.bId, id)))
+      .all();
+    return [...a, ...b].sort((x, y) => (y.id ?? 0) - (x.id ?? 0));
+  }
+
+  getEntityLink(id: number) {
+    return db.select().from(schema.entityLinks).where(eq(schema.entityLinks.id, id)).get();
+  }
+
+  createEntityLink(l: InsertEntityLink) {
+    const c = this.canonicalizeLink(l.aType, l.aId, l.bType, l.bId);
+    return db
+      .insert(schema.entityLinks)
+      .values({ ...l, ...c })
+      .returning()
+      .get();
+  }
+
+  tryDeleteEntityLink(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.entityLinks).where(eq(schema.entityLinks.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.entityLinks).where(eq(schema.entityLinks.id, id)).run();
+    return { ok: true };
+  }
+
+  getSupportRequests(): SupportRequest[] {
+    return db.select().from(schema.supportRequests).orderBy(desc(schema.supportRequests.id)).all();
+  }
+
+  getSupportRequest(id: number) {
+    return db.select().from(schema.supportRequests).where(eq(schema.supportRequests.id, id)).get();
+  }
+
+  createSupportRequest(r: InsertSupportRequest) {
+    return db.insert(schema.supportRequests).values(r).returning().get();
+  }
+
+  updateSupportRequest(id: number, r: Partial<InsertSupportRequest>) {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.supportRequests)
+      .set({ ...r, updatedAt: now })
+      .where(eq(schema.supportRequests.id, id))
+      .returning()
+      .get();
+  }
+
+  tryDeleteSupportRequest(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.supportRequests).where(eq(schema.supportRequests.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.supportRequests).where(eq(schema.supportRequests.id, id)).run();
+    return { ok: true };
+  }
+
+  // Approvals
+  getApprovals(status?: string): Approval[] {
+    if (status) {
+      return db
+        .select()
+        .from(schema.approvals)
+        .where(eq(schema.approvals.status, status))
+        .orderBy(desc(schema.approvals.requestedAt), desc(schema.approvals.id))
+        .all();
+    }
+    return db
+      .select()
+      .from(schema.approvals)
+      .orderBy(desc(schema.approvals.requestedAt), desc(schema.approvals.id))
+      .all();
+  }
+
+  createApproval(a: InsertApproval) {
+    return db.insert(schema.approvals).values(a).returning().get();
+  }
+
+  approveApproval(id: number, approvedBy: string, decisionNote = "") {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.approvals)
+      .set({ status: "approved", approvedBy, approvedAt: now, decisionNote })
+      .where(eq(schema.approvals.id, id))
+      .returning()
+      .get();
+  }
+
+  rejectApproval(id: number, approvedBy: string, decisionNote = "") {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.approvals)
+      .set({ status: "rejected", approvedBy, approvedAt: now, decisionNote })
+      .where(eq(schema.approvals.id, id))
+      .returning()
+      .get();
+  }
+
+  // Medical / Casualty
+  getCasualties(): Casualty[] {
+    return db
+      .select()
+      .from(schema.casualties)
+      .orderBy(desc(schema.casualties.incidentAt), desc(schema.casualties.id))
+      .all();
+  }
+
+  getCasualty(id: number) {
+    return db.select().from(schema.casualties).where(eq(schema.casualties.id, id)).get();
+  }
+
+  createCasualty(c: InsertCasualty) {
+    return db.insert(schema.casualties).values(c).returning().get();
+  }
+
+  updateCasualty(id: number, c: Partial<InsertCasualty>) {
+    const now = new Date().toISOString();
+    return db
+      .update(schema.casualties)
+      .set({ ...c, updatedAt: now })
+      .where(eq(schema.casualties.id, id))
+      .returning()
+      .get();
+  }
+
+  tryDeleteCasualty(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.casualties).where(eq(schema.casualties.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.casualties).where(eq(schema.casualties.id, id)).run();
+    // child rows best-effort cleanup
+    db.delete(schema.casualtyEvac).where(eq(schema.casualtyEvac.casualtyId, id)).run();
+    db.delete(schema.casualtyTreatments).where(eq(schema.casualtyTreatments.casualtyId, id)).run();
+    return { ok: true };
+  }
+
+  getCasualtyEvac(casualtyId: number) {
+    return db.select().from(schema.casualtyEvac).where(eq(schema.casualtyEvac.casualtyId, casualtyId)).get();
+  }
+
+  upsertCasualtyEvac(e: InsertCasualtyEvac) {
+    const existing = this.getCasualtyEvac(e.casualtyId);
+    if (existing) {
+      return db
+        .update(schema.casualtyEvac)
+        .set({ ...e, updatedAt: new Date().toISOString() })
+        .where(eq(schema.casualtyEvac.id, existing.id))
+        .returning()
+        .get();
+    }
+    return db
+      .insert(schema.casualtyEvac)
+      .values({ ...e, updatedAt: new Date().toISOString() })
+      .returning()
+      .get();
+  }
+
+  getCasualtyTreatments(casualtyId: number): CasualtyTreatment[] {
+    return db
+      .select()
+      .from(schema.casualtyTreatments)
+      .where(eq(schema.casualtyTreatments.casualtyId, casualtyId))
+      .orderBy(asc(schema.casualtyTreatments.ts), asc(schema.casualtyTreatments.id))
+      .all();
+  }
+
+  addCasualtyTreatment(t: InsertCasualtyTreatment) {
+    return db.insert(schema.casualtyTreatments).values(t).returning().get();
+  }
+
+  tryDeleteCasualtyTreatment(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.casualtyTreatments).where(eq(schema.casualtyTreatments.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.performedBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.casualtyTreatments).where(eq(schema.casualtyTreatments.id, id)).run();
+    return { ok: true };
+  }
 
   // Broadcasts
   getBroadcasts() { return db.select().from(schema.broadcasts).orderBy(desc(schema.broadcasts.id)).all(); }
@@ -1016,8 +1559,8 @@ export class Storage implements IStorage {
   ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" } {
     const row = db.select().from(schema.tacticalMapMarkers).where(eq(schema.tacticalMapMarkers.id, id)).get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ACCESS_RANK.admin) {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapMarkers).where(eq(schema.tacticalMapMarkers.id, id)).run();
@@ -1090,8 +1633,8 @@ export class Storage implements IStorage {
       .where(eq(schema.tacticalMapLines.id, id))
       .get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ACCESS_RANK.admin) {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapLines).where(eq(schema.tacticalMapLines.id, id)).run();
@@ -1127,8 +1670,8 @@ export class Storage implements IStorage {
       .where(eq(schema.tacticalMapRangeRings.id, id))
       .get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ACCESS_RANK.admin) {
       return { ok: false, reason: "forbidden" };
     }
     const ring = db
@@ -1152,8 +1695,8 @@ export class Storage implements IStorage {
       .where(eq(schema.tacticalMapRangeRings.id, id))
       .get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ACCESS_RANK.admin) {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapRangeRings).where(eq(schema.tacticalMapRangeRings.id, id)).run();
@@ -1222,8 +1765,8 @@ export class Storage implements IStorage {
       .where(eq(schema.tacticalMapBuildingLabels.id, id))
       .get();
     if (!row) return { ok: false, reason: "not_found" };
-    const rank = schema.ROLE_RANK[role] ?? 0;
-    if (row.createdBy !== username && rank < schema.ROLE_RANK.admin) {
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    if (row.createdBy !== username && rank < schema.ACCESS_RANK.admin) {
       return { ok: false, reason: "forbidden" };
     }
     db.delete(schema.tacticalMapBuildingLabels).where(eq(schema.tacticalMapBuildingLabels.id, id)).run();

@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Operation, InsertOperation } from "@shared/schema";
+import type { EntityLink, Operation, InsertOperation } from "@shared/schema";
 import { useState } from "react";
-import { Plus, Crosshair, Trash2, Edit, ChevronDown } from "lucide-react";
+import { Plus, Crosshair, Trash2, Edit, ChevronDown, Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 const STATUS_FLOW: Record<string, string> = {
   planning: "active", active: "complete", complete: "complete", aborted: "aborted",
@@ -18,7 +19,9 @@ const STATUS_FLOW: Record<string, string> = {
 function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const now = new Date().toISOString();
+  const [linkDraft, setLinkDraft] = useState({ bType: "intel", bId: "", relation: "related", note: "" });
   const [form, setForm] = useState<Partial<InsertOperation>>(op ? {
     name: op.name, type: op.type, priority: op.priority, status: op.status,
     objective: op.objective, grid: op.grid, startTime: op.startTime,
@@ -41,6 +44,33 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
   };
 
   const set = (k: keyof InsertOperation) => (v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const { data: links = [] } = useQuery<EntityLink[]>({
+    queryKey: ["/api/entity-links", "operations", op?.id],
+    queryFn: () => apiRequest("GET", `/api/entity-links?type=operations&id=${encodeURIComponent(String(op!.id))}`),
+    enabled: !!user && !!op,
+  });
+
+  const createLink = useMutation({
+    mutationFn: (body: { bType: string; bId: string; relation: string; note: string }) =>
+      apiRequest("POST", "/api/entity-links", {
+        aType: "operations",
+        aId: String(op!.id),
+        bType: body.bType,
+        bId: body.bId,
+        relation: body.relation,
+        note: body.note,
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "operations", op?.id] }),
+  });
+
+  const deleteLink = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/entity-links/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/entity-links", "operations", op?.id] }),
+  });
+
+  const canDeleteLink = (l: EntityLink) =>
+    !!user && (l.createdBy === user.username || user.accessLevel === "admin" || user.accessLevel === "owner");
 
   return (
     <div className="space-y-3">
@@ -69,6 +99,72 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">NOTES</Label>
           <Textarea placeholder="Additional notes..." value={form.notes || ""} onChange={e => set("notes")(e.target.value)} className="text-xs h-14" /></div>
       </div>
+
+      {op && (
+        <div className="border-t border-border/60 pt-2">
+          <div className="text-[9px] font-bold tracking-widest text-muted-foreground mb-1 flex items-center gap-1">
+            <Link2 size={9} /> LINKS
+          </div>
+          <div className="space-y-1.5">
+            {links.length === 0 ? (
+              <div className="text-[9px] text-muted-foreground/60">No links yet.</div>
+            ) : (
+              links.map((l) => (
+                <div key={l.id} className="flex items-center gap-2 text-[10px] border border-border/60 rounded p-2 bg-background/50">
+                  <div className="flex-1 min-w-0 font-mono text-[9px] truncate">
+                    {l.aType}:{l.aId} ↔ {l.bType}:{l.bId} · {l.relation}
+                  </div>
+                  {canDeleteLink(l) ? (
+                    <button
+                      type="button"
+                      className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-muted-foreground hover:text-red-400 touch-manipulation rounded-md hover:bg-red-950/20"
+                      title="Remove link"
+                      onClick={() => deleteLink.mutate(l.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  ) : null}
+                </div>
+              ))
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="bType (e.g. intel)"
+                value={linkDraft.bType}
+                onChange={(e) => setLinkDraft((d) => ({ ...d, bType: e.target.value }))}
+              />
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="bId"
+                value={linkDraft.bId}
+                onChange={(e) => setLinkDraft((d) => ({ ...d, bId: e.target.value }))}
+              />
+              <Input
+                className="h-8 text-[10px] font-mono"
+                placeholder="relation"
+                value={linkDraft.relation}
+                onChange={(e) => setLinkDraft((d) => ({ ...d, relation: e.target.value }))}
+              />
+              <Button
+                size="sm"
+                className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                onClick={() => {
+                  const bt = linkDraft.bType.trim();
+                  const bi = linkDraft.bId.trim();
+                  if (!bt || !bi) return;
+                  createLink.mutate({ bType: bt, bId: bi, relation: linkDraft.relation.trim() || "related", note: linkDraft.note.trim() });
+                }}
+                disabled={!linkDraft.bType.trim() || !linkDraft.bId.trim() || createLink.isPending}
+              >
+                ADD LINK
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
         <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" data-testid="button-submit-op">{op ? "UPDATE" : "CREATE"} OP</Button>

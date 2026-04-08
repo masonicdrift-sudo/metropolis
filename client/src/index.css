@@ -135,6 +135,13 @@
   z-index: 200 !important;
 }
 
+/* Ensure custom (non-Radix) dropdowns/tooltips remain above chrome as well. */
+.tac-overlay,
+.tac-overlay [data-overlay],
+.tac-menu {
+  z-index: 200;
+}
+
 /* ── Scan-line effect (no fixed ::before — that layer stacked above in-flow UI in some
    browsers and broke clicks on selects/menus despite pointer-events: none) ───────── */
 .scanlines {

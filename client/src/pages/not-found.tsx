@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { MetropolisLogo } from "@/components/MetropolisLogo";
 
 export default function NotFound() {
   return (
-    <div className="min-h-dvh w-full flex items-center justify-center bg-background scanlines px-4 py-8 safe-bottom tac-page">
+    <div className="min-h-dvh w-full flex flex-col items-center justify-center bg-background scanlines px-4 py-8 safe-bottom tac-page gap-6">
+      <MetropolisLogo size="sm" className="opacity-80" />
       <Card className="w-full max-w-md border-border bg-card">
         <CardContent className="pt-6">
           <div className="flex mb-4 gap-2 items-start">

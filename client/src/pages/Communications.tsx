@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
+import { SubPageNav } from "@/components/SubPageNav";
+import { COMMS_SUB } from "@/lib/appNav";
 
 const MSG_TYPES = [
   "SITREP",
@@ -813,6 +815,7 @@ export default function Communications() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={COMMS_SUB} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>COMMUNICATIONS CENTER</h1>

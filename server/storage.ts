@@ -208,6 +208,17 @@ sqlite.exec(`
 try { sqlite.exec(`ALTER TABLE tactical_map_markers ADD COLUMN affiliation TEXT NOT NULL DEFAULT 'unknown'`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN mil_id_number TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN mos TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN team_assignment TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN team_assignment TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN linked_username TEXT NOT NULL DEFAULT ''`); } catch {}
+try {
+  sqlite.exec(
+    `UPDATE personnel_roster_entries SET team_assignment = phone WHERE (team_assignment = '' OR team_assignment IS NULL) AND COALESCE(phone,'') != ''`,
+  );
+} catch {}
+try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN phone`); } catch {}
+try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`); } catch {}
+try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_lines (
@@ -309,6 +320,7 @@ sqlite.exec(`
     instructor TEXT DEFAULT '',
     expires_at TEXT DEFAULT '',
     notes TEXT DEFAULT '',
+    attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL
   );
   CREATE TABLE IF NOT EXISTS broadcasts (
@@ -446,8 +458,8 @@ sqlite.exec(`
     mos TEXT NOT NULL DEFAULT '',
     billet TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
-    phone TEXT NOT NULL DEFAULT '',
-    blood_type TEXT NOT NULL DEFAULT '',
+    team_assignment TEXT NOT NULL DEFAULT '',
+    linked_username TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'present',
     notes TEXT NOT NULL DEFAULT '',
     created_by TEXT NOT NULL,
@@ -711,7 +723,7 @@ export interface IStorage {
     username: string,
     password: string,
     accessLevel: string,
-    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
+    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "teamAssignment" | "milIdNumber" | "mos">>,
   ): User;
   deleteUser(id: number): void;
   updateLastLogin(id: number): void;
@@ -811,6 +823,8 @@ export interface IStorage {
   }): ActivityLog[];
   // Link analysis
   getLinksForEntity(type: string, id: string): EntityLink[];
+  /** All entity links (link analysis graph). */
+  getAllEntityLinks(): EntityLink[];
   getEntityLink(id: number): EntityLink | undefined;
   createEntityLink(l: InsertEntityLink): EntityLink;
   tryDeleteEntityLink(
@@ -1113,6 +1127,7 @@ export class Storage implements IStorage {
       accessLevel: schema.users.accessLevel,
       rank: schema.users.rank,
       assignedUnit: schema.users.assignedUnit,
+      teamAssignment: schema.users.teamAssignment,
       milIdNumber: schema.users.milIdNumber,
       mos: schema.users.mos,
       createdAt: schema.users.createdAt,
@@ -1129,7 +1144,7 @@ export class Storage implements IStorage {
     username: string,
     password: string,
     accessLevel: string,
-    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "milIdNumber" | "mos">>,
+    profile?: Partial<Pick<User, "rank" | "assignedUnit" | "teamAssignment" | "milIdNumber" | "mos">>,
   ) {
     const hash = bcrypt.hashSync(password, 10);
     return db.insert(schema.users).values({
@@ -1139,6 +1154,7 @@ export class Storage implements IStorage {
       role: "",
       rank: profile?.rank ?? "",
       assignedUnit: profile?.assignedUnit ?? "",
+      teamAssignment: profile?.teamAssignment ?? "",
       milIdNumber: profile?.milIdNumber ?? "",
       mos: profile?.mos ?? "",
       createdAt: new Date().toISOString(),
@@ -1182,6 +1198,7 @@ export class Storage implements IStorage {
         }
       }
       db.update(schema.perstat).set({ username: newUsername }).where(eq(schema.perstat.username, oldUsername)).run();
+      db.update(schema.personnelRosterEntries).set({ linkedUsername: newUsername }).where(eq(schema.personnelRosterEntries.linkedUsername, oldUsername)).run();
       db.update(schema.trainingRecords).set({ username: newUsername }).where(eq(schema.trainingRecords.username, oldUsername)).run();
       db.update(schema.awards).set({ username: newUsername }).where(eq(schema.awards.username, oldUsername)).run();
       db.update(schema.awards).set({ awardedBy: newUsername }).where(eq(schema.awards.awardedBy, oldUsername)).run();
@@ -1504,6 +1521,10 @@ export class Storage implements IStorage {
       .where(and(eq(schema.entityLinks.bType, type), eq(schema.entityLinks.bId, id)))
       .all();
     return [...a, ...b].sort((x, y) => (y.id ?? 0) - (x.id ?? 0));
+  }
+
+  getAllEntityLinks() {
+    return db.select().from(schema.entityLinks).orderBy(desc(schema.entityLinks.id)).all();
   }
 
   getEntityLink(id: number) {

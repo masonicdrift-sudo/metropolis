@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Casualty, EntityLink, IntelReport, IsofacDoc, Operation, Threat } from "@shared/schema";
+import type { Casualty, EntityLink, IntelReport, IsofacDoc, Operation, Threat, Unit } from "@shared/schema";
+import { EntityLinkGraph, entityNodeKey, type EntityLabelMaps } from "@/components/EntityLinkGraph";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -11,24 +12,70 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link2, Plus, Trash2 } from "lucide-react";
+import { SubPageNav } from "@/components/SubPageNav";
+import { INTEL_SUB } from "@/lib/appNav";
 
-function entityLabel(type: string, id: string): string {
-  return `${type}:${id}`;
-}
-
-type EntityType = "operations" | "intel" | "isofac" | "threats" | "casualties";
+type EntityType =
+  | "users"
+  | "units"
+  | "location"
+  | "threats"
+  | "intel"
+  | "operations"
+  | "isofac"
+  | "casualties";
 type EntityOption = { id: string; label: string };
 
 const ENTITY_TYPES: { value: EntityType; label: string }[] = [
+  { value: "users", label: "PERSON (USER)" },
+  { value: "units", label: "UNIT" },
+  { value: "threats", label: "THREAT" },
+  { value: "location", label: "LOCATION (GRID)" },
   { value: "intel", label: "INTEL" },
   { value: "operations", label: "OPERATIONS" },
   { value: "isofac", label: "ISOFAC" },
-  { value: "threats", label: "THREATS" },
   { value: "casualties", label: "CASUALTIES" },
 ];
 
+function normGrid(g: string): string {
+  return g.trim().replace(/\s+/g, " ");
+}
+
+function buildLocationOptions(threats: Threat[], intel: IntelReport[], units: Unit[]): EntityOption[] {
+  const m = new Map<string, string>();
+  for (const t of threats) {
+    const g = normGrid(t.grid || "");
+    if (!g) continue;
+    m.set(g, g);
+  }
+  for (const r of intel) {
+    const g = normGrid(r.grid || "");
+    if (!g) continue;
+    m.set(g, g);
+  }
+  for (const u of units) {
+    const g = normGrid(u.grid || "");
+    if (!g) continue;
+    const label = m.get(g) ?? g;
+    m.set(g, `${label} · ${u.callsign}`);
+  }
+  return Array.from(m.entries())
+    .map(([id, label]) => ({ id, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function optionsFor(type: EntityType, data: unknown): EntityOption[] {
+  if (type === "users") {
+    return ((data as { username: string }[]) || []).map((u) => ({ id: u.username, label: u.username }));
+  }
+  if (type === "units") {
+    return ((data as Unit[]) || []).map((u) => ({ id: String(u.id), label: `${u.callsign} — ${u.type}` }));
+  }
+  if (type === "location") {
+    return ((data as EntityOption[]) || []);
+  }
   if (type === "intel") {
     return ((data as IntelReport[]) || []).map((r) => ({ id: String(r.id), label: `${r.id} — ${r.title}` }));
   }
@@ -44,13 +91,21 @@ function optionsFor(type: EntityType, data: unknown): EntityOption[] {
   return ((data as Casualty[]) || []).map((c) => ({ id: String(c.id), label: `${c.id} — ${c.precedence.toUpperCase()} — ${c.displayName}` }));
 }
 
+function formatEntityEnd(type: string, id: string, maps: EntityLabelMaps): string {
+  const table = (maps as Record<string, Map<string, string>>)[type];
+  const human = table?.get(id);
+  if (human) return `${type}:${human}`;
+  return `${type}:${id}`;
+}
+
 export default function LinkAnalysisPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
   const mobile = useIsMobile();
 
-  const [target, setTarget] = useState<{ type: EntityType; id: string }>({ type: "intel", id: "" });
+  const [target, setTarget] = useState<{ type: EntityType; id: string }>({ type: "users", id: "" });
+  const [includeDerivedGridEdges, setIncludeDerivedGridEdges] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     aType: "intel" as EntityType,
@@ -72,19 +127,54 @@ export default function LinkAnalysisPage() {
     enabled: !!user && !!target.type && !!target.id.trim(),
   });
 
+  const { data: allEntityLinks = [] } = useQuery<EntityLink[]>({
+    queryKey: ["/api/entity-links/all"],
+    queryFn: () => apiRequest("GET", "/api/entity-links/all"),
+    enabled: !!user,
+  });
+  const { data: directory = [] } = useQuery<{ id: number; username: string; role: string }[]>({
+    queryKey: ["/api/users/directory"],
+    queryFn: () => apiRequest("GET", "/api/users/directory"),
+    enabled: !!user,
+  });
+  const { data: units = [] } = useQuery<Unit[]>({ queryKey: ["/api/units"], queryFn: () => apiRequest("GET", "/api/units"), enabled: !!user });
   const { data: intel = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel"), enabled: !!user });
   const { data: operations = [] } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations"), enabled: !!user });
   const { data: isofac = [] } = useQuery<IsofacDoc[]>({ queryKey: ["/api/isofac"], queryFn: () => apiRequest("GET", "/api/isofac"), enabled: !!user });
   const { data: threats = [] } = useQuery<Threat[]>({ queryKey: ["/api/threats"], queryFn: () => apiRequest("GET", "/api/threats"), enabled: !!user });
   const { data: casualties = [] } = useQuery<Casualty[]>({ queryKey: ["/api/casualties"], queryFn: () => apiRequest("GET", "/api/casualties"), enabled: !!user });
 
+  const locationOptions = useMemo(() => buildLocationOptions(threats, intel, units), [threats, intel, units]);
+
+  const labelMaps = useMemo((): EntityLabelMaps => {
+    const location = new Map<string, string>();
+    for (const o of locationOptions) {
+      location.set(o.id, o.label);
+    }
+    return {
+      users: new Map(directory.map((u) => [u.username, u.username])),
+      units: new Map(units.map((u) => [String(u.id), `${u.callsign} — ${u.type}`])),
+      location,
+      threats: new Map(threats.map((t) => [String(t.id), `${t.label} (${t.category})`])),
+      intel: new Map(intel.map((r) => [String(r.id), r.title])),
+      isofac: new Map(isofac.map((d) => [String(d.id), `${d.type} — ${d.title}`])),
+      operations: new Map(operations.map((o) => [String(o.id), o.name])),
+      casualties: new Map(casualties.map((c) => [String(c.id), `${c.displayName} (${c.precedence})`])),
+    };
+  }, [directory, units, locationOptions, threats, intel, isofac, operations, casualties]);
+
   const dataFor = (t: EntityType) => {
+    if (t === "users") return directory;
+    if (t === "units") return units;
+    if (t === "location") return locationOptions;
     if (t === "intel") return intel;
     if (t === "operations") return operations;
     if (t === "isofac") return isofac;
     if (t === "threats") return threats;
     return casualties;
   };
+
+  const focusNodeId = target.id.trim() ? entityNodeKey(target.type, target.id.trim()) : null;
 
   const createMut = useMutation({
     mutationFn: (body: typeof form) =>
@@ -98,6 +188,7 @@ export default function LinkAnalysisPage() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/entity-links"] });
+      qc.invalidateQueries({ queryKey: ["/api/entity-links/all"] });
       toast({ title: "Link created" });
       setOpen(false);
       setForm((f) => ({ ...f, note: "" }));
@@ -109,6 +200,7 @@ export default function LinkAnalysisPage() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/entity-links/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/entity-links"] });
+      qc.invalidateQueries({ queryKey: ["/api/entity-links/all"] });
       toast({ title: "Link removed" });
     },
     onError: () => toast({ title: "Delete failed", variant: "destructive" }),
@@ -116,6 +208,7 @@ export default function LinkAnalysisPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col min-h-0 gap-3">
+      <SubPageNav items={INTEL_SUB} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -125,7 +218,7 @@ export default function LinkAnalysisPage() {
             </h1>
           </div>
           <div className="text-[10px] text-muted-foreground tracking-wider mt-0.5">
-            Cross-reference objects across the node (Intel, Ops, ISOFAC, Threats, Comms, etc.).
+            Person → unit → threat → grid → intel: explore the network and filter links by target.
           </div>
         </div>
         <Button size="sm" className="h-8 text-[10px] tracking-wider bg-blue-800 hover:bg-blue-700" onClick={() => setOpen(true)}>
@@ -160,18 +253,49 @@ export default function LinkAnalysisPage() {
         </div>
       </div>
 
+      <div className="bg-card border border-border rounded overflow-hidden flex flex-col min-h-0">
+        <div className="px-3 py-2 border-b border-border flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <Label className="text-[9px] tracking-wider text-muted-foreground">RELATIONSHIP NETWORK</Label>
+            <div className="text-[10px] text-muted-foreground/80 mt-0.5">
+              {allEntityLinks.length} stored link{allEntityLinks.length === 1 ? "" : "s"} · drag to pan, scroll to zoom
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer touch-manipulation select-none">
+            <Checkbox
+              checked={includeDerivedGridEdges}
+              onCheckedChange={(c) => setIncludeDerivedGridEdges(c === true)}
+            />
+            Grid-derived edges
+          </label>
+        </div>
+        <EntityLinkGraph
+          className="border-0 rounded-none"
+          links={allEntityLinks}
+          maps={labelMaps}
+          threats={threats}
+          intel={intel}
+          includeDerivedGridEdges={includeDerivedGridEdges}
+          focusNodeId={focusNodeId}
+        />
+      </div>
+
       <div className="bg-card border border-border rounded overflow-hidden flex-1 min-h-0">
         <div className="px-3 py-2 border-b border-border text-[10px] tracking-widest text-muted-foreground flex items-center justify-between">
-          <span>{isLoading ? "LOADING…" : `${links.length} LINKS`}</span>
-          <span className="text-[9px] text-muted-foreground/70">{target.id ? `for ${entityLabel(target.type, target.id)}` : "set a target"}</span>
+          <span>{isLoading ? "LOADING…" : `${links.length} FILTERED LINKS`}</span>
+          <span className="text-[9px] text-muted-foreground/70">
+            {target.id.trim() ? `for ${formatEntityEnd(target.type, target.id.trim(), labelMaps)}` : "set a target to filter"}
+          </span>
         </div>
         <div className="divide-y divide-border overflow-y-auto min-h-0 max-h-[calc(100dvh-14rem)] md:max-h-[calc(100vh-220px)]">
           {links.length === 0 && !isLoading && (
-            <div className="py-10 text-center text-xs text-muted-foreground">NO LINKS</div>
+            <div className="py-10 text-center text-xs text-muted-foreground">
+              {!target.id.trim() ? "SELECT A TARGET TO SEE LINKS FOR THAT ENTITY." : "NO LINKS FOR THIS TARGET."}
+            </div>
           )}
           {links.map((l) => {
-            const left = entityLabel(l.aType, l.aId);
-            const right = entityLabel(l.bType, l.bId);
+            const left = formatEntityEnd(l.aType, l.aId, labelMaps);
+            const right = formatEntityEnd(l.bType, l.bId, labelMaps);
             const canDel = !!user && (l.createdBy === user.username || user.accessLevel === "admin" || user.accessLevel === "owner");
             return (
               <div key={l.id} className="px-3 py-2">

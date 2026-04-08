@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { TRAINING_SUB } from "@/lib/appNav";
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   medal:         { label: "MEDAL",         color: "text-yellow-400", icon: "🎖" },
@@ -112,6 +114,7 @@ export default function AwardsPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={TRAINING_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>AWARDS & COMMENDATIONS</h1>

@@ -3,7 +3,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import type { PersonnelRosterEntry } from "@shared/schema";
 import { useMemo, useState, type ComponentProps } from "react";
-import { ClipboardList, Pencil, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { ClipboardList, Pencil, Plus, Trash2, ChevronUp, ChevronDown, UserCircle2 } from "lucide-react";
+import { Link } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { SubPageNav } from "@/components/SubPageNav";
+import { PERSONNEL_SUB } from "@/lib/appNav";
 
 const STATUS_OPTIONS = [
   { value: "present", label: "Present" },
@@ -51,8 +54,8 @@ function emptyForm(): Record<string, string> {
     mos: "",
     billet: "",
     unit: "",
-    phone: "",
-    bloodType: "",
+    teamAssignment: "",
+    linkedUsername: "",
     status: "present",
     notes: "",
   };
@@ -67,8 +70,8 @@ function entryToForm(e: PersonnelRosterEntry): Record<string, string> {
     mos: e.mos,
     billet: e.billet,
     unit: e.unit,
-    phone: e.phone,
-    bloodType: e.bloodType,
+    teamAssignment: e.teamAssignment,
+    linkedUsername: e.linkedUsername,
     status: e.status,
     notes: e.notes,
   };
@@ -115,10 +118,19 @@ function RosterForm({
       </div>
       <div className="grid grid-cols-2 gap-2">
         {field("unit", "UNIT / TEAM")}
-        {field("phone", "CONTACT")}
+        {field("teamAssignment", "TEAM ASSIGNMENT (WRITE-IN)")}
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {field("bloodType", "BLOOD TYPE")}
+      <div className="space-y-1">
+        <Label className="text-[10px] tracking-wider">LINK TO PROFILE (USERNAME)</Label>
+        <Input
+          className="text-xs font-mono"
+          value={form.linkedUsername}
+          onChange={(ev) => setForm({ ...form, linkedUsername: ev.target.value })}
+          placeholder="Operator username — optional"
+        />
+        <p className="text-[9px] text-muted-foreground">Must match an existing account. Opens that operator&apos;s profile from the roster.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-2">
         <div className="space-y-1">
           <Label className="text-[10px] tracking-wider">STATUS</Label>
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
@@ -186,8 +198,8 @@ export default function PersonnelRosterPage() {
         mos: body.mos,
         billet: body.billet,
         unit: body.unit,
-        phone: body.phone,
-        bloodType: body.bloodType,
+        teamAssignment: body.teamAssignment,
+        linkedUsername: body.linkedUsername,
         status: body.status,
         notes: body.notes,
       }),
@@ -210,8 +222,8 @@ export default function PersonnelRosterPage() {
         mos: body.mos,
         billet: body.billet,
         unit: body.unit,
-        phone: body.phone,
-        bloodType: body.bloodType,
+        teamAssignment: body.teamAssignment,
+        linkedUsername: body.linkedUsername,
         status: body.status,
         notes: body.notes,
       }),
@@ -279,6 +291,7 @@ export default function PersonnelRosterPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={PERSONNEL_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1
@@ -289,8 +302,8 @@ export default function PersonnelRosterPage() {
             PERSONNEL ROSTER
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-wider mt-1 max-w-xl">
-            Fillable line roster for names, billets, and contact—separate from login accounts and PERSTAT. You can edit or delete
-            lines you added; admins can edit any line.
+            Line roster for names, billets, and team assignment. Optionally link a line to an operator username to open their profile.
+            Separate from PERSTAT. You can edit lines you added; admins can edit any line.
           </p>
         </div>
         <Button size="sm" className="text-xs tracking-wider gap-1 shrink-0" onClick={openAdd}>
@@ -320,8 +333,8 @@ export default function PersonnelRosterPage() {
                 <th className="text-left p-2 font-medium">MOS</th>
                 <th className="text-left p-2 font-medium">Billet</th>
                 <th className="text-left p-2 font-medium">Unit</th>
-                <th className="text-left p-2 font-medium">Contact</th>
-                <th className="text-left p-2 font-medium">Blood</th>
+                <th className="text-left p-2 font-medium">Team asgmt</th>
+                <th className="text-left p-2 font-medium">Linked</th>
                 <th className="text-left p-2 font-medium">Status</th>
                 <th className="text-left p-2 font-medium w-28">Actions</th>
               </tr>
@@ -342,8 +355,20 @@ export default function PersonnelRosterPage() {
                   <td className="p-2 font-mono">{e.mos || "—"}</td>
                   <td className="p-2">{e.billet || "—"}</td>
                   <td className="p-2">{e.unit || "—"}</td>
-                  <td className="p-2 font-mono">{e.phone || "—"}</td>
-                  <td className="p-2">{e.bloodType || "—"}</td>
+                  <td className="p-2">{e.teamAssignment || "—"}</td>
+                  <td className="p-2">
+                    {e.linkedUsername ? (
+                      <Link
+                        href={`/profile/${encodeURIComponent(e.linkedUsername)}`}
+                        className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 font-mono text-[10px]"
+                      >
+                        <UserCircle2 className="h-3 w-3 shrink-0" />
+                        {e.linkedUsername}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="p-2">
                     <span
                       className={cn(
@@ -439,8 +464,18 @@ export default function PersonnelRosterPage() {
             </div>
             <div className="text-[10px] text-muted-foreground space-y-0.5">
               <div>Unit: {e.unit || "—"}</div>
-              <div>Contact: {e.phone || "—"}</div>
-              <div>Blood: {e.bloodType || "—"}</div>
+              <div>Team assignment: {e.teamAssignment || "—"}</div>
+              {e.linkedUsername ? (
+                <div>
+                  Profile:{" "}
+                  <Link
+                    href={`/profile/${encodeURIComponent(e.linkedUsername)}`}
+                    className="text-blue-400 font-mono"
+                  >
+                    {e.linkedUsername}
+                  </Link>
+                </div>
+              ) : null}
               {e.notes ? <div className="text-foreground/90 pt-1">{e.notes}</div> : null}
             </div>
             <div className="flex flex-wrap gap-1 pt-1">

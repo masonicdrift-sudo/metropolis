@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { SubPageNav } from "@/components/SubPageNav";
+import { TACTICAL_SUB } from "@/lib/appNav";
 import type { Unit, Threat } from "@shared/schema";
 import { MapPin, Plus, Trash2, Copy, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,6 +68,7 @@ export default function GridTool() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={TACTICAL_SUB} />
       <div className="mb-3">
         <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>GRID REFERENCE TOOL</h1>
         <div className="text-[10px] text-muted-foreground tracking-wider">MGRS COORDINATE MANAGER ▪ MARKER BOARD</div>

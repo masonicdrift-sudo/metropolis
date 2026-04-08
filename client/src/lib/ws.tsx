@@ -56,7 +56,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   USER:             [["/api/users"], ["/api/auth/me"]],
   // Activity / Links / Support
   ACTIVITY:         [["/api/activity"]],
-  LINKS:            [["/api/entity-links"]],
+  LINKS:            [["/api/entity-links"], ["/api/entity-links/all"]],
   SUPPORT_REQUESTS: [["/api/support-requests"]],
   // Medical / Casualty
   CASUALTIES:       [["/api/casualties"]],

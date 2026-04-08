@@ -17,6 +17,8 @@ export const users = sqliteTable("users", {
   milIdNumber: text("mil_id_number").default(""),
   /** US Army MOS code (see US_ARMY_MOS_OPTIONS). */
   mos: text("mos").default(""),
+  /** Team / sub-unit assignment within the unit (write-in; e.g. A TEAM, ASSAULT). */
+  teamAssignment: text("team_assignment").notNull().default(""),
   createdAt: text("created_at").notNull(),
   lastLogin: text("last_login").default(""),
 });
@@ -316,8 +318,10 @@ export const personnelRosterEntries = sqliteTable("personnel_roster_entries", {
   mos: text("mos").notNull().default(""),
   billet: text("billet").notNull().default(""),
   unit: text("unit").notNull().default(""),
-  phone: text("phone").notNull().default(""),
-  bloodType: text("blood_type").notNull().default(""),
+  /** Team assignment (write-in). */
+  teamAssignment: text("team_assignment").notNull().default(""),
+  /** Linked operator account (username) for profile cross-link. */
+  linkedUsername: text("linked_username").notNull().default(""),
   status: text("status").notNull().default("present"),
   notes: text("notes").notNull().default(""),
   createdBy: text("created_by").notNull(),
@@ -394,11 +398,27 @@ export const trainingRecords = sqliteTable("training_records", {
   instructor: text("instructor").default(""),
   expiresAt: text("expires_at").default(""),
   notes: text("notes").default(""),
+  /** ISOFAC document id (OPORD, CONOP, etc.) this sign-in roster is attached to. */
+  attachedIsofacDocId: integer("attached_isofac_doc_id").notNull().default(0),
   createdAt: text("created_at").notNull(),
 });
 export const insertTrainingSchema = createInsertSchema(trainingRecords).omit({ id: true });
 export type InsertTraining = z.infer<typeof insertTrainingSchema>;
 export type TrainingRecord = typeof trainingRecords.$inferSelect;
+
+/** ISOFAC `type` values allowed when attaching a sign-in roster to an order / plan doc. */
+export const SIGN_IN_ISO_FAC_TYPES = [
+  "WARNO",
+  "OPORD",
+  "FRAGORD",
+  "OPLAN",
+  "CONOP",
+  "ROE",
+  "EPA",
+  "OPSEC",
+  "REHEARSAL",
+  "CUSTOM",
+] as const;
 
 // ─── Shared calendar (team events by day) ─────────────────────────────────────
 export const calendarEvents = sqliteTable("calendar_events", {

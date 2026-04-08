@@ -10,6 +10,8 @@ interface AuthUser {
   role: string;
   rank: string;
   assignedUnit: string;
+  /** Current team assignment within the unit (write-in). */
+  teamAssignment: string;
   milIdNumber: string;
   mos: string;
 }

@@ -17,6 +17,7 @@ interface AppUser {
   role: string; // tactical role
   rank: string;
   assignedUnit: string;
+  teamAssignment: string;
   milIdNumber: string;
   mos: string;
   createdAt: string;
@@ -53,6 +54,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
     rolePreset: "",
     rank: "",
     assignedUnit: "",
+    teamAssignment: "",
     milIdNumber: "",
     mos: "00",
   });
@@ -74,6 +76,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
       role: (form.rolePreset && form.rolePreset !== "OTHER" ? form.rolePreset : form.role).trim(),
       rank: form.rank,
       assignedUnit: form.assignedUnit,
+      teamAssignment: form.teamAssignment.trim(),
       milIdNumber: form.milIdNumber.trim(),
       mos: form.mos,
     });
@@ -111,6 +114,16 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
           </select>
         </div>
+      </div>
+      <div>
+        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TEAM ASSIGNMENT (OPTIONAL)</label>
+        <input
+          type="text"
+          value={form.teamAssignment}
+          onChange={(e) => set("teamAssignment")(e.target.value)}
+          placeholder="Squad / team / cell within unit"
+          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
@@ -206,13 +219,15 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
 function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose: () => void; units: Unit[] }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const roleInPresets = (TACTICAL_ROLE_PRESETS as readonly string[]).includes(target.role);
   const [form, setForm] = useState({
     username: target.username,
     accessLevel: target.accessLevel,
     role: target.role || "",
-    rolePreset: target.role || "",
+    rolePreset: roleInPresets ? target.role : (target.role ? "OTHER" : ""),
     rank: target.rank || "",
     assignedUnit: target.assignedUnit || "",
+    teamAssignment: target.teamAssignment || "",
     milIdNumber: target.milIdNumber || "",
     mos: target.mos || "00",
     password: "",
@@ -233,6 +248,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
     if (nextRole !== (target.role || "")) payload.role = nextRole;
     if (form.rank !== (target.rank || "")) payload.rank = form.rank;
     if (form.assignedUnit !== (target.assignedUnit || "")) payload.assignedUnit = form.assignedUnit;
+    if (form.teamAssignment !== (target.teamAssignment || "")) payload.teamAssignment = form.teamAssignment.trim();
     if (form.milIdNumber !== (target.milIdNumber || "")) payload.milIdNumber = form.milIdNumber;
     if (form.mos !== (target.mos || "00")) payload.mos = form.mos;
     if (form.password) {
@@ -313,6 +329,16 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
           </select>
         </div>
+      </div>
+      <div>
+        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TEAM ASSIGNMENT</label>
+        <input
+          type="text"
+          value={form.teamAssignment}
+          onChange={(e) => set("teamAssignment")(e.target.value)}
+          placeholder="Squad / team within unit"
+          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
@@ -446,6 +472,7 @@ export default function UserManagement() {
               <th className="text-left px-4 py-2">MOS</th>
               <th className="text-left px-4 py-2">RANK</th>
               <th className="text-left px-4 py-2">UNIT</th>
+              <th className="text-left px-4 py-2">TEAM</th>
               <th className="text-left px-4 py-2">TACTICAL ROLE</th>
               <th className="text-left px-4 py-2">ACCESS</th>
               <th className="text-left px-4 py-2">LAST LOGIN</th>
@@ -492,6 +519,11 @@ export default function UserManagement() {
                     ? <span className="text-[10px] font-mono font-bold text-blue-400 tracking-wider">{u.assignedUnit}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">UNASSIGNED</span>}
                 </td>
+                <td className="px-4 py-3 max-w-[140px]" data-label="TEAM">
+                  {u.teamAssignment?.trim()
+                    ? <span className="text-[10px] font-mono text-cyan-200/80 tracking-wider line-clamp-2">{u.teamAssignment}</span>
+                    : <span className="text-muted-foreground/40 text-[10px]">—</span>}
+                </td>
                 <td className="px-4 py-3" data-label="TACTICAL ROLE">
                   {u.role?.trim()
                     ? <span className="text-[10px] font-mono font-bold text-cyan-300/90 tracking-wider">{u.role}</span>
@@ -524,7 +556,7 @@ export default function UserManagement() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
+              <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
             )}
           </tbody>
         </table>
@@ -539,7 +571,7 @@ export default function UserManagement() {
                 EDIT — <span className="font-mono text-blue-400">{editUser.username}</span>
               </DialogTitle>
             </DialogHeader>
-            <EditUserForm user={editUser} onClose={() => setEditUser(null)} units={units} />
+            <EditUserForm key={editUser.id} user={editUser} onClose={() => setEditUser(null)} units={units} />
           </DialogContent>
         </Dialog>
       )}

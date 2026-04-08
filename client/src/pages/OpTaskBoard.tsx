@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { OPS_SUB } from "@/lib/appNav";
 
 const PHASES = ["PREP", "INFIL", "ACTION", "EXFIL", "CONSOLIDATE"] as const;
 const PHASE_COLOR: Record<string, string> = {
@@ -159,6 +161,7 @@ export default function OpTaskBoard() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={OPS_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>OP-ORDER TASK BOARD</h1>

@@ -11,6 +11,7 @@ import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
   ACCESS_RANK,
+  SIGN_IN_ISO_FAC_TYPES,
 } from "@shared/schema";
 import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
@@ -373,6 +374,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       role: user.role || "",
       rank: user.rank || "",
       assignedUnit: user.assignedUnit || "",
+      teamAssignment: user.teamAssignment || "",
       milIdNumber: user.milIdNumber || "",
       mos: user.mos || "",
     });
@@ -430,6 +432,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       role: user.role || "",
       rank: user.rank || "",
       assignedUnit: user.assignedUnit || "",
+      teamAssignment: user.teamAssignment || "",
       milIdNumber: user.milIdNumber || "",
       mos: user.mos || "",
     });
@@ -474,17 +477,35 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!username) return res.status(400).json({ error: "username required" });
     const u = storage.getUserByUsername(username);
     if (!u) return res.status(404).json({ error: "Not found" });
-    // Only return safe/public fields (no passwordHash)
+    const awards = storage.getAwards(username);
+    const citations = awards.filter((a) => a.awardType === "citation");
+    const awardsOther = awards.filter((a) => a.awardType !== "citation");
+    const signInSheets = storage.getTrainingRecords(username).map((r) => {
+      let attachedTitle: string | null = null;
+      let attachedType: string | null = null;
+      if (r.attachedIsofacDocId) {
+        const doc = storage.getIsofacDoc(r.attachedIsofacDocId);
+        if (doc) {
+          attachedTitle = doc.title;
+          attachedType = doc.type;
+        }
+      }
+      return { ...r, attachedDocTitle: attachedTitle, attachedDocType: attachedType };
+    });
     res.json({
       username: u.username,
       accessLevel: u.accessLevel,
       tacticalRole: u.role || "",
       rank: u.rank || "",
       assignedUnit: u.assignedUnit || "",
+      teamAssignment: u.teamAssignment || "",
       milIdNumber: u.milIdNumber || "",
       mos: u.mos || "",
       createdAt: u.createdAt,
       lastLogin: u.lastLogin,
+      awards: awardsOther,
+      citations,
+      signInSheets,
     });
   });
   /** Roster for any logged-in user — DMs, @mentions (no admin required). */
@@ -513,6 +534,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const user = storage.createUser(username, password, requestedAccess, {
       rank: typeof rank === "string" ? rank : "",
       assignedUnit: typeof assignedUnit === "string" ? assignedUnit : "",
+      teamAssignment:
+        typeof req.body.teamAssignment === "string"
+          ? req.body.teamAssignment.trim().slice(0, 128)
+          : "",
       milIdNumber:
         typeof milIdNumber === "string" ? milIdNumber.trim().slice(0, 64) : "",
       mos: typeof mos === "string" ? mos.trim().slice(0, 32) : "",
@@ -564,6 +589,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (typeof req.body.mos !== "undefined") {
       updates.mos =
         typeof req.body.mos === "string" ? req.body.mos.trim().slice(0, 32) : "";
+    }
+    if (typeof req.body.teamAssignment !== "undefined") {
+      updates.teamAssignment =
+        typeof req.body.teamAssignment === "string" ? req.body.teamAssignment.trim().slice(0, 128) : "";
     }
     if (password) {
       if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
@@ -1305,8 +1334,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     mos: z.string().max(32).optional().default(""),
     billet: z.string().max(120).optional().default(""),
     unit: z.string().max(120).optional().default(""),
-    phone: z.string().max(64).optional().default(""),
-    bloodType: z.string().max(16).optional().default(""),
+    teamAssignment: z.string().max(128).optional().default(""),
+    linkedUsername: z.string().max(64).optional().default(""),
     status: z.string().max(32).optional().default("present"),
     notes: z.string().max(2000).optional().default(""),
   });
@@ -1319,6 +1348,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.post("/api/personnel-roster", requireAuth, (req, res) => {
     const parsed = personnelRosterPostSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const lu = parsed.data.linkedUsername?.trim();
+    if (lu) {
+      const u = storage.getUserByUsername(lu);
+      if (!u) return res.status(400).json({ error: "Linked profile username not found" });
+    }
     const now = new Date().toISOString();
     const all = storage.getPersonnelRosterEntries();
     const nextSort =
@@ -1333,8 +1367,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       mos: parsed.data.mos,
       billet: parsed.data.billet,
       unit: parsed.data.unit,
-      phone: parsed.data.phone,
-      bloodType: parsed.data.bloodType,
+      teamAssignment: parsed.data.teamAssignment,
+      linkedUsername: lu || "",
       status: parsed.data.status,
       notes: parsed.data.notes,
       createdBy: req.session.username!,
@@ -1364,8 +1398,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (existing.createdBy !== req.session.username && !isStaff) {
       return res.status(403).json({ error: "Only the author or an admin/owner can edit this line" });
     }
+    const lu = typeof parsed.data.linkedUsername === "string" ? parsed.data.linkedUsername.trim() : undefined;
+    if (lu) {
+      const u = storage.getUserByUsername(lu);
+      if (!u) return res.status(400).json({ error: "Linked profile username not found" });
+    }
     const now = new Date().toISOString();
-    const row = storage.updatePersonnelRosterEntry(id, { ...parsed.data, updatedAt: now });
+    const patch = { ...parsed.data, updatedAt: now } as Record<string, unknown>;
+    if (lu !== undefined) patch.linkedUsername = lu || "";
+    const row = storage.updatePersonnelRosterEntry(id, patch as typeof parsed.data & { updatedAt: string });
     if (!row) return res.status(404).json({ error: "Not found" });
     wsPush("PERSONNEL_ROSTER");
     appendActivity(req, {
@@ -1468,7 +1509,34 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
-  // ── Training Records ──────────────────────────────────────────────────────────
+  // ── Training Records (sign-in sheets) ───────────────────────────────────────
+  const trainingPostSchema = z.object({
+    username: z.string().min(1),
+    eventName: z.string().min(1),
+    category: z.string().optional().default("general"),
+    date: z.string(),
+    result: z.string().optional().default("pass"),
+    instructor: z.string().optional().default(""),
+    expiresAt: z.string().optional().default(""),
+    notes: z.string().optional().default(""),
+    attachedIsofacDocId: z.number().int().nonnegative().optional().default(0),
+  });
+
+  function enrichTrainingRows(rows: ReturnType<typeof storage.getTrainingRecords>) {
+    return rows.map((r) => {
+      let attachedDocTitle: string | null = null;
+      let attachedDocType: string | null = null;
+      if (r.attachedIsofacDocId) {
+        const doc = storage.getIsofacDoc(r.attachedIsofacDocId);
+        if (doc) {
+          attachedDocTitle = doc.title;
+          attachedDocType = doc.type;
+        }
+      }
+      return { ...r, attachedDocTitle, attachedDocType };
+    });
+  }
+
   app.get("/api/training", requireAuth, (req, res) => {
     const me = req.session.username!;
     const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
@@ -1482,12 +1550,36 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
           : undefined;
     // Operators only see their own records; admins/owners can filter by ?username= or see all
     if (!isStaff) {
-      return res.json(storage.getTrainingRecords(me));
+      return res.json(enrichTrainingRows(storage.getTrainingRecords(me)));
     }
-    res.json(storage.getTrainingRecords(qUser));
+    res.json(enrichTrainingRows(storage.getTrainingRecords(qUser)));
   });
   app.post("/api/training", requireAdmin, (req, res) => {
-    const rec = storage.createTrainingRecord({ ...req.body, createdAt: new Date().toISOString() }); wsPush("TRAINING");
+    const parsed = trainingPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const p = parsed.data;
+    if (p.attachedIsofacDocId) {
+      const doc = storage.getIsofacDoc(p.attachedIsofacDocId);
+      if (!doc) return res.status(400).json({ error: "Attached ISOFAC document not found" });
+      if (!(SIGN_IN_ISO_FAC_TYPES as readonly string[]).includes(doc.type)) {
+        return res.status(400).json({
+          error: "Choose an order/plan document (e.g. OPORD, CONOP, FRAGORD) to attach",
+        });
+      }
+    }
+    const rec = storage.createTrainingRecord({
+      username: p.username,
+      eventName: p.eventName,
+      category: p.category,
+      date: p.date,
+      result: p.result,
+      instructor: p.instructor,
+      expiresAt: p.expiresAt,
+      notes: p.notes,
+      attachedIsofacDocId: p.attachedIsofacDocId,
+      createdAt: new Date().toISOString(),
+    });
+    wsPush("TRAINING");
     res.status(201).json(rec);
   });
   app.patch("/api/training/:id", requireAdmin, (req, res) => {
@@ -1613,6 +1705,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── Link Analysis ────────────────────────────────────────────────────────────
+  app.get("/api/entity-links/all", requireAuth, (_, res) => {
+    res.json(storage.getAllEntityLinks());
+  });
+
   app.get("/api/entity-links", requireAuth, (req, res) => {
     const rawType = req.query.type;
     const rawId = req.query.id;

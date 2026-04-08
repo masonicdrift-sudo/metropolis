@@ -4,20 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap } from "lucide-react";
+import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type PublicProfile = {
-  username: string;
-  accessLevel: "user" | "admin" | "owner" | string;
-  tacticalRole: string;
-  rank: string;
-  assignedUnit: string;
-  milIdNumber: string;
-  mos: string;
-  createdAt?: string;
-  lastLogin?: string;
-};
+import type { TrainingRecord } from "@shared/schema";
 
 type AwardRow = {
   id: number;
@@ -31,6 +20,27 @@ type AwardRow = {
   relatedOpName: string;
 };
 
+type SignInRow = TrainingRecord & {
+  attachedDocTitle?: string | null;
+  attachedDocType?: string | null;
+};
+
+type ProfilePayload = {
+  username: string;
+  accessLevel: "user" | "admin" | "owner" | string;
+  tacticalRole: string;
+  rank: string;
+  assignedUnit: string;
+  teamAssignment: string;
+  milIdNumber: string;
+  mos: string;
+  createdAt?: string;
+  lastLogin?: string;
+  awards: AwardRow[];
+  citations: AwardRow[];
+  signInSheets: SignInRow[];
+};
+
 function accessIcon(level: string) {
   if (level === "owner") return <Crown size={14} className="text-orange-400" />;
   if (level === "admin") return <ShieldCheck size={14} className="text-yellow-400" />;
@@ -41,6 +51,14 @@ function accessLabel(level: string) {
   return level === "owner" ? "OWNER" : level === "admin" ? "ADMIN" : "USER";
 }
 
+function fmtDate(s: string) {
+  try {
+    return new Date(s).toLocaleDateString();
+  } catch {
+    return s;
+  }
+}
+
 export default function UserProfilePage() {
   const { user } = useAuth();
   const params = useParams<{ username?: string }>();
@@ -48,15 +66,9 @@ export default function UserProfilePage() {
 
   const canView = !!user && !!username;
 
-  const { data: profile, isLoading } = useQuery<PublicProfile>({
+  const { data: profile, isLoading } = useQuery<ProfilePayload>({
     queryKey: ["/api/profile", username],
     queryFn: () => apiRequest("GET", `/api/profile/${encodeURIComponent(username)}`),
-    enabled: canView,
-  });
-
-  const { data: awards = [] } = useQuery<AwardRow[]>({
-    queryKey: ["/api/awards", username],
-    queryFn: () => apiRequest("GET", `/api/awards?username=${encodeURIComponent(username)}`),
     enabled: canView,
   });
 
@@ -80,6 +92,10 @@ export default function UserProfilePage() {
     );
   }
 
+  const awards = profile?.awards ?? [];
+  const citations = profile?.citations ?? [];
+  const signInSheets = profile?.signInSheets ?? [];
+
   return (
     <div className="p-3 md:p-4 tac-page space-y-3">
       <div className="flex items-center gap-2">
@@ -101,18 +117,20 @@ export default function UserProfilePage() {
                 {profile?.username || username}
               </div>
               {profile?.accessLevel ? (
-                <span className={cn("text-[9px] px-2 py-0.5 rounded border font-bold tracking-widest inline-flex items-center gap-1",
+                <span className={cn(
+                  "text-[9px] px-2 py-0.5 rounded border font-bold tracking-widest inline-flex items-center gap-1",
                   profile.accessLevel === "owner" ? "border-orange-900/50 text-orange-400 bg-orange-950/20" :
                   profile.accessLevel === "admin" ? "border-yellow-900/50 text-yellow-400 bg-yellow-950/20" :
-                  "border-blue-900/40 text-blue-200 bg-blue-950/20"
-                )}>
+                  "border-blue-900/40 text-blue-200 bg-blue-950/20",
+                )}
+                >
                   {accessIcon(profile.accessLevel)}
                   {accessLabel(profile.accessLevel)}
                 </span>
               ) : null}
               {profile?.tacticalRole ? (
                 <span className="text-[9px] px-2 py-0.5 rounded bg-secondary text-muted-foreground tracking-wider">
-                  {profile.tacticalRole}
+                  ROLE: {profile.tacticalRole}
                 </span>
               ) : null}
             </div>
@@ -120,6 +138,7 @@ export default function UserProfilePage() {
             <div className="text-[10px] text-muted-foreground mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
               <div>RANK: <span className="text-foreground/80 font-mono">{profile?.rank || "—"}</span></div>
               <div>UNIT: <span className="text-foreground/80 font-mono">{profile?.assignedUnit || "—"}</span></div>
+              <div>TEAM ASSIGNMENT: <span className="text-foreground/80 font-mono">{profile?.teamAssignment || "—"}</span></div>
               <div>MOS: <span className="text-foreground/80 font-mono">{profile?.mos || "—"}</span></div>
               <div>MIL ID: <span className="text-foreground/80 font-mono">{profile?.milIdNumber || "—"}</span></div>
             </div>
@@ -145,7 +164,7 @@ export default function UserProfilePage() {
                 <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
                   <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
                   <div className="text-[9px] text-muted-foreground">
-                    {new Date(a.awardedAt).toLocaleDateString()} · BY {a.awardedBy}
+                    {fmtDate(a.awardedAt)} · BY {a.awardedBy}
                     {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
                   </div>
                 </div>
@@ -159,14 +178,51 @@ export default function UserProfilePage() {
 
         <div className="bg-card border border-border rounded p-3">
           <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
-            <GraduationCap className="h-3.5 w-3.5 text-blue-300" /> TRAINING
+            <ScrollText className="h-3.5 w-3.5 text-amber-300" /> CITATIONS
+            <span className="ml-auto text-[9px] text-muted-foreground/70">{citations.length}</span>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Training records are restricted. Operators can view their own in the Training tab; admins/owners can view the full roster.
-          </div>
+          {citations.length === 0 ? (
+            <div className="text-xs text-muted-foreground">No citations on record.</div>
+          ) : (
+            <div className="space-y-1.5">
+              {citations.slice(0, 8).map((a) => (
+                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
+                  <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
+                  <div className="text-[9px] text-muted-foreground">
+                    {fmtDate(a.awardedAt)} · BY {a.awardedBy}
+                    {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded p-3">
+        <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+          <GraduationCap className="h-3.5 w-3.5 text-blue-300" /> SIGN-IN SHEET
+        </div>
+        {signInSheets.length === 0 ? (
+          <div className="text-xs text-muted-foreground">No sign-in entries for this operator.</div>
+        ) : (
+          <div className="space-y-1.5">
+            {signInSheets.map((r) => (
+              <div key={r.id} className="border border-border/60 rounded p-2 bg-background/40 text-[10px]">
+                <div className="font-bold">{r.eventName}</div>
+                <div className="text-muted-foreground mt-0.5">
+                  {fmtDate(r.date)} · {r.category.toUpperCase()} · {r.result.toUpperCase()}
+                </div>
+                {r.attachedIsofacDocId > 0 && (r.attachedDocTitle || r.attachedDocType) ? (
+                  <div className="text-blue-300/90 mt-0.5">
+                    Attached: {r.attachedDocType ? `[${r.attachedDocType}] ` : ""}{r.attachedDocTitle || `#${r.attachedIsofacDocId}`}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

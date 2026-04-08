@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Ambulance, Plus, Trash2 } from "lucide-react";
+import { SubPageNav } from "@/components/SubPageNav";
+import { SUPPORT_SUB } from "@/lib/appNav";
 
 const STATUS = ["open", "evac_requested", "evac_enroute", "evac_complete", "closed"] as const;
 const PRECEDENCE = ["urgent", "priority", "routine"] as const;
@@ -188,6 +190,7 @@ export default function MedicalCasualtyPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col min-h-0 gap-3">
+      <SubPageNav items={SUPPORT_SUB} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">

@@ -3,6 +3,8 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Shield, KeyRound } from "lucide-react";
 import Register from "./Register";
+import { MetropolisLogo } from "@/components/MetropolisLogo";
+import { ClassificationBanner } from "@/components/ClassificationBanner";
 
 export default function Login() {
   const { login } = useAuth();
@@ -28,25 +30,18 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-dvh bg-background flex items-center justify-center scanlines overflow-y-auto overflow-x-hidden px-4 py-8 safe-bottom">
+    <div className="min-h-dvh bg-background flex flex-col scanlines overflow-x-hidden">
+      <ClassificationBanner />
+      <div className="flex-1 flex items-center justify-center overflow-y-auto overflow-x-hidden px-4 py-8 safe-bottom min-h-0">
       {/* Grid background */}
       <div className="fixed inset-0 map-grid-bg opacity-40 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-sm min-w-0">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <svg viewBox="0 0 64 64" width="56" height="56" aria-label="METROPOLIS logo">
-              <rect width="64" height="64" fill="hsl(226 35% 6%)" rx="8" />
-              <polygon points="32,6 58,54 6,54" fill="none" stroke="hsl(217 91% 60%)" strokeWidth="3" />
-              <line x1="32" y1="6" x2="32" y2="54" stroke="hsl(217 91% 60%)" strokeWidth="1.5" strokeDasharray="3,4" />
-              <circle cx="32" cy="32" r="4" fill="hsl(217 91% 70%)" />
-              <circle cx="32" cy="32" r="8" fill="none" stroke="hsl(217 91% 50%)" strokeWidth="1" strokeDasharray="2,3" />
-            </svg>
+          <div className="flex justify-center mb-3">
+            <MetropolisLogo size="lg" className="mx-auto" />
           </div>
-          <h1 className="text-lg font-bold tracking-[0.2em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-            METROPOLIS
-          </h1>
           <div className="text-[10px] text-muted-foreground tracking-[0.3em] mt-1">TACTICAL NODE // SECURE ACCESS</div>
         </div>
 
@@ -112,6 +107,7 @@ export default function Login() {
           <span>▪</span>
           <span>ENC: AES-256</span>
         </div>
+      </div>
       </div>
     </div>
   );

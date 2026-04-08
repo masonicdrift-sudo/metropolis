@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { OPS_SUB } from "@/lib/appNav";
 
 const CLASS_COLOR: Record<string, string> = {
   UNCLASS: "text-blue-400", CUI: "text-yellow-400", SECRET: "text-orange-400", TS: "text-red-400",
@@ -187,6 +189,7 @@ export default function AfterActionPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={OPS_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>AFTER ACTION REPORTS</h1>

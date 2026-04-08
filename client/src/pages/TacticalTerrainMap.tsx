@@ -28,6 +28,8 @@ import {
   type GeoJsonFeatureLike,
 } from "@/lib/tacticalBuildings";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { TACTICAL_SUB } from "@/lib/appNav";
 import type { TacAffiliation } from "@shared/natoSidc";
 import {
   NATO_FRIENDLY_SIDCS,
@@ -943,6 +945,9 @@ export default function TacticalTerrainMap() {
 
   return (
     <div className="p-0 md:p-4 tac-page flex flex-col gap-0 md:gap-3 min-h-0 flex-1 -mx-0">
+      <div className="px-3 pt-2 md:px-0 shrink-0 z-30 bg-background/90 md:bg-transparent">
+        <SubPageNav items={TACTICAL_SUB} />
+      </div>
       {/* Sticky map switcher — full width on mobile */}
       <div className="sticky top-0 z-20 shrink-0 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 px-3 py-2.5 md:rounded-t-lg md:border md:border-b-0 md:mx-0 space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

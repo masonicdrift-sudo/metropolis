@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { SubPageNav } from "@/components/SubPageNav";
+import { INTEL_SUB } from "@/lib/appNav";
 
 function IntelForm({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
@@ -178,6 +180,7 @@ export default function Intel() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={INTEL_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>INTELLIGENCE COLLECTION</h1>

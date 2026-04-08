@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { SubPageNav } from "@/components/SubPageNav";
+import { COMMS_SUB } from "@/lib/appNav";
 
 // ── Types matching the JSON stored in DB ─────────────────────────────────────
 interface Net { label: string; freq: string; callsigns?: string; notes?: string; tdl?: string; }
@@ -384,9 +386,13 @@ export default function CommoCardPage() {
   const viewCard = selectedId ? cards.find(c => c.id === selectedId) : activeCard;
 
   return (
+    <div className="flex flex-col min-h-0 w-full tac-page">
+      <div className="px-3 pt-2 md:px-4 shrink-0 border-b border-border/60 md:border-b-0">
+        <SubPageNav items={COMMS_SUB} className="mb-0 pb-2 border-0" />
+      </div>
     <div
       className={cn(
-        "tac-page flex min-h-0 w-full",
+        "flex min-h-0 w-full flex-1",
         isMobile
           ? "flex-col min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
           : "flex-row min-h-[min(100dvh,calc(100vh-3rem))]",
@@ -477,6 +483,7 @@ export default function CommoCardPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

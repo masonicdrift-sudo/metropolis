@@ -31,7 +31,7 @@ const EVENT_COLORS: { key: string; label: string; cls: string }[] = [
   { key: "black", label: "BLACK", cls: "bg-black/30 border-white/10 text-slate-200/90 hover:bg-black/40" },
   { key: "red", label: "RED", cls: "bg-red-950/40 border-red-900/40 text-red-200/90 hover:bg-red-900/40" },
   { key: "amber", label: "AMBER", cls: "bg-amber-950/35 border-amber-900/40 text-amber-200/90 hover:bg-amber-900/35" },
-  { key: "green", label: "GREEN", cls: "bg-emerald-950/35 border-emerald-900/40 text-emerald-200/90 hover:bg-emerald-900/35" },
+  { key: "green", label: "GREEN", cls: "bg-blue-950/35 border-blue-900/40 text-blue-200/90 hover:bg-blue-900/35" },
   { key: "purple", label: "PURPLE", cls: "bg-purple-950/35 border-purple-900/40 text-purple-200/90 hover:bg-purple-900/35" },
 ] as const;
 
@@ -189,7 +189,7 @@ export default function CalendarPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h1
-            className="text-sm font-bold tracking-[0.15em] text-green-400"
+            className="text-sm font-bold tracking-[0.15em] text-blue-400"
             style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}
           >
             UNIT CALENDAR
@@ -262,14 +262,14 @@ export default function CalendarPage() {
                 className={cn(
                   "border-b border-r border-border/60 p-1 sm:p-1.5 text-left flex flex-col gap-0.5 min-h-[4.5rem] sm:min-h-[5.5rem] touch-manipulation transition-colors cursor-pointer",
                   inMonth ? "bg-card hover:bg-secondary/40" : "bg-secondary/10 opacity-70 hover:opacity-90",
-                  isToday(day) && "ring-1 ring-inset ring-green-600/50",
+                  isToday(day) && "ring-1 ring-inset ring-blue-600/50",
                 )}
               >
                 <div className="flex items-center justify-between gap-1">
                   <span
                     className={cn(
                       "text-[10px] font-mono font-bold",
-                      isToday(day) ? "text-green-400" : inMonth ? "text-foreground" : "text-muted-foreground",
+                      isToday(day) ? "text-blue-400" : inMonth ? "text-foreground" : "text-muted-foreground",
                     )}
                   >
                     {format(day, "d")}
@@ -331,7 +331,7 @@ export default function CalendarPage() {
         >
           <DialogHeader>
             <DialogTitle className="text-sm tracking-wider flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-green-400" />
+              <CalendarIcon className="h-4 w-4 text-blue-400" />
               {editing ? (
                 <>
                   <Pencil className="h-3.5 w-3.5" /> EDIT EVENT
@@ -443,7 +443,7 @@ export default function CalendarPage() {
             <Button
               type="button"
               size="sm"
-              className="bg-green-800 hover:bg-green-700"
+              className="bg-blue-800 hover:bg-blue-700"
               onClick={submit}
               disabled={
                 createMut.isPending ||

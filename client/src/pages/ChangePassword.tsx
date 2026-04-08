@@ -56,7 +56,7 @@ export default function ChangePassword() {
     if (/[0-9]/.test(p)) s++;
     if (/[^A-Za-z0-9]/.test(p)) s++;
     const labels = ["", "WEAK", "FAIR", "GOOD", "STRONG"];
-    const colors = ["", "text-red-400", "text-orange-400", "text-yellow-400", "text-green-400"];
+    const colors = ["", "text-red-400", "text-orange-400", "text-yellow-400", "text-blue-400"];
     return { score: s, label: labels[s] || "WEAK", color: colors[s] || "text-red-400" };
   };
 
@@ -80,7 +80,7 @@ export default function ChangePassword() {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700 pr-9"
+        className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-600 pr-9"
       />
       <button type="button" onClick={toggle}
         className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -96,15 +96,15 @@ export default function ChangePassword() {
           SETTINGS
         </h1>
         <div className="text-[10px] text-muted-foreground tracking-wider">
-          Signed in as <span className="text-green-400 font-mono">{user?.username}</span>
+          Signed in as <span className="text-blue-400 font-mono">{user?.username}</span>
         </div>
       </div>
 
       {/* Username */}
       <div className="bg-card border border-border rounded p-5 space-y-4 mb-4">
         <div className="flex items-center gap-2 pb-3 border-b border-border">
-          <User size={12} className="text-green-400" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">DISPLAY NAME</span>
+          <User size={12} className="text-blue-400" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400">DISPLAY NAME</span>
         </div>
         <p className="text-[9px] text-muted-foreground/80 leading-relaxed">
           Your username is used across messages, training records, and accountability. Changing it updates your history everywhere on this node.
@@ -116,7 +116,7 @@ export default function ChangePassword() {
               value={newUsername}
               onChange={e => setNewUsername(e.target.value)}
               placeholder={user?.username || "username"}
-              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-600"
               autoComplete="username"
             />
           </div>
@@ -127,7 +127,7 @@ export default function ChangePassword() {
               value={usernamePassword}
               onChange={e => setUsernamePassword(e.target.value)}
               placeholder="Enter current password"
-              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-600"
               autoComplete="current-password"
             />
           </div>
@@ -136,15 +136,15 @@ export default function ChangePassword() {
           type="button"
           onClick={() => changeUsername.mutate()}
           disabled={!canChangeUsername}
-          className={`w-full text-xs tracking-wider gap-1.5 ${usernameDone ? "bg-green-700" : "bg-green-800 hover:bg-green-700"}`}>
+          className={`w-full text-xs tracking-wider gap-1.5 ${usernameDone ? "bg-blue-700" : "bg-blue-800 hover:bg-blue-700"}`}>
           {usernameDone ? <><Check size={12} /> USERNAME UPDATED</> : changeUsername.isPending ? "UPDATING..." : "SAVE USERNAME"}
         </Button>
       </div>
 
       <div className="bg-card border border-border rounded p-5 space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-border">
-          <KeyRound size={12} className="text-green-400" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">PASSWORD</span>
+          <KeyRound size={12} className="text-blue-400" />
+          <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400">PASSWORD</span>
         </div>
 
         <div className="space-y-3">
@@ -164,7 +164,7 @@ export default function ChangePassword() {
                   {[1,2,3,4].map(i => (
                     <div key={i} className={`h-1 flex-1 rounded-full transition-all ${
                       i <= pw.score
-                        ? i === 1 ? "bg-red-500" : i === 2 ? "bg-orange-500" : i === 3 ? "bg-yellow-500" : "bg-green-500"
+                        ? i === 1 ? "bg-red-500" : i === 2 ? "bg-orange-500" : i === 3 ? "bg-yellow-500" : "bg-blue-500"
                         : "bg-secondary"
                     }`} />
                   ))}
@@ -180,8 +180,8 @@ export default function ChangePassword() {
                   { label: "Number", ok: /[0-9]/.test(form.next) },
                   { label: "Special character", ok: /[^A-Za-z0-9]/.test(form.next) },
                 ].map(r => (
-                  <div key={r.label} className={`flex items-center gap-1.5 text-[9px] ${r.ok ? "text-green-400" : "text-muted-foreground/50"}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${r.ok ? "bg-green-500" : "bg-muted-foreground/30"}`} />
+                  <div key={r.label} className={`flex items-center gap-1.5 text-[9px] ${r.ok ? "text-blue-400" : "text-muted-foreground/50"}`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${r.ok ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
                     {r.label}
                   </div>
                 ))}
@@ -195,7 +195,7 @@ export default function ChangePassword() {
               <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
                 placeholder="Repeat new password"
                 className={`w-full bg-secondary border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 ${
-                  mismatch ? "border-red-800 focus:ring-red-700" : "border-border focus:ring-green-700"
+                  mismatch ? "border-red-800 focus:ring-red-700" : "border-border focus:ring-blue-600"
                 }`} />
             </div>
             {mismatch && <div className="text-[9px] text-red-400 mt-1 tracking-wider">Passwords do not match</div>}
@@ -205,7 +205,7 @@ export default function ChangePassword() {
         <Button
           onClick={() => change.mutate()}
           disabled={!canSubmit || change.isPending}
-          className={`w-full text-xs tracking-wider gap-1.5 ${done ? "bg-green-700" : "bg-green-800 hover:bg-green-700"}`}>
+          className={`w-full text-xs tracking-wider gap-1.5 ${done ? "bg-blue-700" : "bg-blue-800 hover:bg-blue-700"}`}>
           {done ? <><Check size={12} /> CHANGED</> : change.isPending ? "UPDATING..." : <><KeyRound size={12} /> UPDATE PASSWORD</>}
         </Button>
 

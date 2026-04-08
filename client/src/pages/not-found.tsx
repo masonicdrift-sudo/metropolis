@@ -17,7 +17,7 @@ export default function NotFound() {
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             This path is not registered on the node. Check the URL or use the navigation menu to return to an active sector.
           </p>
-          <Link href="/" className="inline-block mt-4 text-xs font-bold tracking-wider text-green-400 hover:text-green-300">
+          <Link href="/" className="inline-block mt-4 text-xs font-bold tracking-wider text-blue-400 hover:text-blue-300">
             ← RETURN TO DASHBOARD
           </Link>
         </CardContent>

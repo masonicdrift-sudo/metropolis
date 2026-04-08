@@ -63,7 +63,7 @@ function UnitForm({ unit, onClose }: { unit?: Unit; onClose: () => void }) {
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" data-testid="button-submit-unit">{unit ? "UPDATE" : "ADD"} UNIT</Button>
+        <Button size="sm" onClick={submit} className="text-xs bg-blue-800 hover:bg-blue-700" data-testid="button-submit-unit">{unit ? "UPDATE" : "ADD"} UNIT</Button>
       </div>
     </div>
   );
@@ -89,7 +89,7 @@ function StatusCycler({ unit, canEdit, onCycle }: { unit: Unit; canEdit: boolean
           {statuses.map(s => (
             <button key={s} onClick={() => { onCycle(s); setOpen(false); }}
               className={`w-full text-left px-3 py-1.5 text-[10px] tracking-wider uppercase transition-colors hover:bg-secondary ${
-                s === unit.status ? "text-green-400 font-bold" : "text-muted-foreground"
+                s === unit.status ? "text-blue-400 font-bold" : "text-muted-foreground"
               }`}>{s}</button>
           ))}
         </div>
@@ -140,7 +140,7 @@ export default function Units() {
         <Dialog open={open} onOpenChange={setOpen}>
           {canEditStatus && (
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-new-unit">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" data-testid="button-new-unit">
               <Plus size={12} /> ADD UNIT
             </Button>
           </DialogTrigger>
@@ -155,7 +155,7 @@ export default function Units() {
       {/* Status summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
-          { s: "active", label: "ACTIVE", color: "text-green-400" },
+          { s: "active", label: "ACTIVE", color: "text-blue-400" },
           { s: "standby", label: "STANDBY", color: "text-yellow-400" },
           { s: "compromised", label: "COMPROMISED", color: "text-red-400" },
           { s: "offline", label: "OFFLINE", color: "text-muted-foreground" },
@@ -171,7 +171,7 @@ export default function Units() {
       <div className="tac-filter-row mb-3">
         {statuses.map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === s ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === s ? "bg-blue-900 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
             {s}
           </button>
         ))}

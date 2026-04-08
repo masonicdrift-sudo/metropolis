@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as UserIcon, Search, Plus, LogOut, UserPlus, X, Paperclip, Download, ChevronLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,13 @@ const GENERAL = "GENERAL";
 function RoleIcon({ role }: { role?: string }) {
   if (role === "owner") return <Crown size={9} className="text-orange-400 shrink-0" />;
   if (role === "admin") return <ShieldCheck size={9} className="text-yellow-400 shrink-0" />;
-  return <UserIcon size={9} className="text-green-400 shrink-0" />;
+  return <UserIcon size={9} className="text-blue-400 shrink-0" />;
 }
 
 function roleColor(role?: string) {
   if (role === "owner") return "text-orange-400";
   if (role === "admin") return "text-yellow-400";
-  return "text-green-400";
+  return "text-blue-400";
 }
 
 /** Highlight @username for known roster members (matches server ping parsing). */
@@ -97,7 +98,7 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
       <div className={`w-6 h-6 rounded shrink-0 flex items-center justify-center text-[9px] font-bold border mt-0.5 ${
         role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
         role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
-        "bg-green-900/40 border-green-800/50 text-green-400"
+        "bg-blue-900/40 border-blue-800/50 text-blue-400"
       }`}>
         {msg.fromUsername[0].toUpperCase()}
       </div>
@@ -105,13 +106,18 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
       {/* Bubble */}
       <div className={cn("flex-1 min-w-0 max-w-[88%] sm:max-w-[75%]", isMe ? "items-end" : "items-start", "flex flex-col")}>
         <div className={`flex items-center gap-1.5 mb-0.5 ${isMe ? "flex-row-reverse" : ""}`}>
-          <span className={`text-[10px] font-bold font-mono tracking-wider ${roleColor(role)}`}>{msg.fromUsername}</span>
+          <Link
+            href={`/profile/${encodeURIComponent(msg.fromUsername)}`}
+            className={`text-[10px] font-bold font-mono tracking-wider ${roleColor(role)} hover:underline`}
+          >
+            {msg.fromUsername}
+          </Link>
           <RoleIcon role={role} />
           <span className="text-[9px] text-muted-foreground/50">{time}</span>
         </div>
         <div className={`relative rounded px-2.5 py-1.5 text-xs leading-relaxed max-w-full break-words ${
           deleted ? "italic text-muted-foreground/50 bg-secondary/30" :
-          isMe ? "bg-green-900/40 border border-green-800/30 text-foreground" :
+          isMe ? "bg-blue-900/40 border border-blue-800/30 text-foreground" :
           "bg-secondary border border-border text-foreground"
         }`}>
           {deleted ? msg.content : formatMessageContent(msg.content, knownUsers)}
@@ -126,7 +132,7 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
               );
               return (
                 <a href={att.url} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-1.5 mt-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px] text-green-400 hover:text-green-300 transition-colors max-w-xs">
+                  className="flex items-center gap-1.5 mt-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px] text-blue-400 hover:text-blue-300 transition-colors max-w-xs">
                   <Paperclip size={9} />
                   <span className="truncate">{att.originalName}</span>
                   <Download size={9} className="ml-auto shrink-0" />
@@ -223,7 +229,7 @@ function MessageInput({ onSend, placeholder, mentionCandidates = [] }: {
               key={u}
               type="button"
               className={`w-full text-left px-2 py-1.5 text-xs font-mono touch-manipulation ${
-                i === mentionHighlight ? "bg-green-950/70 text-green-300" : "hover:bg-secondary"
+                i === mentionHighlight ? "bg-blue-950/70 text-blue-300" : "hover:bg-secondary"
               }`}
               onMouseDown={(ev) => {
                 ev.preventDefault();
@@ -245,14 +251,14 @@ function MessageInput({ onSend, placeholder, mentionCandidates = [] }: {
           ) : (
             <div className="flex items-center gap-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px]">
               <Paperclip size={9} className="text-muted-foreground" />
-              <span className="text-green-400 max-w-[200px] truncate">{pending.originalName}</span>
+              <span className="text-blue-400 max-w-[200px] truncate">{pending.originalName}</span>
               <button onClick={() => setPending(null)} className="text-muted-foreground hover:text-red-400 ml-1"><X size={9} /></button>
             </div>
           )}
         </div>
       )}
       <form onSubmit={submit} className="flex gap-2 px-4 py-3 items-center">
-        <label className={`p-1.5 rounded cursor-pointer transition-colors ${uploading ? "text-muted-foreground/30" : "text-muted-foreground hover:text-green-400"}`} title="Attach image or file">
+        <label className={`p-1.5 rounded cursor-pointer transition-colors ${uploading ? "text-muted-foreground/30" : "text-muted-foreground hover:text-blue-400"}`} title="Attach image or file">
           <Paperclip size={13} />
           <input ref={fileRef} type="file" className="hidden" disabled={uploading}
             onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
@@ -263,13 +269,13 @@ function MessageInput({ onSend, placeholder, mentionCandidates = [] }: {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          className="flex-1 bg-secondary border border-border rounded px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700"
+          className="flex-1 bg-secondary border border-border rounded px-3 py-1.5 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-700"
           data-testid="input-message-text"
           autoComplete="off"
           autoCorrect="off"
         />
         <button type="submit" disabled={!text.trim() && !pending}
-          className="px-3 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-green-100 text-xs transition-colors flex items-center gap-1 touch-manipulation"
+          className="px-3 py-1.5 bg-blue-800 hover:bg-blue-700 disabled:opacity-40 rounded text-blue-100 text-xs transition-colors flex items-center gap-1 touch-manipulation"
           data-testid="button-send-message">
           <Send size={11} />
         </button>
@@ -310,7 +316,7 @@ function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors">
+        <button className="text-[9px] text-blue-400/60 hover:text-blue-400 flex items-center gap-1 tracking-wider transition-colors">
           <Plus size={9} /> NEW GROUP
         </button>
       </DialogTrigger>
@@ -321,7 +327,7 @@ function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
             <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">GROUP NAME</label>
             <input value={name} onChange={e => setName(e.target.value)}
               placeholder="e.g. Assault Team Alpha"
-              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+              className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider" />
           </div>
           <div>
             <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-2">ADD MEMBERS ({selected.length} selected)</label>
@@ -330,18 +336,18 @@ function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
                 <button key={u.username} onClick={() => toggle(u.username)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all ${
                     selected.includes(u.username)
-                      ? "bg-green-950/60 border border-green-800/50"
+                      ? "bg-blue-950/60 border border-blue-800/50"
                       : "hover:bg-secondary"
                   }`}>
                   <div className={`w-4 h-4 rounded border flex items-center justify-center text-[8px] ${
-                    selected.includes(u.username) ? "bg-green-700 border-green-600" : "border-border"
+                    selected.includes(u.username) ? "bg-blue-700 border-blue-600" : "border-border"
                   }`}>
                     {selected.includes(u.username) && "✓"}
                   </div>
                   <div className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold border ${
                     u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
                     u.role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
-                    "bg-green-900/40 border-green-800/50 text-green-400"
+                    "bg-blue-900/40 border-blue-800/50 text-blue-400"
                   }`}>{u.username[0].toUpperCase()}</div>
                   <span className={`font-mono font-bold text-[10px] ${roleColor(u.role)}`}>{u.username}</span>
                 </button>
@@ -352,7 +358,7 @@ function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
             <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="text-xs">CANCEL</Button>
             <Button size="sm" onClick={() => create.mutate()}
               disabled={!name.trim() || selected.length === 0 || create.isPending}
-              className="text-xs bg-green-800 hover:bg-green-700">CREATE</Button>
+              className="text-xs bg-blue-800 hover:bg-blue-700">CREATE</Button>
           </div>
         </div>
       </DialogContent>
@@ -381,7 +387,7 @@ function AddMemberDialog({ group, allUsers, currentUser }: {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Add member">
+        <button className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Add member">
           <UserPlus size={10} />
         </button>
       </DialogTrigger>
@@ -394,7 +400,7 @@ function AddMemberDialog({ group, allUsers, currentUser }: {
               <div className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold border ${
                 u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
                 u.role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
-                "bg-green-900/40 border-green-800/50 text-green-400"
+                "bg-blue-900/40 border-blue-800/50 text-blue-400"
               }`}>{u.username[0].toUpperCase()}</div>
               <span className={`font-mono font-bold text-[10px] ${roleColor(u.role)}`}>{u.username}</span>
             </button>
@@ -560,7 +566,7 @@ export default function Messaging() {
 
   const canDelete = (msg: Message) =>
     msg.fromUsername === user?.username ||
-    (user?.role === "admin" || user?.role === "owner");
+    (user?.accessLevel === "admin" || user?.accessLevel === "owner");
 
   const otherUsers = allUsers.filter(u => u.username !== user?.username);
   const filteredUsers = dmSearch
@@ -598,8 +604,8 @@ export default function Messaging() {
         {/* Header */}
         <div className="px-3 py-3 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <MessageSquare size={13} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">SECURE COMMS</span>
+            <MessageSquare size={13} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">SECURE COMMS</span>
           </div>
         </div>
 
@@ -610,7 +616,7 @@ export default function Messaging() {
             onClick={() => goToChannel(GENERAL)}
             className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-xs transition-all ${
               activeChannel === GENERAL
-                ? "bg-green-950/60 text-green-400 border border-green-900/50"
+                ? "bg-blue-950/60 text-blue-400 border border-blue-900/50"
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             }`}
             data-testid="channel-general"
@@ -620,7 +626,7 @@ export default function Messaging() {
               <span className="tracking-wider">general</span>
             </div>
             {unread.general > 0 && activeChannel !== GENERAL && (
-              <span className="bg-green-600 text-white text-[9px] font-bold px-1.5 rounded-full min-w-[16px] text-center">
+              <span className="bg-blue-600 text-white text-[9px] font-bold px-1.5 rounded-full min-w-[16px] text-center">
                 {unread.general > 99 ? "99+" : unread.general}
               </span>
             )}
@@ -639,10 +645,10 @@ export default function Messaging() {
             return (
               <button key={g.id} onClick={() => openGroup(g.id)}
                 className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all mb-0.5 ${
-                  isActive ? "bg-green-950/60 border border-green-900/50" : "hover:bg-secondary"
+                  isActive ? "bg-blue-950/60 border border-blue-900/50" : "hover:bg-secondary"
                 }`}>
-                <div className="w-5 h-5 rounded bg-green-900/40 border border-green-800/50 flex items-center justify-center shrink-0">
-                  <Users size={9} className="text-green-400" />
+                <div className="w-5 h-5 rounded bg-blue-900/40 border border-blue-800/50 flex items-center justify-center shrink-0">
+                  <Users size={9} className="text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[10px] font-bold font-mono truncate tracking-wider text-foreground">{g.name}</div>
@@ -668,7 +674,7 @@ export default function Messaging() {
             <Search size={9} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
             <input value={dmSearch} onChange={e => setDmSearch(e.target.value)}
               placeholder="Search users..."
-              className="w-full bg-secondary border border-border rounded pl-6 pr-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-800"
+              className="w-full bg-secondary border border-border rounded pl-6 pr-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-800"
             />
           </div>
 
@@ -681,14 +687,14 @@ export default function Messaging() {
                 <button key={u.id}
                   onClick={() => openDM(u.username)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all ${
-                    isActive ? "bg-green-950/60 border border-green-900/50" : "hover:bg-secondary"
+                    isActive ? "bg-blue-950/60 border border-blue-900/50" : "hover:bg-secondary"
                   }`}
                   data-testid={`dm-user-${u.username}`}
                 >
                   <div className={`w-5 h-5 rounded shrink-0 flex items-center justify-center text-[9px] font-bold border ${
                     u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
                     u.role === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
-                    "bg-green-900/40 border-green-800/50 text-green-400"
+                    "bg-blue-900/40 border-blue-800/50 text-blue-400"
                   }`}>{u.username[0].toUpperCase()}</div>
                   <div className="flex-1 min-w-0">
                     <div className={`text-[10px] font-mono font-bold truncate ${roleColor(u.role)}`}>{u.username}</div>
@@ -733,17 +739,17 @@ export default function Messaging() {
           )}
           {activeChannel === GENERAL ? (
             <>
-              <Hash size={14} className="text-green-400 shrink-0" />
+              <Hash size={14} className="text-blue-400 shrink-0" />
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-bold tracking-wider text-green-400 block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>general</span>
+                <span className="text-sm font-bold tracking-wider text-blue-400 block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>general</span>
                 <span className="text-[9px] text-muted-foreground hidden sm:block">All members can see this channel</span>
               </div>
             </>
           ) : isGroup && activeGroup ? (
             <>
-              <Users size={14} className="text-green-400 shrink-0" />
+              <Users size={14} className="text-blue-400 shrink-0" />
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-bold tracking-wider text-green-400 font-mono block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
+                <span className="text-sm font-bold tracking-wider text-blue-400 font-mono block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
                 <span className="text-[9px] text-muted-foreground truncate hidden md:block">
                   {JSON.parse(activeGroup.members || "[]").join(", ")}
                 </span>
@@ -754,7 +760,7 @@ export default function Messaging() {
                   className="p-1 text-muted-foreground hover:text-yellow-400 transition-colors" title="Leave group">
                   <LogOut size={11} />
                 </button>
-                {(activeGroup.createdBy === user?.username || user?.role === "admin" || user?.role === "owner") && (
+                {(activeGroup.createdBy === user?.username || user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
                   <button onClick={() => deleteGroup.mutate(activeGroup.id)}
                     className="p-1 text-muted-foreground hover:text-red-400 transition-colors" title="Delete group">
                     <Trash2 size={11} />
@@ -767,7 +773,7 @@ export default function Messaging() {
               <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold border shrink-0 ${
                 userMap[activeDMUser || ""] === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
                 userMap[activeDMUser || ""] === "admin" ? "bg-yellow-900/40 border-yellow-800/50 text-yellow-400" :
-                "bg-green-900/40 border-green-800/50 text-green-400"
+                "bg-blue-900/40 border-blue-800/50 text-blue-400"
               }`}>{(activeDMUser || "?")[0].toUpperCase()}</div>
               <div className="min-w-0 flex-1">
                 <span className={`text-sm font-bold tracking-wider font-mono truncate block ${roleColor(userMap[activeDMUser || ""])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>

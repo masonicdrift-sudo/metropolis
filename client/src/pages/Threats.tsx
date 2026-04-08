@@ -107,7 +107,7 @@ export default function Threats() {
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <button onClick={() => setShowActive(a => !a)}
-            className={`text-[10px] px-3 py-1 rounded tracking-wider border transition-all ${showActive ? "bg-green-900 text-green-400 border-green-800" : "text-muted-foreground border-border bg-secondary"}`}>
+            className={`text-[10px] px-3 py-1 rounded tracking-wider border transition-all ${showActive ? "bg-blue-900 text-blue-400 border-blue-800" : "text-muted-foreground border-border bg-secondary"}`}>
             {showActive ? "ACTIVE ONLY" : "ALL THREATS"}
           </button>
           <Dialog open={open} onOpenChange={setOpen}>
@@ -147,14 +147,14 @@ export default function Threats() {
                   <span className={`badge-${t.confidence} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase`}>{t.confidence}</span>
                   <span className="text-[9px] bg-secondary text-muted-foreground px-1.5 py-0.5 rounded uppercase">{t.category.replace("_"," ")}</span>
                   {t.docNumber ? <span className="text-[9px] font-mono text-muted-foreground/70">#{t.docNumber}</span> : null}
-                  {!t.active && <span className="text-[9px] text-green-600 font-bold tracking-wider">NEUTRALIZED</span>}
+                  {!t.active && <span className="text-[9px] text-blue-600 font-bold tracking-wider">NEUTRALIZED</span>}
                 </div>
                 <div className="text-xs font-bold">{t.label}</div>
               </div>
               <div className="flex gap-1">
                 {t.active && (
                   <button onClick={() => neutralize.mutate(t.id)} title="Mark neutralized"
-                    className="p-1 text-muted-foreground hover:text-green-400" data-testid={`neutralize-${t.id}`}><ShieldOff size={11} /></button>
+                    className="p-1 text-muted-foreground hover:text-blue-400" data-testid={`neutralize-${t.id}`}><ShieldOff size={11} /></button>
                 )}
                   <button
                     onClick={() => { setReqThreat(t); setReqNote(""); setReqOpen(true); }}
@@ -175,7 +175,7 @@ export default function Threats() {
           </div>
         ))}
         {displayed.length === 0 && (
-          <div className="col-span-2 py-10 text-center text-xs text-green-400 tracking-wider">NO ACTIVE THREATS DETECTED</div>
+          <div className="col-span-2 py-10 text-center text-xs text-blue-400 tracking-wider">NO ACTIVE THREATS DETECTED</div>
         )}
       </div>
 

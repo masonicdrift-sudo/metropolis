@@ -60,7 +60,7 @@ function IntelForm({ onClose }: { onClose: () => void }) {
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" data-testid="button-submit-intel">FILE REPORT</Button>
+        <Button size="sm" onClick={submit} className="text-xs bg-blue-800 hover:bg-blue-700" data-testid="button-submit-intel">FILE REPORT</Button>
       </div>
     </div>
   );
@@ -185,7 +185,7 @@ export default function Intel() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-new-intel">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" data-testid="button-new-intel">
               <Plus size={12} /> FILE REPORT
             </Button>
           </DialogTrigger>
@@ -215,7 +215,7 @@ export default function Intel() {
       <div className="tac-filter-row mb-3">
         {categories.map(c => (
           <button key={c} onClick={() => setFilter(c)}
-            className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === c ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+            className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === c ? "bg-blue-900 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
             {c}
           </button>
         ))}
@@ -230,7 +230,7 @@ export default function Intel() {
                 <span className={`badge-${r.classification.toLowerCase()} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider`}>{r.classification}</span>
                 <span className={`badge-${r.threat} text-[9px] px-1.5 py-0.5 rounded tracking-wider uppercase`}>{r.threat}</span>
                 <span className="text-[9px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{r.category}</span>
-                {r.verified && <span className="text-[9px] text-green-400 flex items-center gap-0.5"><CheckCircle size={9} /> VERIFIED</span>}
+                {r.verified && <span className="text-[9px] text-blue-400 flex items-center gap-0.5"><CheckCircle size={9} /> VERIFIED</span>}
               </div>
               <div className="flex gap-1 shrink-0 flex-wrap">
                 <IntelImageUploader reportId={r.id} onUploaded={() => {}} />
@@ -244,7 +244,7 @@ export default function Intel() {
                 >
                   <Eye size={11} />
                 </button>
-                {!r.verified && <button onClick={() => verify.mutate(r.id)} className="p-1 text-muted-foreground hover:text-green-400" data-testid={`verify-intel-${r.id}`}><CheckCircle size={11} /></button>}
+                {!r.verified && <button onClick={() => verify.mutate(r.id)} className="p-1 text-muted-foreground hover:text-blue-400" data-testid={`verify-intel-${r.id}`}><CheckCircle size={11} /></button>}
                 <button onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400" data-testid={`delete-intel-${r.id}`}><Trash2 size={11} /></button>
               </div>
             </div>
@@ -340,7 +340,7 @@ export default function Intel() {
                   />
                   <Button
                     size="sm"
-                    className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                    className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider"
                     onClick={() => releaseMut.mutate()}
                     disabled={!releaseMark.trim() || releaseMut.isPending}
                   >
@@ -423,7 +423,7 @@ export default function Intel() {
                     />
                     <Button
                       size="sm"
-                      className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                      className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider"
                       onClick={() => {
                         const bt = linkDraft.bType.trim();
                         const bi = linkDraft.bId.trim();

@@ -30,25 +30,25 @@ const DOC_TYPES = [
   { value: "HVT_CARD",      label: "HVT CARD",           icon: Target,        color: "text-red-400",          bg: "bg-red-950/20 border-red-900/40",          group: "INTEL" },
   { value: "INTEL_SUMMARY", label: "INTEL SUMMARY",      icon: AlertTriangle, color: "text-orange-400",       bg: "bg-orange-950/20 border-orange-900/40",    group: "INTEL" },
   { value: "JIPOE",         label: "JIPOE",              icon: Map,           color: "text-purple-400",       bg: "bg-purple-950/20 border-purple-900/40",   group: "INTEL" },
-  { value: "COA",           label: "COA DEVELOPMENT",    icon: Crosshair,     color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "INTEL" },
+  { value: "COA",           label: "COA DEVELOPMENT",    icon: Crosshair,     color: "text-blue-400",        bg: "bg-blue-950/20 border-blue-900/40",      group: "INTEL" },
   { value: "THREAT_ASSESS", label: "THREAT ASSESSMENT",  icon: AlertTriangle, color: "text-red-400",          bg: "bg-red-950/20 border-red-900/40",          group: "INTEL" },
   { value: "ACE",           label: "ACE / PIR",          icon: AlertTriangle, color: "text-orange-400",       bg: "bg-orange-950/20 border-orange-900/40",    group: "INTEL" },
   // Fires & Support
   { value: "ISR_PLAN",      label: "ISR PLAN",           icon: Eye,           color: "text-purple-400",       bg: "bg-purple-950/20 border-purple-900/40",   group: "SUPPORT" },
   { value: "FIRE_PLAN",     label: "FIRE SUPPORT PLAN",  icon: Target,        color: "text-red-400",          bg: "bg-red-950/20 border-red-900/40",          group: "SUPPORT" },
-  { value: "CASEVAC_PLAN",  label: "CASEVAC PLAN",       icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "SUPPORT" },
+  { value: "CASEVAC_PLAN",  label: "CASEVAC PLAN",       icon: Shield,        color: "text-blue-400",        bg: "bg-blue-950/20 border-blue-900/40",      group: "SUPPORT" },
   { value: "LOGSTAT",       label: "LOG / CSS PLAN",     icon: Activity,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "SUPPORT" },
   // Comms & signal
   { value: "RADIO_LOG",           label: "RADIO LOG BOOK",           icon: Radio,         color: "text-cyan-400",   bg: "bg-cyan-950/25 border-cyan-900/45",   group: "COMMS" },
   { value: "SOI_NET_EXTRACT",     label: "SOI / NET EXTRACT",        icon: NotebookTabs,  color: "text-sky-400",    bg: "bg-sky-950/25 border-sky-900/45",    group: "COMMS" },
-  { value: "CEOI_FREQ_LIST",      label: "CEOI / FREQ WORKSHEET",    icon: ListOrdered,   color: "text-emerald-400", bg: "bg-emerald-950/25 border-emerald-900/45", group: "COMMS" },
+  { value: "CEOI_FREQ_LIST",      label: "CEOI / FREQ WORKSHEET",    icon: ListOrdered,   color: "text-blue-400", bg: "bg-blue-950/25 border-blue-900/45", group: "COMMS" },
   { value: "NET_ROSTER_CALLSIGNS", label: "NET ROSTER / CALLSIGNS", icon: Users,         color: "text-teal-400",   bg: "bg-teal-950/25 border-teal-900/45",   group: "COMMS" },
   { value: "OPFREQ_QUICK_CARD",   label: "OPFREQ QUICK CARD",        icon: IdCard,        color: "text-violet-400", bg: "bg-violet-950/25 border-violet-900/45", group: "COMMS" },
   { value: "COMMS_PRE_COMSEC_CHECK", label: "PRE-COMMS CHECKLIST", icon: ListChecks,    color: "text-amber-400",  bg: "bg-amber-950/25 border-amber-900/45", group: "COMMS" },
   { value: "SATCOM_HF_LOG",       label: "HF / SATCOM PASS LOG",     icon: Satellite,     color: "text-blue-400",   bg: "bg-blue-950/25 border-blue-900/45",   group: "COMMS" },
   // Admin & Command
   { value: "ROE",           label: "ROE",                icon: BookOpen,      color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "ADMIN" },
-  { value: "EPA",           label: "EVASION PLAN (EPA)", icon: Shield,        color: "text-green-400",        bg: "bg-green-950/20 border-green-900/40",      group: "ADMIN" },
+  { value: "EPA",           label: "EVASION PLAN (EPA)", icon: Shield,        color: "text-blue-400",        bg: "bg-blue-950/20 border-blue-900/40",      group: "ADMIN" },
   { value: "OPSEC",         label: "OPSEC PLAN",         icon: Shield,        color: "text-yellow-400",       bg: "bg-yellow-950/20 border-yellow-900/40",   group: "ADMIN" },
   { value: "REHEARSAL",     label: "REHEARSAL PLAN",     icon: Activity,      color: "text-blue-400",         bg: "bg-blue-950/20 border-blue-900/40",        group: "ADMIN" },
   { value: "CUSTOM",        label: "CUSTOM DOC",         icon: FileText,      color: "text-muted-foreground", bg: "bg-secondary/50 border-border",            group: "ADMIN" },
@@ -1247,7 +1247,7 @@ function AttachmentChip({ att, onRemove }: { att: AttachmentInfo; onRemove?: () 
     <div className="flex items-center gap-1.5 bg-secondary border border-border rounded px-2 py-1 text-[10px]">
       <Paperclip size={9} className="text-muted-foreground shrink-0" />
       <a href={att.url} target="_blank" rel="noreferrer"
-        className="text-green-400 hover:text-green-300 truncate max-w-[160px]">{att.originalName}</a>
+        className="text-blue-400 hover:text-blue-300 truncate max-w-[160px]">{att.originalName}</a>
       {onRemove && (
         <button onClick={onRemove} className="text-muted-foreground hover:text-red-400 ml-0.5"><X size={9} /></button>
       )}
@@ -1279,7 +1279,7 @@ function FileUploader({ onUploaded }: { onUploaded: (att: AttachmentInfo) => voi
 
   return (
     <label className={`flex items-center gap-1.5 px-2 py-1 rounded border cursor-pointer text-[10px] tracking-wider transition-colors ${
-      uploading ? "text-muted-foreground border-border" : "text-green-400/60 border-green-900/40 hover:text-green-400 hover:border-green-800/60"
+      uploading ? "text-muted-foreground border-border" : "text-blue-400/60 border-blue-900/40 hover:text-blue-400 hover:border-blue-800/60"
     }`}>
       <Upload size={9} />
       {uploading ? "UPLOADING..." : "ATTACH FILE"}
@@ -1365,7 +1365,7 @@ function DocEditor({
         <div className="flex-1" />
         <FileUploader onUploaded={att => setAttachments(a => [...a, att])} />
         <Button size="sm" onClick={save} disabled={create.isPending || update.isPending}
-          className="text-[10px] bg-green-800 hover:bg-green-700 h-7 gap-1">
+          className="text-[10px] bg-blue-800 hover:bg-blue-700 h-7 gap-1">
           <Save size={10} /> SAVE
         </Button>
         <Button size="sm" variant="outline" onClick={onClose} className="text-[10px] h-7">CANCEL</Button>
@@ -1382,13 +1382,13 @@ function DocEditor({
           <div className="text-[9px] text-muted-foreground tracking-wider">ASSOCIATED OP</div>
           <input value={form.opName} onChange={e => setForm(f => ({ ...f, opName: e.target.value }))}
             placeholder="OP IRON VEIL"
-            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] font-mono text-foreground mt-0.5 focus:outline-none focus:ring-1 focus:ring-green-700" />
+            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] font-mono text-foreground mt-0.5 focus:outline-none focus:ring-1 focus:ring-blue-700" />
         </div>
         <div>
           <div className="text-[9px] text-muted-foreground tracking-wider">TARGET GRID</div>
           <input value={form.targetGrid} onChange={e => setForm(f => ({ ...f, targetGrid: e.target.value }))}
             placeholder="38T LP 1234 5678"
-            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] font-mono text-foreground mt-0.5 focus:outline-none focus:ring-1 focus:ring-green-700" />
+            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] font-mono text-foreground mt-0.5 focus:outline-none focus:ring-1 focus:ring-blue-700" />
         </div>
       </div>
 
@@ -1466,7 +1466,7 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
                 doc.classification === "TS" ? "text-red-400 bg-red-950/20 border-red-900/40" :
                 doc.classification === "SECRET" ? "text-orange-400 bg-orange-950/20 border-orange-900/40" :
                 doc.classification === "CUI" ? "text-yellow-400 bg-yellow-950/20 border-yellow-900/40" :
-                "text-green-400 bg-green-950/10 border-green-900/20"
+                "text-blue-400 bg-blue-950/10 border-blue-900/20"
               }`}>{doc.classification}</span>
               <span className="text-[9px] text-muted-foreground bg-secondary px-2 py-0.5 rounded tracking-wider">{typeInfo?.label || doc.type}</span>
               <span className={`text-[9px] px-2 py-0.5 rounded tracking-wider font-bold ${
@@ -1519,7 +1519,7 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
             />
             <Button
               size="sm"
-              className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+              className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider"
               onClick={() => releaseMut.mutate()}
               disabled={!releaseMark.trim() || releaseMut.isPending}
             >
@@ -1581,7 +1581,7 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
               />
               <Button
                 size="sm"
-                className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider"
                 onClick={() => {
                   const bt = linkDraft.bType.trim();
                   const bi = linkDraft.bId.trim();
@@ -1622,7 +1622,7 @@ function DocCard({ doc, active, onClick }: { doc: IsofacDoc; active: boolean; on
           <div className="flex items-center gap-1 mt-0.5">
             <span className="text-[8px] text-muted-foreground/50">{typeInfo?.label || doc.type}</span>
             <span className={`text-[8px] font-bold ${
-              doc.status === "ACTIVE" ? "text-green-400" :
+              doc.status === "ACTIVE" ? "text-blue-400" :
               doc.status === "DRAFT" ? "text-yellow-400" : "text-muted-foreground"
             }`}>▪ {doc.status}</span>
           </div>
@@ -1630,7 +1630,7 @@ function DocCard({ doc, active, onClick }: { doc: IsofacDoc; active: boolean; on
         <span className={`text-[8px] font-bold shrink-0 ${
           doc.classification === "TS" ? "text-red-400" :
           doc.classification === "SECRET" ? "text-orange-400" :
-          doc.classification === "CUI" ? "text-yellow-400" : "text-green-400/40"
+          doc.classification === "CUI" ? "text-yellow-400" : "text-blue-400/40"
         }`}>{doc.classification}</span>
       </div>
     </button>
@@ -1650,7 +1650,7 @@ export default function IsofacPage() {
   const [search, setSearch] = useState("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const isMobile = useIsMobile();
-  const isAdmin = user?.role === "admin" || user?.role === "owner";
+  const isAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
 
   const { data: docs = [] } = useQuery<IsofacDoc[]>({
     queryKey: ["/api/isofac"],
@@ -1722,8 +1722,8 @@ export default function IsofacPage() {
       >
         <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-b border-border shrink-0">
           <div className="flex items-center gap-2 flex-wrap min-w-0">
-            <BookOpen size={11} className="text-green-400 shrink-0" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">ISOFAC</span>
+            <BookOpen size={11} className="text-blue-400 shrink-0" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">ISOFAC</span>
             <span className="text-[9px] text-muted-foreground/50 hidden sm:inline">MISSION PLANNING</span>
           </div>
           <button
@@ -1732,7 +1732,7 @@ export default function IsofacPage() {
               setCreateInitialType(undefined);
               setEditing(true);
             }}
-            className="text-[9px] text-green-400/60 hover:text-green-400 flex items-center gap-1 tracking-wider transition-colors"
+            className="text-[9px] text-blue-400/60 hover:text-blue-400 flex items-center gap-1 tracking-wider transition-colors"
           >
             <Plus size={9} /> NEW
           </button>
@@ -1741,7 +1741,7 @@ export default function IsofacPage() {
         <div className="px-2 py-1.5 border-b border-border shrink-0">
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search documents..."
-            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-800" />
+            className="w-full bg-secondary border border-border rounded px-2 py-1 text-[10px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-800" />
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
@@ -1788,7 +1788,7 @@ export default function IsofacPage() {
                   setEditDoc(selectedDoc);
                   setEditing(true);
                 }}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-green-400 tracking-wider transition-colors"
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-blue-400 tracking-wider transition-colors"
               >
                 <Edit size={11} /> EDIT
               </button>

@@ -78,23 +78,23 @@ export default function Register({ onBack }: { onBack: () => void }) {
               <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
               <input type="text" value={form.username} onChange={set("username")}
                 placeholder="Choose a callsign..." data-testid="input-reg-username"
-                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 uppercase tracking-wider" />
+                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-700 focus:border-blue-700 uppercase tracking-wider" />
             </div>
             <div>
               <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
               <input type="password" value={form.password} onChange={set("password")}
                 placeholder="••••••••" data-testid="input-reg-password"
-                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700" />
+                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-700" />
             </div>
             <div>
               <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">CONFIRM PASSWORD</label>
               <input type="password" value={form.confirm} onChange={set("confirm")}
                 placeholder="••••••••" data-testid="input-reg-confirm"
-                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-green-700" />
+                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-blue-700" />
             </div>
             <button type="submit" disabled={loading}
               data-testid="button-register"
-              className="w-full bg-green-800 hover:bg-green-700 disabled:opacity-40 text-green-100 text-xs font-bold tracking-[0.2em] py-2.5 rounded transition-colors flex items-center justify-center gap-2 mt-1">
+              className="w-full bg-blue-800 hover:bg-blue-700 disabled:opacity-40 text-blue-100 text-xs font-bold tracking-[0.2em] py-2.5 rounded transition-colors flex items-center justify-center gap-2 mt-1">
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Shield size={12} />}
               {loading ? "REGISTERING..." : "CREATE ACCOUNT"}
             </button>
@@ -107,7 +107,7 @@ export default function Register({ onBack }: { onBack: () => void }) {
         </div>
 
         <div className="flex items-center justify-center gap-3 mt-4 text-[9px] text-muted-foreground tracking-wider">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />NET: SECURE</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />NET: SECURE</span>
           <span>▪</span>
           <span>INVITE-ONLY ACCESS</span>
         </div>

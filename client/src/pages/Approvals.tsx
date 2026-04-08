@@ -49,8 +49,8 @@ export default function ApprovalsPage() {
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <ShieldCheck className="h-4 w-4 text-green-400" />
-        <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+        <ShieldCheck className="h-4 w-4 text-blue-400" />
+        <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           APPROVALS
         </h1>
         <div className="ml-auto flex items-center gap-2">
@@ -115,7 +115,7 @@ export default function ApprovalsPage() {
             {selected && selected.status === "pending" && (
               <>
                 <Button variant="destructive" size="sm" onClick={() => reject.mutate(selected.id)} disabled={reject.isPending}>Reject</Button>
-                <Button size="sm" className="bg-green-800 hover:bg-green-700" onClick={() => approve.mutate(selected.id)} disabled={approve.isPending}>Approve</Button>
+                <Button size="sm" className="bg-blue-800 hover:bg-blue-700" onClick={() => approve.mutate(selected.id)} disabled={approve.isPending}>Approve</Button>
               </>
             )}
           </DialogFooter>

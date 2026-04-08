@@ -11,13 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
 const CLASS_COLOR: Record<string, string> = {
-  UNCLASS: "text-green-400 border-green-900/50",
+  UNCLASS: "text-blue-400 border-blue-900/50",
   CUI: "text-yellow-400 border-yellow-900/50",
   SECRET: "text-orange-400 border-orange-900/50",
   TS: "text-red-400 border-red-900/50",
 };
 const STATUS_COLOR: Record<string, string> = {
-  DRAFT: "text-muted-foreground", ACTIVE: "text-green-400",
+  DRAFT: "text-muted-foreground", ACTIVE: "text-blue-400",
   SUPERSEDED: "text-yellow-400", ARCHIVED: "text-red-400",
 };
 
@@ -158,7 +158,7 @@ export default function FileVault() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Link href="/isofac">
-                  <button className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Open in ISOFAC">
+                  <button className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Open in ISOFAC">
                     <ExternalLink size={11} />
                   </button>
                 </Link>

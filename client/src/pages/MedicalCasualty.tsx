@@ -21,7 +21,7 @@ const CLASSIF = ["UNCLASS", "CUI", "SECRET", "TS"] as const;
 function precedenceBadge(p: string) {
   if (p === "urgent") return "text-red-400 bg-red-950/20 border-red-900/40";
   if (p === "priority") return "text-orange-400 bg-orange-950/20 border-orange-900/40";
-  return "text-green-400/80 bg-green-950/10 border-green-900/20";
+  return "text-blue-400/80 bg-blue-950/10 border-blue-900/20";
 }
 
 export default function MedicalCasualtyPage() {
@@ -191,8 +191,8 @@ export default function MedicalCasualtyPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <Ambulance className="h-4 w-4 text-green-400" />
-            <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+            <Ambulance className="h-4 w-4 text-blue-400" />
+            <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
               MEDICAL / CASUALTY
             </h1>
           </div>
@@ -200,7 +200,7 @@ export default function MedicalCasualtyPage() {
             Casualty roster, evac tracking, and treatment notes (tactical v1).
           </div>
         </div>
-        <Button size="sm" className="h-8 text-[10px] tracking-wider bg-green-800 hover:bg-green-700" onClick={openNew}>
+        <Button size="sm" className="h-8 text-[10px] tracking-wider bg-blue-800 hover:bg-blue-700" onClick={openNew}>
           <Plus className="h-3.5 w-3.5 mr-1" /> NEW CASUALTY
         </Button>
       </div>
@@ -312,7 +312,7 @@ export default function MedicalCasualtyPage() {
                     <Input className="h-8 text-[10px] font-mono" placeholder="ETA / time" value={evac.eta} onChange={(e) => setEvac((x) => ({ ...x, eta: e.target.value }))} />
                   </div>
                   <div className="flex items-center gap-2 mt-2">
-                    <Button size="sm" className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider" onClick={() => upsertEvac.mutate()} disabled={upsertEvac.isPending}>
+                    <Button size="sm" className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider" onClick={() => upsertEvac.mutate()} disabled={upsertEvac.isPending}>
                       SAVE EVAC
                     </Button>
                     <div className="text-[9px] text-muted-foreground">
@@ -325,7 +325,7 @@ export default function MedicalCasualtyPage() {
                   <div className="text-[9px] tracking-widest text-muted-foreground mb-2">TREATMENT LOG</div>
                   <div className="space-y-2">
                     <Textarea className="text-xs font-mono min-h-[4.5rem]" placeholder="Interventions, vitals, meds, notes…" value={treatmentNote} onChange={(e) => setTreatmentNote(e.target.value)} />
-                    <Button size="sm" className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider" onClick={() => addTx.mutate()} disabled={!treatmentNote.trim() || addTx.isPending}>
+                    <Button size="sm" className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider" onClick={() => addTx.mutate()} disabled={!treatmentNote.trim() || addTx.isPending}>
                       ADD NOTE
                     </Button>
                     <div className="space-y-1 max-h-[220px] overflow-y-auto">
@@ -360,7 +360,7 @@ export default function MedicalCasualtyPage() {
             )}
             <Button
               size="sm"
-              className="bg-green-800 hover:bg-green-700"
+              className="bg-blue-800 hover:bg-blue-700"
               onClick={() => (selected ? updateMut.mutate() : createMut.mutate())}
               disabled={!form.displayName.trim() || createMut.isPending || updateMut.isPending}
             >

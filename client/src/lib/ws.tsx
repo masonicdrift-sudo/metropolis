@@ -37,6 +37,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   THREAT:           [["/api/threats"], ["/api/dashboard/threat-level"]],
   // PERSTAT
   PERSTAT:          [["/api/perstat"]],
+  PERSONNEL_ROSTER: [["/api/personnel-roster"]],
   // AAR
   AAR:              [["/api/aar"]],
   // Awards

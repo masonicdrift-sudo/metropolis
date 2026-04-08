@@ -244,11 +244,11 @@ const TAC_MAP_STORAGE_KEY = "tacedge.tacMapKey";
 function canDeleteMarker(
   m: TacticalMapMarker,
   username: string | undefined,
-  role: string | undefined,
+  accessLevel: string | undefined,
 ): boolean {
   if (!username) return false;
   if (m.createdBy === username) return true;
-  return role === "admin" || role === "owner";
+  return accessLevel === "admin" || accessLevel === "owner";
 }
 
 /** Repositioning is allowed for any logged-in user (shared map); deletion uses canDeleteMarker. */
@@ -259,31 +259,31 @@ function canDragMarker(username: string | undefined): boolean {
 function canDeleteLine(
   line: TacticalMapLine,
   username: string | undefined,
-  role: string | undefined,
+  accessLevel: string | undefined,
 ): boolean {
   if (!username) return false;
   if (line.createdBy === username) return true;
-  return role === "admin" || role === "owner";
+  return accessLevel === "admin" || accessLevel === "owner";
 }
 
 function canDeleteRangeRing(
   ring: TacticalMapRangeRing,
   username: string | undefined,
-  role: string | undefined,
+  accessLevel: string | undefined,
 ): boolean {
   if (!username) return false;
   if (ring.createdBy === username) return true;
-  return role === "admin" || role === "owner";
+  return accessLevel === "admin" || accessLevel === "owner";
 }
 
 function canDeleteBuildingLabel(
   row: TacticalMapBuildingLabel,
   username: string | undefined,
-  role: string | undefined,
+  accessLevel: string | undefined,
 ): boolean {
   if (!username) return false;
   if (row.createdBy === username) return true;
-  return role === "admin" || role === "owner";
+  return accessLevel === "admin" || accessLevel === "owner";
 }
 
 export default function TacticalTerrainMap() {
@@ -948,7 +948,7 @@ export default function TacticalTerrainMap() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground tracking-wider">
-              <MapPinned className="h-3.5 w-3.5 text-green-400 shrink-0" />
+              <MapPinned className="h-3.5 w-3.5 text-blue-400 shrink-0" />
               <span className="truncate">LIVE · Each map keeps its own markers</span>
             </div>
             <Label htmlFor="tac-map-select" className="sr-only">
@@ -960,7 +960,7 @@ export default function TacticalTerrainMap() {
                 className="h-11 w-full sm:h-10 sm:max-w-md text-sm font-mono touch-manipulation"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <Layers className="h-4 w-4 text-green-400 shrink-0" />
+                  <Layers className="h-4 w-4 text-blue-400 shrink-0" />
                   <SelectValue placeholder="Select map" />
                 </div>
               </SelectTrigger>
@@ -1256,7 +1256,7 @@ export default function TacticalTerrainMap() {
                       direction="top"
                       offset={[0, -6]}
                       opacity={1}
-                      className="tac-marker-tooltip !border-border/80 !bg-black/88 !px-1.5 !py-0.5 !text-[9px] !font-mono !text-green-100 !shadow-md"
+                      className="tac-marker-tooltip !border-border/80 !bg-black/88 !px-1.5 !py-0.5 !text-[9px] !font-mono !text-blue-100 !shadow-md"
                     >
                       {cap}
                     </Tooltip>
@@ -1352,7 +1352,7 @@ export default function TacticalTerrainMap() {
           ) : null}
           {mapKey ? (
             <div
-              className={`pointer-events-none absolute bottom-2 left-2 z-[500] rounded border border-border/60 bg-black/70 px-2 py-1 font-mono text-[9px] text-green-400/95 shadow-sm max-w-[min(100%,22rem)] ${
+              className={`pointer-events-none absolute bottom-2 left-2 z-[500] rounded border border-border/60 bg-black/70 px-2 py-1 font-mono text-[9px] text-blue-400/95 shadow-sm max-w-[min(100%,22rem)] ${
                 layers.grid ? "" : "opacity-90"
               }`}
               aria-live="polite"
@@ -1378,7 +1378,7 @@ export default function TacticalTerrainMap() {
             </div>
             <div className="mt-1 max-h-[min(28dvh,240px)] lg:max-h-[min(32dvh,280px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
               {markers.map((m) => {
-                const canDel = canDeleteMarker(m, user?.username, user?.role);
+                const canDel = canDeleteMarker(m, user?.username, user?.accessLevel);
                 return (
                   <div
                     key={m.id}
@@ -1391,7 +1391,7 @@ export default function TacticalTerrainMap() {
                       }}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-mono text-green-400/90 truncate">
+                      <div className="font-mono text-blue-400/90 truncate">
                         {m.label || (m.markerType.startsWith("custom:") ? "Custom SIDC" : m.markerType)}
                       </div>
                       <div className="text-muted-foreground text-[9px]">
@@ -1432,7 +1432,7 @@ export default function TacticalTerrainMap() {
             </div>
             <div className="mt-1 max-h-[min(20dvh,200px)] lg:max-h-[min(24dvh,220px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
               {rangeRings.map((rr) => {
-                const canDel = canDeleteRangeRing(rr, user?.username, user?.role);
+                const canDel = canDeleteRangeRing(rr, user?.username, user?.accessLevel);
                 return (
                   <div
                     key={rr.id}
@@ -1478,7 +1478,7 @@ export default function TacticalTerrainMap() {
             </div>
             <div className="mt-1 max-h-[min(18dvh,180px)] lg:max-h-[min(22dvh,200px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
               {buildingLabels.map((bl) => {
-                const canDel = canDeleteBuildingLabel(bl, user?.username, user?.role);
+                const canDel = canDeleteBuildingLabel(bl, user?.username, user?.accessLevel);
                 return (
                   <div
                     key={bl.id}
@@ -1527,7 +1527,7 @@ export default function TacticalTerrainMap() {
             </div>
             <div className="mt-1 max-h-[min(22dvh,200px)] lg:max-h-[min(26dvh,220px)] overflow-y-auto overscroll-contain space-y-1.5 pr-1 -mr-1 touch-pan-y">
               {lines.map((ln) => {
-                const canDel = canDeleteLine(ln, user?.username, user?.role);
+                const canDel = canDeleteLine(ln, user?.username, user?.accessLevel);
                 return (
                   <div
                     key={ln.id}
@@ -1969,7 +1969,7 @@ export default function TacticalTerrainMap() {
             {buildingEdit?.rowId != null &&
             (() => {
               const row = buildingLabels.find((b) => b.id === buildingEdit.rowId);
-              return row && canDeleteBuildingLabel(row, user?.username, user?.role) ? (
+              return row && canDeleteBuildingLabel(row, user?.username, user?.accessLevel) ? (
                 <Button
                   variant="destructive"
                   size="sm"

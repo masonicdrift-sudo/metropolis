@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const CLASS_COLOR: Record<string, string> = {
-  UNCLASS: "text-green-400", CUI: "text-yellow-400", SECRET: "text-orange-400", TS: "text-red-400",
+  UNCLASS: "text-blue-400", CUI: "text-yellow-400", SECRET: "text-orange-400", TS: "text-red-400",
 };
 
 function AarForm({ aar, ops, onClose }: { aar?: AfterActionReport; ops: Operation[]; onClose: () => void }) {
@@ -108,7 +108,7 @@ function AarForm({ aar, ops, onClose }: { aar?: AfterActionReport; ops: Operatio
 
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" className="text-xs" onClick={onClose}>CANCEL</Button>
-        <Button size="sm" className="text-xs bg-green-800 hover:bg-green-700" onClick={submit} disabled={create.isPending || update.isPending}>
+        <Button size="sm" className="text-xs bg-blue-800 hover:bg-blue-700" onClick={submit} disabled={create.isPending || update.isPending}>
           {aar ? "UPDATE" : "SUBMIT"} AAR
         </Button>
       </div>
@@ -125,7 +125,7 @@ function AarCard({ aar, canAdmin, onDelete }: { aar: AfterActionReport; canAdmin
       <div className="flex items-start justify-between px-3 py-2.5 cursor-pointer" onClick={() => setExpanded(e => !e)}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <FileText size={12} className="text-green-400 shrink-0" />
+            <FileText size={12} className="text-blue-400 shrink-0" />
             {aar.docNumber ? <span className="text-[10px] font-mono text-muted-foreground/70">#{aar.docNumber}</span> : null}
             <span className="text-xs font-bold tracking-wider">{aar.title}</span>
             <span className={`text-[9px] font-bold tracking-wider ${cls}`}>{aar.classification}</span>
@@ -174,7 +174,7 @@ export default function AfterActionPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [open, setOpen] = useState(false);
 
   const { data: aars = [] } = useQuery<AfterActionReport[]>({ queryKey: ["/api/aar"], queryFn: () => apiRequest("GET", "/api/aar") });
@@ -194,7 +194,7 @@ export default function AfterActionPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1">
               <Plus size={12} /> NEW AAR
             </Button>
           </DialogTrigger>

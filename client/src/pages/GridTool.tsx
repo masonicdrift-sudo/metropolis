@@ -17,7 +17,7 @@ interface Marker {
 }
 
 const MARKER_CONFIG: Record<string, { color: string; symbol: string; label: string }> = {
-  friendly:   { color: "text-green-400",  symbol: "▲", label: "FRIENDLY" },
+  friendly:   { color: "text-blue-400",  symbol: "▲", label: "FRIENDLY" },
   enemy:      { color: "text-red-400",    symbol: "✕", label: "ENEMY" },
   objective:  { color: "text-yellow-400", symbol: "★", label: "OBJECTIVE" },
   waypoint:   { color: "text-blue-400",   symbol: "◆", label: "WAYPOINT" },
@@ -30,8 +30,8 @@ function CopyBtn({ value }: { value: string }) {
     navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); });
   };
   return (
-    <button onClick={copy} className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Copy grid">
-      {copied ? <CheckCheck size={11} className="text-green-400" /> : <Copy size={11} />}
+    <button onClick={copy} className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Copy grid">
+      {copied ? <CheckCheck size={11} className="text-blue-400" /> : <Copy size={11} />}
     </button>
   );
 }
@@ -105,7 +105,7 @@ export default function GridTool() {
                 <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   placeholder="Optional description" className="text-xs" />
               </div>
-              <Button size="sm" className="w-full bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" onClick={addMarker}>
+              <Button size="sm" className="w-full bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" onClick={addMarker}>
                 <Plus size={12} /> ADD MARKER
               </Button>
             </div>
@@ -118,7 +118,7 @@ export default function GridTool() {
               placeholder="Paste or type MGRS..." className="text-xs font-mono uppercase" />
             {calcResult && (
               <div className="mt-2 flex items-center justify-between">
-                <div className="text-[11px] font-mono text-green-400">{calcResult}</div>
+                <div className="text-[11px] font-mono text-blue-400">{calcResult}</div>
                 <CopyBtn value={mgrs} />
               </div>
             )}
@@ -131,7 +131,7 @@ export default function GridTool() {
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {unitRefs.map(r => (
                   <div key={r.label} className="flex items-center justify-between text-[10px] py-0.5">
-                    <span className="text-green-400 font-bold">▲ {r.label}</span>
+                    <span className="text-blue-400 font-bold">▲ {r.label}</span>
                     <div className="flex items-center gap-1">
                       <span className="font-mono text-muted-foreground">{r.grid}</span>
                       <CopyBtn value={r.grid} />
@@ -174,7 +174,7 @@ export default function GridTool() {
             {markers.map(m => {
               const cfg = MARKER_CONFIG[m.type];
               return (
-                <div key={m.id} className="flex items-center justify-between px-2 py-2 bg-secondary/30 rounded border border-border hover:border-green-900/50 transition-colors">
+                <div key={m.id} className="flex items-center justify-between px-2 py-2 bg-secondary/30 rounded border border-border hover:border-blue-900/50 transition-colors">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`text-base leading-none shrink-0 ${cfg.color}`}>{cfg.symbol}</span>
                     <div className="min-w-0">

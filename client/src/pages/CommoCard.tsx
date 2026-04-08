@@ -31,8 +31,8 @@ function CopyBtn({ text }: { text: string }) {
   const [done, setDone] = useState(false);
   const copy = () => { navigator.clipboard.writeText(text); setDone(true); setTimeout(() => setDone(false), 1800); };
   return (
-    <button onClick={copy} className="ml-1 text-muted-foreground/50 hover:text-green-400 transition-colors">
-      {done ? <Check size={9} className="text-green-400" /> : <Copy size={9} />}
+    <button onClick={copy} className="ml-1 text-muted-foreground/50 hover:text-blue-400 transition-colors">
+      {done ? <Check size={9} className="text-blue-400" /> : <Copy size={9} />}
     </button>
   );
 }
@@ -93,11 +93,11 @@ function NetsTable({ nets }: { nets: Net[] }) {
             const isAirNet = ["ATG", "Inter-Ship", "Ship 1", "Ship 2"].includes(net.label);
             const isMedSuas = ["MEDICAL", "sUAS OPS"].includes(net.label);
             return (
-              <tr key={i} className={`transition-colors hover:bg-secondary/20 ${isAirNet ? "bg-blue-950/10" : ""} ${isMedSuas ? "bg-green-950/10" : ""} ${isConvoy ? "bg-yellow-950/10" : ""}`}>
+              <tr key={i} className={`transition-colors hover:bg-secondary/20 ${isAirNet ? "bg-blue-950/10" : ""} ${isMedSuas ? "bg-blue-950/10" : ""} ${isConvoy ? "bg-yellow-950/10" : ""}`}>
                 <td className="px-3 py-1.5">
                   <span className={`font-bold tracking-wider text-[10px] ${
                     isAirNet ? "text-blue-400" :
-                    isMedSuas ? "text-green-400" :
+                    isMedSuas ? "text-blue-400" :
                     isConvoy ? "text-yellow-400" :
                     "text-foreground"
                   }`}>{net.label}</span>
@@ -105,7 +105,7 @@ function NetsTable({ nets }: { nets: Net[] }) {
                 <td className="px-3 py-1.5 text-center">
                   {net.freq ? (
                     <div className="flex items-center justify-center gap-1">
-                      <span className="kpi-value text-sm text-green-400">{net.freq}</span>
+                      <span className="kpi-value text-sm text-blue-400">{net.freq}</span>
                       <CopyBtn text={net.freq} />
                     </div>
                   ) : (
@@ -161,7 +161,7 @@ function RangerNetsBlock({ data }: { data: RangerNets }) {
             const isMedevac = net.label === "MEDEVAC";
             const isCsar = net.label === "CSAR" || net.label === "CAS";
             return (
-              <tr key={i} className={`hover:bg-red-950/10 transition-colors ${isMedevac ? "bg-green-950/10" : ""} ${isCsar ? "bg-blue-950/10" : ""}`}>
+              <tr key={i} className={`hover:bg-red-950/10 transition-colors ${isMedevac ? "bg-blue-950/10" : ""} ${isCsar ? "bg-blue-950/10" : ""}`}>
                 <td className="px-3 py-1 font-bold tracking-wider text-[10px] text-foreground/90">{net.label}</td>
                 <td className="px-3 py-1 text-center">
                   <div className="flex items-center justify-center gap-1">
@@ -242,7 +242,7 @@ function CardView({ card }: { card: CommoCard }) {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between pb-3 border-b border-dashed border-border/60">
         <div>
-          <h2 className="text-base font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+          <h2 className="text-base font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             {card.title}
           </h2>
           <div className="text-[9px] text-muted-foreground tracking-widest mt-0.5">
@@ -349,7 +349,7 @@ function CreateCardForm({ onClose }: { onClose: () => void }) {
         <Input placeholder="All Keycalls except BROKEN CRYPTO are external use only." value={form.keycallNote} onChange={set("keycallNote")} className="text-xs" /></div>
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" disabled={create.isPending}>CREATE CARD</Button>
+        <Button size="sm" onClick={submit} className="text-xs bg-blue-800 hover:bg-blue-700" disabled={create.isPending}>CREATE CARD</Button>
       </div>
     </div>
   );
@@ -363,7 +363,7 @@ export default function CommoCardPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const isMobile = useIsMobile();
-  const isAdmin = user?.role === "admin" || user?.role === "owner";
+  const isAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
 
   const { data: cards = [] } = useQuery<CommoCard[]>({
     queryKey: ["/api/commo-cards"],
@@ -403,8 +403,8 @@ export default function CommoCardPage() {
         )}
       >
         <div className="flex items-center gap-2 px-3 py-3 border-b border-border">
-          <Radio size={12} className="text-green-400" />
-          <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMMO CARDS</span>
+          <Radio size={12} className="text-blue-400" />
+          <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">COMMO CARDS</span>
         </div>
 
         <div className="flex-1 overflow-y-auto py-2 space-y-0.5 px-2">
@@ -413,11 +413,11 @@ export default function CommoCardPage() {
               onClick={() => setSelectedId(c.id)}
               className={`w-full text-left px-2 py-2 rounded transition-all text-xs ${
                 viewCard?.id === c.id
-                  ? "bg-green-950/60 border border-green-900/50 text-green-400"
+                  ? "bg-blue-950/60 border border-blue-900/50 text-blue-400"
                   : "hover:bg-secondary text-muted-foreground hover:text-foreground"
               }`}>
               <div className="flex items-center gap-1 mb-0.5">
-                {c.active && <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />}
+                {c.active && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />}
                 <span className="font-mono font-bold text-[10px] truncate tracking-wider">
                   {c.docNumber ? <span className="text-muted-foreground/70">#{c.docNumber} </span> : null}
                   {c.title}
@@ -435,7 +435,7 @@ export default function CommoCardPage() {
           <div className="px-2 pb-3 border-t border-border pt-2">
             <Dialog open={createOpen} onOpenChange={setCreateOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="w-full text-[10px] bg-green-900/50 hover:bg-green-800/60 border border-green-800/40 text-green-400 gap-1">
+                <Button size="sm" className="w-full text-[10px] bg-blue-900/50 hover:bg-blue-800/60 border border-blue-800/40 text-blue-400 gap-1">
                   <Plus size={10} /> NEW CARD
                 </Button>
               </DialogTrigger>
@@ -457,7 +457,7 @@ export default function CommoCardPage() {
               <div className="flex gap-2 mb-4">
                 {!viewCard.active && (
                   <Button size="sm" onClick={() => activate.mutate(viewCard.id)}
-                    className="text-[10px] bg-green-900/50 hover:bg-green-800 border border-green-800/40 text-green-400 gap-1">
+                    className="text-[10px] bg-blue-900/50 hover:bg-blue-800 border border-blue-800/40 text-blue-400 gap-1">
                     <CheckCircle size={10} /> SET AS ACTIVE
                   </Button>
                 )}

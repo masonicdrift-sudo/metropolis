@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 function StatusBar({ value, label }: { value: number; label: string }) {
-  const color = value > 60 ? "bar-green" : value > 30 ? "bar-yellow" : "bar-red";
+  const color = value > 60 ? "bar-blue" : value > 30 ? "bar-yellow" : "bar-red";
   return (
     <div className="flex items-center gap-2">
       <div className="text-[9px] text-muted-foreground w-12 shrink-0">{label}</div>
@@ -92,7 +92,7 @@ function AssetForm({ asset, units, onClose }: { asset?: Asset; units: Unit[]; on
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700">{asset ? "UPDATE" : "REGISTER"}</Button>
+        <Button size="sm" onClick={submit} className="text-xs bg-blue-800 hover:bg-blue-700">{asset ? "UPDATE" : "REGISTER"}</Button>
       </div>
     </div>
   );
@@ -131,7 +131,7 @@ export default function Assets() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-new-asset">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" data-testid="button-new-asset">
               <Plus size={12} /> REGISTER ASSET
             </Button>
           </DialogTrigger>
@@ -145,7 +145,7 @@ export default function Assets() {
       {/* Status summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-3">
         {[
-          { label: "OPERATIONAL", val: opCount, color: "text-green-400" },
+          { label: "OPERATIONAL", val: opCount, color: "text-blue-400" },
           { label: "DEGRADED", val: degCount, color: "text-orange-400" },
           { label: "MAINTENANCE", val: mntCount, color: "text-yellow-400" },
           { label: "DESTROYED", val: assets.filter(a => a.status === "destroyed").length, color: "text-red-400" },
@@ -161,7 +161,7 @@ export default function Assets() {
       <div className="tac-filter-row mb-3">
         {types.map(t => (
           <button key={t} onClick={() => setFilter(t)}
-            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === t ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filter === t ? "bg-blue-900 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
             {t.replace("_", " ")}
           </button>
         ))}
@@ -191,7 +191,7 @@ export default function Assets() {
             </div>
             <div className="text-[9px] text-muted-foreground space-y-0.5">
               <div>S/N: <span className="font-mono text-foreground/70">{a.serialNumber}</span></div>
-              <div>UNIT: <span className="text-green-400/80">{getUnitName(a.assignedUnitId || 0)}</span></div>
+              <div>UNIT: <span className="text-blue-400/80">{getUnitName(a.assignedUnitId || 0)}</span></div>
               {a.grid && <div className="grid-coord">{a.grid}</div>}
             </div>
             {a.notes && <div className="text-[9px] text-muted-foreground/70 mt-1.5 border-t border-border pt-1.5 line-clamp-1">{a.notes}</div>}

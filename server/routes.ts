@@ -468,6 +468,25 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   // ── User management (admin+ can list/create, only owner can delete admins) ───
   app.get("/api/users", requireAdmin, (_, res) => res.json(storage.getUsers()));
+  // ── User profiles (any logged-in user can view) ─────────────────────────────
+  app.get("/api/profile/:username", requireAuth, (req, res) => {
+    const username = String(req.params.username || "").trim();
+    if (!username) return res.status(400).json({ error: "username required" });
+    const u = storage.getUserByUsername(username);
+    if (!u) return res.status(404).json({ error: "Not found" });
+    // Only return safe/public fields (no passwordHash)
+    res.json({
+      username: u.username,
+      accessLevel: u.accessLevel,
+      tacticalRole: u.role || "",
+      rank: u.rank || "",
+      assignedUnit: u.assignedUnit || "",
+      milIdNumber: u.milIdNumber || "",
+      mos: u.mos || "",
+      createdAt: u.createdAt,
+      lastLogin: u.lastLogin,
+    });
+  });
   /** Roster for any logged-in user — DMs, @mentions (no admin required). */
   app.get("/api/users/directory", requireAuth, (_, res) => {
     res.json(
@@ -1274,6 +1293,112 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (target !== req.session.username && (ACCESS_RANK[req.session.accessLevel || ""] ?? 0) < ACCESS_RANK.admin)
       return res.status(403).json({ error: "Forbidden" });
     const ps = storage.upsertPerstat(target, dutyStatus || "active", notes || ""); wsPush("PERSTAT"); res.json(ps);
+  });
+
+  // ── Personnel roster (fillable line roster) ───────────────────────────────────
+  const personnelRosterPostSchema = z.object({
+    sortOrder: z.number().int().min(0).max(1_000_000).optional(),
+    lineNo: z.string().max(32).optional().default(""),
+    lastName: z.string().max(120).optional().default(""),
+    firstName: z.string().max(120).optional().default(""),
+    rank: z.string().max(32).optional().default(""),
+    mos: z.string().max(32).optional().default(""),
+    billet: z.string().max(120).optional().default(""),
+    unit: z.string().max(120).optional().default(""),
+    phone: z.string().max(64).optional().default(""),
+    bloodType: z.string().max(16).optional().default(""),
+    status: z.string().max(32).optional().default("present"),
+    notes: z.string().max(2000).optional().default(""),
+  });
+  const personnelRosterPatchSchema = personnelRosterPostSchema.partial();
+
+  app.get("/api/personnel-roster", requireAuth, (_, res) => {
+    res.json(storage.getPersonnelRosterEntries());
+  });
+
+  app.post("/api/personnel-roster", requireAuth, (req, res) => {
+    const parsed = personnelRosterPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const all = storage.getPersonnelRosterEntries();
+    const nextSort =
+      parsed.data.sortOrder ??
+      (all.length ? Math.max(...all.map((r) => r.sortOrder)) : 0) + 1;
+    const row = storage.createPersonnelRosterEntry({
+      sortOrder: nextSort,
+      lineNo: parsed.data.lineNo,
+      lastName: parsed.data.lastName,
+      firstName: parsed.data.firstName,
+      rank: parsed.data.rank,
+      mos: parsed.data.mos,
+      billet: parsed.data.billet,
+      unit: parsed.data.unit,
+      phone: parsed.data.phone,
+      bloodType: parsed.data.bloodType,
+      status: parsed.data.status,
+      notes: parsed.data.notes,
+      createdBy: req.session.username!,
+      createdAt: now,
+      updatedAt: now,
+    });
+    wsPush("PERSONNEL_ROSTER");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "personnel_roster",
+      entityId: row.id,
+      summary: `Added roster line: ${[row.rank, row.lastName, row.firstName].filter(Boolean).join(" ") || `#${row.id}`}`,
+      after: row,
+    });
+    res.status(201).json(row);
+  });
+
+  app.patch("/api/personnel-roster/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const parsed = personnelRosterPatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const existing = storage.getPersonnelRosterEntry(id);
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const isStaff = callerRank >= ACCESS_RANK.admin;
+    if (existing.createdBy !== req.session.username && !isStaff) {
+      return res.status(403).json({ error: "Only the author or an admin/owner can edit this line" });
+    }
+    const now = new Date().toISOString();
+    const row = storage.updatePersonnelRosterEntry(id, { ...parsed.data, updatedAt: now });
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("PERSONNEL_ROSTER");
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "personnel_roster",
+      entityId: row.id,
+      summary: `Updated roster line #${row.id}`,
+      before: existing,
+      after: row,
+    });
+    res.json(row);
+  });
+
+  app.delete("/api/personnel-roster/:id", requireAuth, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getPersonnelRosterEntry(id);
+    const result = storage.tryDeletePersonnelRosterEntry(id, req.session.username!, req.session.accessLevel || "");
+    if (!result.ok) {
+      if (result.reason === "forbidden") {
+        return res.status(403).json({ error: "Only the author or an admin/owner can delete this line" });
+      }
+      return res.status(404).json({ error: "Not found" });
+    }
+    wsPush("PERSONNEL_ROSTER");
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "personnel_roster",
+      entityId: id,
+      summary: `Deleted roster line #${id}`,
+      before,
+    });
+    res.status(204).send();
   });
 
   // ── After Action Reports ──────────────────────────────────────────────────────

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   medal:         { label: "MEDAL",         color: "text-yellow-400", icon: "🎖" },
-  commendation:  { label: "COMMENDATION",  color: "text-green-400",  icon: "⭐" },
+  commendation:  { label: "COMMENDATION",  color: "text-blue-400",  icon: "⭐" },
   citation:      { label: "CITATION",      color: "text-blue-400",   icon: "📋" },
   achievement:   { label: "ACHIEVEMENT",   color: "text-orange-400", icon: "🏆" },
 };
@@ -92,7 +92,7 @@ export default function AwardsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [open, setOpen] = useState(false);
   const [filterUser, setFilterUser] = useState("all");
 

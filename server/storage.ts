@@ -18,6 +18,7 @@ import type {
   GroupChat,
   IsofacDoc, InsertIsofacDoc,
   Perstat, InsertPerstat,
+  PersonnelRosterEntry, InsertPersonnelRosterEntry,
   AfterActionReport, InsertAar,
   OpTask, InsertOpTask,
   Award, InsertAward,
@@ -435,6 +436,26 @@ sqlite.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_calendar_events_date ON calendar_events(event_date);
 
+  CREATE TABLE IF NOT EXISTS personnel_roster_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    line_no TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    first_name TEXT NOT NULL DEFAULT '',
+    rank TEXT NOT NULL DEFAULT '',
+    mos TEXT NOT NULL DEFAULT '',
+    billet TEXT NOT NULL DEFAULT '',
+    unit TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    blood_type TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'present',
+    notes TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_personnel_roster_sort ON personnel_roster_entries(sort_order, id);
+
   CREATE TABLE IF NOT EXISTS activity_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts TEXT NOT NULL,
@@ -736,6 +757,16 @@ export interface IStorage {
   // PERSTAT
   getPerstat(): Perstat[];
   upsertPerstat(username: string, dutyStatus: string, notes?: string): Perstat;
+  // Personnel roster (line roster)
+  getPersonnelRosterEntries(): PersonnelRosterEntry[];
+  getPersonnelRosterEntry(id: number): PersonnelRosterEntry | undefined;
+  createPersonnelRosterEntry(e: InsertPersonnelRosterEntry): PersonnelRosterEntry;
+  updatePersonnelRosterEntry(id: number, e: Partial<InsertPersonnelRosterEntry>): PersonnelRosterEntry | undefined;
+  tryDeletePersonnelRosterEntry(
+    id: number,
+    username: string,
+    accessLevel: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
   // After Action Reports
   getAars(): AfterActionReport[];
   getAar(id: number): AfterActionReport | undefined;
@@ -1284,6 +1315,33 @@ export class Storage implements IStorage {
         .where(eq(schema.perstat.username, username)).returning().get()!;
     }
     return db.insert(schema.perstat).values({ username, dutyStatus, lastSeen: now, notes }).returning().get();
+  }
+
+  getPersonnelRosterEntries() {
+    return db.select().from(schema.personnelRosterEntries)
+      .orderBy(asc(schema.personnelRosterEntries.sortOrder), asc(schema.personnelRosterEntries.id)).all();
+  }
+  getPersonnelRosterEntry(id: number) {
+    return db.select().from(schema.personnelRosterEntries).where(eq(schema.personnelRosterEntries.id, id)).get();
+  }
+  createPersonnelRosterEntry(e: InsertPersonnelRosterEntry) {
+    return db.insert(schema.personnelRosterEntries).values(e).returning().get();
+  }
+  updatePersonnelRosterEntry(id: number, e: Partial<InsertPersonnelRosterEntry>) {
+    return db.update(schema.personnelRosterEntries).set(e).where(eq(schema.personnelRosterEntries.id, id)).returning().get();
+  }
+  tryDeletePersonnelRosterEntry(
+    id: number,
+    username: string,
+    role: string,
+  ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" } {
+    const row = db.select().from(schema.personnelRosterEntries).where(eq(schema.personnelRosterEntries.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    const rank = schema.ACCESS_RANK[role] ?? 0;
+    const isStaff = rank >= schema.ACCESS_RANK.admin;
+    if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    db.delete(schema.personnelRosterEntries).where(eq(schema.personnelRosterEntries.id, id)).run();
+    return { ok: true };
   }
 
   // After Action Reports

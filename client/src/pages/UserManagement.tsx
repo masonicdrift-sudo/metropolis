@@ -29,7 +29,7 @@ const MOS_SORTED = [...US_ARMY_MOS_OPTIONS].sort((a, b) =>
 
 // ── Rank tier colors ────────────────────────────────────────────────────────
 const TIER_COLOR: Record<string, string> = {
-  enlisted: "text-green-400",
+  enlisted: "text-blue-400",
   NCO:      "text-yellow-400",
   WO:       "text-blue-400",
   officer:  "text-orange-400",
@@ -86,13 +86,13 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
-          placeholder="Enter callsign..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+          placeholder="Enter callsign..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">RANK</label>
           <select value={form.rank} onChange={e => set("rank")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700">
             <option value="">— No Rank —</option>
             {["enlisted","NCO","WO","officer","MOS"].map(tier => (
               <optgroup key={tier} label={`── ${tier.toUpperCase()} ──`}>
@@ -106,7 +106,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ASSIGNED UNIT</label>
           <select value={form.assignedUnit} onChange={e => set("assignedUnit")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700">
             <option value="">— Unassigned —</option>
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
           </select>
@@ -118,7 +118,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
           <select
             value={form.rolePreset}
             onChange={(e) => set("rolePreset")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
           >
             <option value="">— Select —</option>
             {TACTICAL_ROLE_PRESETS.map((r) => (
@@ -131,7 +131,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
               value={form.role}
               onChange={(e) => set("role")(e.target.value)}
               placeholder="Custom role…"
-              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
+              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
             />
           )}
         </div>
@@ -140,8 +140,8 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
           <select
             value={form.accessLevel}
             onChange={(e) => set("accessLevel")(e.target.value)}
-            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 ${
-              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-green-400"
+            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 ${
+              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"
             } touch-manipulation min-h-[44px]`}
           >
             <option value="user">USER — Standard access</option>
@@ -165,7 +165,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
             value={form.milIdNumber}
             onChange={(e) => set("milIdNumber")(e.target.value)}
             placeholder="EDIPI / DoD ID"
-            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
           />
         </div>
         <div>
@@ -173,7 +173,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
           <select
             value={form.mos}
             onChange={(e) => set("mos")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
           >
             {MOS_SORTED.map((o) => (
               <option key={o.code} value={o.code}>
@@ -187,16 +187,16 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
         <input type="password" value={form.password} onChange={e => set("password")(e.target.value)}
-          placeholder="••••••••" className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+          placeholder="••••••••" className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700" />
       </div>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">CONFIRM PASSWORD</label>
         <input type="password" value={form.confirm} onChange={e => set("confirm")(e.target.value)}
-          placeholder="••••••••" className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+          placeholder="••••••••" className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700" />
       </div>
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} disabled={create.isPending} className="text-xs bg-green-800 hover:bg-green-700">CREATE USER</Button>
+        <Button size="sm" onClick={submit} disabled={create.isPending} className="text-xs bg-blue-800 hover:bg-blue-700">CREATE USER</Button>
       </div>
     </div>
   );
@@ -250,7 +250,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
-          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider" />
+          className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
@@ -258,8 +258,8 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           <select
             value={form.accessLevel}
             onChange={(e) => set("accessLevel")(e.target.value)}
-            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider ${
-              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-green-400"
+            className={`w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 font-bold tracking-wider ${
+              form.accessLevel === "owner" ? "text-orange-400" : form.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"
             } touch-manipulation min-h-[44px]`}
           >
             <option value="user">USER</option>
@@ -272,7 +272,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           <select
             value={form.rolePreset}
             onChange={(e) => set("rolePreset")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
           >
             <option value="">— Select —</option>
             {TACTICAL_ROLE_PRESETS.map((r) => (
@@ -285,7 +285,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
               value={form.role}
               onChange={(e) => set("role")(e.target.value)}
               placeholder="Custom role…"
-              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
+              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
             />
           )}
         </div>
@@ -294,7 +294,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">RANK</label>
           <select value={form.rank} onChange={e => set("rank")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700">
             <option value="">— No Rank —</option>
             {["enlisted","NCO","WO","officer","MOS"].map(tier => (
               <optgroup key={tier} label={`── ${tier.toUpperCase()} ──`}>
@@ -308,7 +308,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">ASSIGNED UNIT</label>
           <select value={form.assignedUnit} onChange={e => set("assignedUnit")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700">
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700">
             <option value="">— Unassigned —</option>
             {units.map(u => <option key={u.id} value={u.callsign}>{u.callsign}</option>)}
           </select>
@@ -321,7 +321,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
             type="text"
             value={form.milIdNumber}
             onChange={(e) => set("milIdNumber")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+            className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
           />
         </div>
         <div>
@@ -329,7 +329,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           <select
             value={form.mos}
             onChange={(e) => set("mos")(e.target.value)}
-            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-green-700"
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
           >
             {MOS_SORTED.map((o) => (
               <option key={o.code} value={o.code}>
@@ -344,14 +344,14 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
         <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep)</div>
         <div className="space-y-2">
           <input type="password" value={form.password} onChange={e => set("password")(e.target.value)}
-            placeholder="New password..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+            placeholder="New password..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700" />
           <input type="password" value={form.confirm} onChange={e => set("confirm")(e.target.value)}
-            placeholder="Confirm..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-green-700" />
+            placeholder="Confirm..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700" />
         </div>
       </div>
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} disabled={update.isPending} className="text-xs bg-green-800 hover:bg-green-700">SAVE CHANGES</Button>
+        <Button size="sm" onClick={submit} disabled={update.isPending} className="text-xs bg-blue-800 hover:bg-blue-700">SAVE CHANGES</Button>
       </div>
     </div>
   );
@@ -401,7 +401,7 @@ export default function UserManagement() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1">
               <Plus size={12} /> CREATE USER
             </Button>
           </DialogTrigger>
@@ -416,7 +416,7 @@ export default function UserManagement() {
       <div className="tac-filter-row mb-3">
         {allFilters.map(f => (
           <button key={f} onClick={() => setUnitFilter(f)}
-            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${unitFilter === f ? "bg-green-900/60 text-green-400 border border-green-800/60" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
+            className={`px-3 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${unitFilter === f ? "bg-blue-900/60 text-blue-400 border border-blue-800/60" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
             {f} {f !== "ALL" && `(${users.filter(u => f === "UNASSIGNED" ? !u.assignedUnit : u.assignedUnit === f).length})`}
           </button>
         ))}
@@ -425,7 +425,7 @@ export default function UserManagement() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
         {[
-          { label: "TOTAL USERS", val: users.length, color: "text-green-400" },
+          { label: "TOTAL USERS", val: users.length, color: "text-blue-400" },
           { label: "WITH RANK", val: users.filter(u => u.rank).length, color: "text-yellow-400" },
           { label: "ASSIGNED", val: users.filter(u => u.assignedUnit).length, color: "text-blue-400" },
         ].map(s => (
@@ -454,14 +454,14 @@ export default function UserManagement() {
           </thead>
           <tbody className="divide-y divide-border">
             {filtered.map(u => (
-              <tr key={u.id} className={`hover:bg-secondary/20 transition-colors ${u.username === me?.username ? "bg-green-950/10" : ""}`}>
+              <tr key={u.id} className={`hover:bg-secondary/20 transition-colors ${u.username === me?.username ? "bg-blue-950/10" : ""}`}>
                 <td className="px-4 py-3" data-label="USERNAME">
                   <div className="flex items-center gap-2">
                     {u.accessLevel === "owner" ? <Crown size={12} className="text-orange-400 shrink-0" />
                       : u.accessLevel === "admin" ? <ShieldCheck size={12} className="text-yellow-400 shrink-0" />
-                      : <User size={12} className="text-green-400 shrink-0" />}
+                      : <User size={12} className="text-blue-400 shrink-0" />}
                     <span className="font-mono font-bold tracking-wider">{u.username}</span>
-                    {u.username === me?.username && <span className="text-[9px] text-green-500">(YOU)</span>}
+                    {u.username === me?.username && <span className="text-[9px] text-blue-500">(YOU)</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3 font-mono text-[10px] text-cyan-400/90" data-label="MIL ID">
@@ -489,7 +489,7 @@ export default function UserManagement() {
                 </td>
                 <td className="px-4 py-3" data-label="UNIT">
                   {u.assignedUnit
-                    ? <span className="text-[10px] font-mono font-bold text-green-400 tracking-wider">{u.assignedUnit}</span>
+                    ? <span className="text-[10px] font-mono font-bold text-blue-400 tracking-wider">{u.assignedUnit}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">UNASSIGNED</span>}
                 </td>
                 <td className="px-4 py-3" data-label="TACTICAL ROLE">
@@ -507,7 +507,7 @@ export default function UserManagement() {
                 <td className="px-4 py-3" data-label="ACTIONS">
                   <div className="flex items-center gap-1">
                     {me?.accessLevel === "owner" && (
-                      <button onClick={() => setEditUser(u)} className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Edit">
+                      <button onClick={() => setEditUser(u)} className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Edit">
                         <Edit size={11} />
                       </button>
                     )}
@@ -536,7 +536,7 @@ export default function UserManagement() {
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle className="text-sm tracking-widest flex items-center gap-2">
-                EDIT — <span className="font-mono text-green-400">{editUser.username}</span>
+                EDIT — <span className="font-mono text-blue-400">{editUser.username}</span>
               </DialogTitle>
             </DialogHeader>
             <EditUserForm user={editUser} onClose={() => setEditUser(null)} units={units} />

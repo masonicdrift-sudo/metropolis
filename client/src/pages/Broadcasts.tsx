@@ -78,7 +78,7 @@ export default function BroadcastsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [open, setOpen] = useState(false);
 
   const { data: all = [] } = useQuery<Broadcast[]>({

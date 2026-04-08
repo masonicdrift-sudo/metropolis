@@ -627,8 +627,8 @@ function TemplateFieldRow({
 
   return (
     <div className={field.multiline ? "col-span-2" : ""}>
-      <label className={`text-[9px] tracking-wider block mb-1 ${field.required ? "text-green-400/80" : "text-muted-foreground"}`}>
-        {field.label}{field.required && <span className="text-green-400/60 ml-1">(key field)</span>}
+      <label className={`text-[9px] tracking-wider block mb-1 ${field.required ? "text-blue-400/80" : "text-muted-foreground"}`}>
+        {field.label}{field.required && <span className="text-blue-400/60 ml-1">(key field)</span>}
       </label>
       {field.options && field.options.length > 0 && field.multiline && (
         <select
@@ -700,7 +700,7 @@ function FormatTemplate({ type, onFill }: { type: string; onFill: (text: string)
     <div className="border border-border rounded overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between px-3 py-2 text-[10px] tracking-wider transition-colors ${open ? "bg-green-950/30 text-green-400" : "bg-secondary/50 text-muted-foreground hover:text-foreground"}`}
+        className={`w-full flex items-center justify-between px-3 py-2 text-[10px] tracking-wider transition-colors ${open ? "bg-blue-950/30 text-blue-400" : "bg-secondary/50 text-muted-foreground hover:text-foreground"}`}
       >
         <div className="flex flex-col min-[380px]:flex-row min-[380px]:items-center gap-0.5 sm:gap-2 text-left min-w-0">
           <div className="flex items-center gap-2 shrink-0">
@@ -724,7 +724,7 @@ function FormatTemplate({ type, onFill }: { type: string; onFill: (text: string)
           </div>
           <div className="flex gap-2 pt-1">
             <Button size="sm" onClick={handleFill}
-              className="text-[10px] bg-green-800 hover:bg-green-700 h-7 px-3 tracking-wider">
+              className="text-[10px] bg-blue-800 hover:bg-blue-700 h-7 px-3 tracking-wider">
               INSERT INTO MESSAGE
             </Button>
             <Button size="sm" variant="outline" onClick={handleClear}
@@ -744,7 +744,7 @@ export default function Communications() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const isOwner = user?.role === "owner";
+  const isOwner = user?.accessLevel === "owner";
   const [form, setForm] = useState<Partial<InsertCommsLog>>({
     channel: "PRIMARY", type: "SITREP", priority: "routine",
   });
@@ -836,8 +836,8 @@ export default function Communications() {
         {/* Compose */}
         <div className="md:col-span-5 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <Radio size={11} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMPOSE MESSAGE</span>
+            <Radio size={11} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">COMPOSE MESSAGE</span>
           </div>
           <div className="p-3 space-y-2.5">
             {/* From / To */}
@@ -906,7 +906,7 @@ export default function Communications() {
             </div>
 
             <Button size="sm" onClick={transmit} disabled={send.isPending}
-              className="w-full bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-transmit">
+              className="w-full bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" data-testid="button-transmit">
               <Send size={11} /> TRANSMIT
             </Button>
           </div>
@@ -915,12 +915,12 @@ export default function Communications() {
         {/* Log */}
         <div className="md:col-span-7 bg-card border border-border rounded min-h-0 flex flex-col">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-3 py-2 border-b border-border shrink-0">
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400 shrink-0">MESSAGE LOG</span>
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400 shrink-0">MESSAGE LOG</span>
             <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:justify-end sm:gap-2">
               <div className="tac-filter-row sm:flex-wrap sm:overflow-visible">
                 {["ALL", ...CHANNELS].map(ch => (
                   <button key={ch} onClick={() => setFilterChan(ch)}
-                    className={`text-[9px] px-2 py-0.5 rounded tracking-wider transition-all ${filterChan === ch ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
+                    className={`text-[9px] px-2 py-0.5 rounded tracking-wider transition-all ${filterChan === ch ? "bg-blue-900 text-blue-400 border border-blue-800" : "text-muted-foreground bg-secondary hover:text-foreground"}`}>
                     {ch}
                   </button>
                 ))}
@@ -956,7 +956,7 @@ export default function Communications() {
               <div key={msg.id} className={`px-3 py-2.5 ${priorityColor[msg.priority] || ""}`} data-testid={`msg-${msg.id}`}>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`badge-${msg.priority} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase`}>{msg.priority}</span>
-                  <span className="text-[10px] font-bold text-green-400">{msg.fromCallsign}</span>
+                  <span className="text-[10px] font-bold text-blue-400">{msg.fromCallsign}</span>
                   <span className="text-[9px] text-muted-foreground">▶</span>
                   <span className="text-[10px] font-bold">{msg.toCallsign}</span>
                   <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{msgTypeSelectLabel(msg.type)}</span>
@@ -967,7 +967,7 @@ export default function Communications() {
                       <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />ACK
                     </button>
                   ) : (
-                    <span className="text-[9px] text-green-600 flex items-center gap-0.5 ml-1"><CheckCheck size={9} />ACK</span>
+                    <span className="text-[9px] text-blue-600 flex items-center gap-0.5 ml-1"><CheckCheck size={9} />ACK</span>
                   )}
                   {isOwner && (
                     <button onClick={() => deleteEntry.mutate(msg.id)}

@@ -70,8 +70,8 @@ export default function ActivityLogPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <ScrollText className="h-4 w-4 text-green-400" />
-            <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+            <ScrollText className="h-4 w-4 text-blue-400" />
+            <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
               ACTIVITY LOG
             </h1>
           </div>
@@ -134,7 +134,7 @@ export default function ActivityLogPage() {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[9px] font-mono text-muted-foreground">{new Date(r.ts).toLocaleString()}</span>
-                <span className="text-[9px] font-bold text-green-400">{r.actorUsername}</span>
+                <span className="text-[9px] font-bold text-blue-400">{r.actorUsername}</span>
                 <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{r.action}</span>
                 <span className="text-[9px] text-muted-foreground">{r.entityType}{r.entityId ? `#${r.entityId}` : ""}</span>
                 <span className="text-[9px] text-muted-foreground/70 ml-auto">{canSeeIp && r.ip ? `IP ${r.ip}` : ""}</span>

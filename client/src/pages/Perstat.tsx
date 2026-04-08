@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-  active:   { label: "ACTIVE",    color: "text-green-400",  dot: "bg-green-500" },
+  active:   { label: "ACTIVE",    color: "text-blue-400",  dot: "bg-blue-500" },
   off_duty: { label: "OFF DUTY",  color: "text-yellow-400", dot: "bg-yellow-500" },
   leave:    { label: "ON LEAVE",  color: "text-blue-400",   dot: "bg-blue-500" },
   mia:      { label: "MIA",       color: "text-orange-400", dot: "bg-orange-500 animate-pulse" },
@@ -51,7 +51,7 @@ function EditModal({ perstat, username, onClose }: { perstat?: Perstat; username
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" className="text-xs" onClick={onClose}>CANCEL</Button>
-        <Button size="sm" className="text-xs bg-green-800 hover:bg-green-700" onClick={() => mut.mutate()} disabled={mut.isPending}>UPDATE</Button>
+        <Button size="sm" className="text-xs bg-blue-800 hover:bg-blue-700" onClick={() => mut.mutate()} disabled={mut.isPending}>UPDATE</Button>
       </div>
     </div>
   );
@@ -59,7 +59,7 @@ function EditModal({ perstat, username, onClose }: { perstat?: Perstat; username
 
 export default function PerstatPage() {
   const { user } = useAuth();
-  const canEdit = user?.role === "admin" || user?.role === "owner";
+  const canEdit = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [editEntry, setEditEntry] = useState<Perstat | undefined>();
   const [selfOpen, setSelfOpen] = useState(false);
 
@@ -92,7 +92,7 @@ export default function PerstatPage() {
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>PERSTAT — PERSONNEL ACCOUNTABILITY</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">{entries.length} ACCOUNTED ▪ {counts.active || 0} ACTIVE ▪ {counts.mia || 0} MIA ▪ {counts.kia || 0} KIA</div>
         </div>
-        <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" onClick={() => setSelfOpen(true)}>
+        <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" onClick={() => setSelfOpen(true)}>
           <UserCheck size={12} /> MY STATUS
         </Button>
       </div>

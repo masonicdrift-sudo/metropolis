@@ -136,8 +136,8 @@ export default function SupportRequestsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <LifeBuoy className="h-4 w-4 text-green-400" />
-            <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+            <LifeBuoy className="h-4 w-4 text-blue-400" />
+            <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
               SUPPORT REQUESTS
             </h1>
           </div>
@@ -145,7 +145,7 @@ export default function SupportRequestsPage() {
             Reachback-style requests with assignment and status.
           </div>
         </div>
-        <Button size="sm" className="h-8 text-[10px] tracking-wider bg-green-800 hover:bg-green-700" onClick={openNew}>
+        <Button size="sm" className="h-8 text-[10px] tracking-wider bg-blue-800 hover:bg-blue-700" onClick={openNew}>
           <Plus className="h-3.5 w-3.5 mr-1" /> NEW REQUEST
         </Button>
       </div>
@@ -250,7 +250,7 @@ export default function SupportRequestsPage() {
             )}
             <Button
               size="sm"
-              className="bg-green-800 hover:bg-green-700"
+              className="bg-blue-800 hover:bg-blue-700"
               onClick={submit}
               disabled={(editing !== null && !canEdit(editing)) || createMut.isPending || updateMut.isPending}
             >

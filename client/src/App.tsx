@@ -19,6 +19,7 @@ import CommoCardPage from "./pages/CommoCard";
 import IsofacPage from "./pages/Isofac";
 import ChangePassword from "./pages/ChangePassword";
 import PerstatPage from "./pages/Perstat";
+import PersonnelRosterPage from "./pages/PersonnelRoster";
 import AfterActionPage from "./pages/AfterAction";
 import OpTaskBoard from "./pages/OpTaskBoard";
 import AwardsPage from "./pages/Awards";
@@ -33,6 +34,7 @@ import LinkAnalysisPage from "./pages/LinkAnalysis";
 import SupportRequestsPage from "./pages/SupportRequests";
 import MedicalCasualtyPage from "./pages/MedicalCasualty";
 import ApprovalsPage from "./pages/Approvals";
+import UserProfilePage from "./pages/UserProfile";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
@@ -45,8 +47,9 @@ import {
   LayoutDashboard, Radio, Target, ShieldAlert,
   Crosshair, Package, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, Signal, BookOpen,
-  Settings, Menu, X, ChevronRight, UserCheck, FileText,
-  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, LifeBuoy, ScrollText
+  Settings, Menu, X, ChevronRight,   UserCheck, FileText,
+  Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, LifeBuoy, ScrollText,
+  ClipboardList
 } from "lucide-react";
 
 // All nav items
@@ -67,6 +70,7 @@ const NAV = [
   { path: "/threats",     label: "THREAT BOARD", icon: Target,          short: "Threats" },
   { path: "/units",       label: "UNITS",        icon: Users,           short: "Units" },
   { path: "/perstat",     label: "PERSTAT",      icon: UserCheck,       short: "PERSTAT" },
+  { path: "/personnel-roster", label: "ROSTER", icon: ClipboardList,   short: "Roster" },
   { path: "/messages",    label: "MESSAGES",     icon: MessageSquare,   short: "Msgs" },
   { path: "/aar",         label: "AFTER ACTION", icon: FileText,        short: "AAR" },
   { path: "/task-board",  label: "TASK BOARD",   icon: Kanban,          short: "Tasks" },
@@ -121,7 +125,7 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
 
       <div className="px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
           <span className="text-[10px] text-muted-foreground tracking-wider">NET: SECURE ▪ AES-256</span>
         </div>
       </div>
@@ -132,10 +136,10 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
           const isMsg = path === "/messages";
           return (
             <Link key={path} href={path} className={`flex items-center justify-between px-3 py-2 rounded text-xs tracking-[0.08em] transition-all duration-150 cursor-pointer ${
-              active ? "bg-green-950/60 text-green-400 border border-green-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              active ? "bg-blue-950/60 text-blue-400 border border-blue-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
             }`}>
               <div className="flex items-center gap-3">
-                <Icon size={13} className={active ? "text-green-400" : ""} />
+                <Icon size={13} className={active ? "text-blue-400" : ""} />
                 {label}
               </div>
               {isMsg && totalUnread > 0 && !active && (
@@ -172,11 +176,11 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
         <div className="flex items-center gap-2 px-1">
           <div className={`w-5 h-5 rounded border flex items-center justify-center ${
             user?.accessLevel === "owner" ? "bg-orange-900/50 border-orange-800/50" :
-            user?.accessLevel === "admin" ? "bg-yellow-900/50 border-yellow-800/50" : "bg-green-900/50 border-green-800/50"
+            user?.accessLevel === "admin" ? "bg-yellow-900/50 border-yellow-800/50" : "bg-blue-900/50 border-blue-800/50"
           }`}>
             {user?.accessLevel === "owner" ? <Crown size={11} className="text-orange-400" /> :
              user?.accessLevel === "admin" ? <ShieldCheck size={11} className="text-yellow-400" /> :
-             <Users size={11} className="text-green-400" />}
+             <Users size={11} className="text-blue-400" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">
@@ -192,7 +196,7 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
         </div>
         <div className="flex gap-1">
           <Link href="/settings" className={`flex-1 flex items-center gap-2 px-3 py-1.5 rounded text-[10px] transition-all tracking-wider ${
-            location === "/settings" ? "text-green-400 bg-green-950/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+            location === "/settings" ? "text-blue-400 bg-blue-950/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}><Settings size={11} />SETTINGS</Link>
           <button onClick={logout} className="flex items-center gap-2 px-3 py-1.5 rounded text-[10px] text-muted-foreground hover:text-red-400 hover:bg-red-950/20 transition-all" data-testid="button-logout">
             <LogOut size={11} />
@@ -277,7 +281,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <div>
-            <div className="text-xs font-bold text-green-400 tracking-widest">NAVIGATION</div>
+            <div className="text-xs font-bold text-blue-400 tracking-widest">NAVIGATION</div>
             <div className="text-[9px] text-muted-foreground tracking-wider mt-0.5">
               <span className={`font-bold ${user?.accessLevel === "owner" ? "text-orange-400" : user?.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"}`}>{user?.username}</span>
               {" "}▪ {user?.accessLevel?.toUpperCase()}
@@ -295,10 +299,10 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
             return (
               <Link key={path} href={path} onClick={handleNav}
                 className={`flex items-center justify-between px-4 py-3.5 border-b border-border/40 transition-colors ${
-                  active ? "bg-green-950/40 text-green-400" : "text-foreground/80 hover:bg-secondary"
+                  active ? "bg-blue-950/40 text-blue-400" : "text-foreground/80 hover:bg-secondary"
                 }`}>
                 <div className="flex items-center gap-3">
-                  <Icon size={16} className={active ? "text-green-400" : "text-muted-foreground"} />
+                  <Icon size={16} className={active ? "text-blue-400" : "text-muted-foreground"} />
                   <span className="text-sm tracking-wider">{label}</span>
                 </div>
                 <ChevronRight size={14} className="text-muted-foreground/40" />
@@ -343,7 +347,7 @@ function BottomTabBar({ onOpenMore, mobileShell }: { onOpenMore: () => void; mob
         const showBadge = path === "/messages" && totalUnread > 0 && !active;
         return (
           <Link key={path} href={path}
-            className={`relative flex-1 flex flex-col items-center gap-0.5 py-2.5 px-0.5 min-h-[52px] min-w-0 justify-center transition-colors ${active ? "text-green-400" : "text-muted-foreground"}`}>
+            className={`relative flex-1 flex flex-col items-center gap-0.5 py-2.5 px-0.5 min-h-[52px] min-w-0 justify-center transition-colors ${active ? "text-blue-400" : "text-muted-foreground"}`}>
             <Icon size={20} strokeWidth={active ? 2.5 : 1.5} className="shrink-0" />
             <span className="text-[8px] sm:text-[9px] tracking-wider truncate max-w-full">{label}</span>
             {showBadge && (
@@ -415,7 +419,7 @@ function AppRoutes() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center scanlines">
         <div className="text-center space-y-2">
-          <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
           <div className="text-[10px] text-muted-foreground tracking-widest">INITIALIZING NODE...</div>
         </div>
       </div>
@@ -440,6 +444,7 @@ function AppRoutes() {
         <Route path="/isofac" component={IsofacPage} />
         <Route path="/settings" component={ChangePassword} />
         <Route path="/perstat" component={PerstatPage} />
+        <Route path="/personnel-roster" component={PersonnelRosterPage} />
         <Route path="/aar" component={AfterActionPage} />
         <Route path="/task-board" component={OpTaskBoard} />
         <Route path="/awards" component={AwardsPage} />
@@ -456,6 +461,7 @@ function AppRoutes() {
         <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.accessLevel === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
+        <Route path="/profile/:username" component={UserProfilePage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

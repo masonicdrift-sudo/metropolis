@@ -18,14 +18,14 @@ const PHASE_COLOR: Record<string, string> = {
   INFIL: "border-yellow-800 bg-yellow-950/30",
   ACTION: "border-red-800 bg-red-950/30",
   EXFIL: "border-orange-800 bg-orange-950/30",
-  CONSOLIDATE: "border-green-800 bg-green-950/30",
+  CONSOLIDATE: "border-blue-800 bg-blue-950/30",
 };
 const PHASE_HEADER: Record<string, string> = {
   PREP: "text-blue-400", INFIL: "text-yellow-400", ACTION: "text-red-400",
-  EXFIL: "text-orange-400", CONSOLIDATE: "text-green-400",
+  EXFIL: "text-orange-400", CONSOLIDATE: "text-blue-400",
 };
 const STATUS_COLOR: Record<string, string> = {
-  pending: "text-muted-foreground", in_progress: "text-yellow-400", complete: "text-green-400",
+  pending: "text-muted-foreground", in_progress: "text-yellow-400", complete: "text-blue-400",
 };
 
 function TaskForm({ opId, onClose }: { opId: number; onClose: () => void }) {
@@ -74,7 +74,7 @@ function TaskForm({ opId, onClose }: { opId: number; onClose: () => void }) {
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" className="text-xs" onClick={onClose}>CANCEL</Button>
-        <Button size="sm" className="text-xs bg-green-800 hover:bg-green-700"
+        <Button size="sm" className="text-xs bg-blue-800 hover:bg-blue-700"
           onClick={() => { if (!form.title.trim()) { toast({ title: "Title required", variant: "destructive" }); return; } create.mutate(form); }}
           disabled={create.isPending}>ADD TASK</Button>
       </div>
@@ -98,7 +98,7 @@ function TaskCard({ task, canAdmin }: { task: OpTask; canAdmin: boolean }) {
   const statusCfg = STATUS_COLOR[task.status] || "text-muted-foreground";
 
   return (
-    <div className="bg-card border border-border rounded p-2 mb-1.5 hover:border-green-900/50 transition-colors">
+    <div className="bg-card border border-border rounded p-2 mb-1.5 hover:border-blue-900/50 transition-colors">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="text-[11px] font-bold leading-tight">{task.title}</div>
@@ -115,7 +115,7 @@ function TaskCard({ task, canAdmin }: { task: OpTask; canAdmin: boolean }) {
               <div className="absolute right-0 top-full mt-0.5 tac-menu bg-card border border-border rounded shadow-xl min-w-[110px] overflow-hidden">
                 {["pending", "in_progress", "complete"].map(s => (
                   <button key={s} onClick={() => { updateStatus.mutate(s); setStatusOpen(false); }}
-                    className={`w-full text-left px-2 py-1.5 text-[10px] tracking-wider hover:bg-secondary transition-colors ${s === task.status ? "text-green-400 font-bold" : "text-muted-foreground"}`}>
+                    className={`w-full text-left px-2 py-1.5 text-[10px] tracking-wider hover:bg-secondary transition-colors ${s === task.status ? "text-blue-400 font-bold" : "text-muted-foreground"}`}>
                     {s.replace("_", " ").toUpperCase()}
                   </button>
                 ))}
@@ -165,7 +165,7 @@ export default function OpTaskBoard() {
           <div className="text-[10px] text-muted-foreground tracking-wider">SELECT AN OPERATION TO VIEW PHASES</div>
         </div>
         {selectedOp && (
-          <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" onClick={() => setAddOpen(true)}>
+          <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" onClick={() => setAddOpen(true)}>
             <Plus size={12} /> ADD TASK
           </Button>
         )}
@@ -199,11 +199,11 @@ export default function OpTaskBoard() {
             <div className="flex-1">
               <div className="text-[10px] text-muted-foreground tracking-wider mb-1">OP PROGRESS — {op.name}</div>
               <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="kpi-value text-lg text-green-400">{pct}%</div>
+              <div className="kpi-value text-lg text-blue-400">{pct}%</div>
               <div className="text-[9px] text-muted-foreground">{done}/{tasks.length} TASKS</div>
             </div>
           </div>

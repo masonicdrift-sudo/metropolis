@@ -149,7 +149,7 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
               />
               <Button
                 size="sm"
-                className="h-8 text-[10px] bg-green-800 hover:bg-green-700 tracking-wider"
+                className="h-8 text-[10px] bg-blue-800 hover:bg-blue-700 tracking-wider"
                 onClick={() => {
                   const bt = linkDraft.bType.trim();
                   const bi = linkDraft.bId.trim();
@@ -167,7 +167,7 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
 
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
-        <Button size="sm" onClick={submit} className="text-xs bg-green-800 hover:bg-green-700" data-testid="button-submit-op">{op ? "UPDATE" : "CREATE"} OP</Button>
+        <Button size="sm" onClick={submit} className="text-xs bg-blue-800 hover:bg-blue-700" data-testid="button-submit-op">{op ? "UPDATE" : "CREATE"} OP</Button>
       </div>
     </div>
   );
@@ -195,7 +195,7 @@ export default function Operations() {
   const statusCounts = { all: ops.length, planning: 0, active: 0, complete: 0, aborted: 0 };
   ops.forEach(o => { if (o.status in statusCounts) (statusCounts as any)[o.status]++; });
 
-  const priorityBg: Record<string, string> = { critical: "border-l-2 border-l-red-600", high: "border-l-2 border-l-orange-600", medium: "border-l-2 border-l-yellow-600", low: "border-l-2 border-l-green-800" };
+  const priorityBg: Record<string, string> = { critical: "border-l-2 border-l-red-600", high: "border-l-2 border-l-orange-600", medium: "border-l-2 border-l-yellow-600", low: "border-l-2 border-l-blue-800" };
 
   return (
     <div className="p-3 md:p-4 tac-page">
@@ -206,7 +206,7 @@ export default function Operations() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1" data-testid="button-new-op">
+            <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1" data-testid="button-new-op">
               <Plus size={12} /> NEW OPERATION
             </Button>
           </DialogTrigger>
@@ -221,7 +221,7 @@ export default function Operations() {
       <div className="tac-filter-row mb-3">
         {Object.entries(statusCounts).map(([s, c]) => (
           <button key={s} onClick={() => setFilter(s)} data-testid={`filter-${s}`}
-            className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === s ? "bg-green-900 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+            className={`px-3 py-1 rounded text-[10px] tracking-wider font-bold uppercase transition-all ${filter === s ? "bg-blue-900 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
             {s} ({c})
           </button>
         ))}
@@ -262,7 +262,7 @@ export default function Operations() {
                     <div className="flex gap-1">
                       {op.status === "planning" && (
                         <button onClick={() => advance.mutate({ id: op.id, status: "active" })}
-                          className="text-[9px] px-2 py-0.5 bg-green-900/50 text-green-400 rounded border border-green-800/50 hover:bg-green-800/60 tracking-wider">ACTIVATE</button>
+                          className="text-[9px] px-2 py-0.5 bg-blue-900/50 text-blue-400 rounded border border-blue-800/50 hover:bg-blue-800/60 tracking-wider">ACTIVATE</button>
                       )}
                       {op.status === "active" && (
                         <button onClick={() => advance.mutate({ id: op.id, status: "complete" })}

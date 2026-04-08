@@ -53,8 +53,8 @@ export default function Login() {
         {/* Login card */}
         <div className="bg-card border border-border rounded-lg p-6 shadow-2xl">
           <div className="flex items-center gap-2 mb-5 pb-3 border-b border-border">
-            <Lock size={12} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">AUTHENTICATION REQUIRED</span>
+            <Lock size={12} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.2em] text-blue-400">AUTHENTICATION REQUIRED</span>
           </div>
 
           <form onSubmit={submit} className="space-y-4">
@@ -67,7 +67,7 @@ export default function Login() {
                 placeholder="Enter callsign..."
                 autoComplete="username"
                 data-testid="input-username"
-                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 tracking-wider uppercase"
+                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-blue-700 focus:border-blue-700 tracking-wider uppercase"
               />
             </div>
             <div>
@@ -79,14 +79,14 @@ export default function Login() {
                 placeholder="••••••••••••"
                 autoComplete="current-password"
                 data-testid="input-password"
-                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700"
+                className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-blue-700 focus:border-blue-700"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !username || !password}
               data-testid="button-login"
-              className="w-full bg-green-800 hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed text-green-100 text-xs font-bold tracking-[0.2em] py-2.5 rounded transition-colors flex items-center justify-center gap-2 mt-2"
+              className="w-full bg-blue-800 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-blue-100 text-xs font-bold tracking-[0.2em] py-2.5 rounded transition-colors flex items-center justify-center gap-2 mt-2"
             >
               {loading ? <Loader2 size={12} className="animate-spin" /> : <Shield size={12} />}
               {loading ? "AUTHENTICATING..." : "AUTHENTICATE"}
@@ -106,7 +106,7 @@ export default function Login() {
 
         {/* Status bar */}
         <div className="flex items-center justify-center gap-3 mt-4 text-[9px] text-muted-foreground tracking-wider">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />NET: SECURE</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />NET: SECURE</span>
           <span>▪</span>
           <span>NODE: ALPHA</span>
           <span>▪</span>

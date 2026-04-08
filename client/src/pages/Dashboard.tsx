@@ -73,7 +73,7 @@ function LiveClock() {
   );
 }
 
-function KPICard({ label, value, sub, color = "text-green-400", alert = false }: { label: string; value: string | number; sub?: string; color?: string; alert?: boolean }) {
+function KPICard({ label, value, sub, color = "text-blue-400", alert = false }: { label: string; value: string | number; sub?: string; color?: string; alert?: boolean }) {
   return (
     <div className={`bg-card border rounded p-3 ${alert ? "border-red-800/60 tactical-active" : "border-border"}`}>
       <div className="text-[10px] text-muted-foreground tracking-[0.12em] mb-1">{label}</div>
@@ -101,7 +101,7 @@ function ThreatLevelCard({
   saving: boolean;
 }) {
   const colors: Record<string, string> = {
-    LOW: "bg-green-500", GUARDED: "bg-blue-500",
+    LOW: "bg-blue-600", GUARDED: "bg-blue-500",
     ELEVATED: "bg-yellow-500", HIGH: "bg-orange-500", SEVERE: "bg-red-500",
   };
   const levels: ThreatLevel[] = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"];
@@ -126,7 +126,7 @@ function ThreatLevelCard({
         level === "SEVERE" ? "text-red-400" :
         level === "HIGH" ? "text-orange-400" :
         level === "ELEVATED" ? "text-yellow-400" :
-        "text-green-400"
+        "text-blue-400"
       }`}>{level}</div>
       {mode === "manual" && (
         <div className="text-[9px] text-muted-foreground/70 mt-1 tracking-wide">
@@ -168,7 +168,7 @@ function ThreatLevelCard({
 export default function Dashboard() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const canEditThreat = user?.role === "admin" || user?.role === "owner";
+  const canEditThreat = user?.accessLevel === "admin" || user?.accessLevel === "owner";
 
   const { data: units = [] } = useQuery<Unit[]>({ queryKey: ["/api/units"], queryFn: () => apiRequest("GET", "/api/units") });
   const { data: ops = [] } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations") });
@@ -223,7 +223,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-3">
         <div>
-          <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+          <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
             TACTICAL OPERATIONS CENTER
           </h1>
           <div className="text-[10px] text-muted-foreground tracking-widest">SECTOR ALPHA // COMBINED ARMS TEAM</div>
@@ -233,13 +233,13 @@ export default function Dashboard() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
-        <KPICard label="ACTIVE OPS" value={activeOps} sub={`${ops.length} total`} color={activeOps > 0 ? "text-green-400" : "text-muted-foreground"} />
+        <KPICard label="ACTIVE OPS" value={activeOps} sub={`${ops.length} total`} color={activeOps > 0 ? "text-blue-400" : "text-muted-foreground"} />
         <KPICard label="ACTIVE UNITS" value={activeUnits} sub={`${totalPax} PAX`} />
-        <KPICard label="CRIT INTEL" value={criticalIntel} color={criticalIntel > 0 ? "text-red-400" : "text-green-400"} alert={criticalIntel > 0} sub="unverified rpts" />
-        <KPICard label="UNACK COMMS" value={unackComms} color={unackComms > 0 ? "text-yellow-400" : "text-green-400"} />
+        <KPICard label="CRIT INTEL" value={criticalIntel} color={criticalIntel > 0 ? "text-red-400" : "text-blue-400"} alert={criticalIntel > 0} sub="unverified rpts" />
+        <KPICard label="UNACK COMMS" value={unackComms} color={unackComms > 0 ? "text-yellow-400" : "text-blue-400"} />
         <KPICard label="ASSETS OP" value={`${opAssets}/${assets.length}`} sub="operational" />
-        <KPICard label="ACT THREATS" value={activeThreats} color={activeThreats > 0 ? "text-orange-400" : "text-green-400"} alert={criticalThreats > 0} />
-        <KPICard label="CONFIRMED" value={criticalThreats} color={criticalThreats > 0 ? "text-red-400" : "text-green-400"} sub="threats" />
+        <KPICard label="ACT THREATS" value={activeThreats} color={activeThreats > 0 ? "text-orange-400" : "text-blue-400"} alert={criticalThreats > 0} />
+        <KPICard label="CONFIRMED" value={criticalThreats} color={criticalThreats > 0 ? "text-red-400" : "text-blue-400"} sub="threats" />
         <ThreatLevelCard
           level={displayThreat}
           canEdit={!!canEditThreat}
@@ -257,8 +257,8 @@ export default function Dashboard() {
         {/* Ops Status */}
         <div className="md:col-span-5 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <Activity size={11} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">OPERATIONS STATUS</span>
+            <Activity size={11} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">OPERATIONS STATUS</span>
           </div>
           <div className="divide-y divide-border">
             {ops.length === 0 && <div className="px-3 py-4 text-xs text-muted-foreground text-center">NO OPS IN QUEUE</div>}
@@ -286,8 +286,8 @@ export default function Dashboard() {
         {/* Units Board */}
         <div className="md:col-span-4 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <Shield size={11} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">UNIT STATUS BOARD</span>
+            <Shield size={11} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">UNIT STATUS BOARD</span>
           </div>
           <div className="divide-y divide-border">
             {units.map(u => (
@@ -326,7 +326,7 @@ export default function Dashboard() {
               </div>
             ))}
             {threats.filter(t => t.active).length === 0 && (
-              <div className="px-3 py-4 text-[11px] text-green-400 text-center tracking-wider">NO ACTIVE THREATS</div>
+              <div className="px-3 py-4 text-[11px] text-blue-400 text-center tracking-wider">NO ACTIVE THREATS</div>
             )}
           </div>
         </div>
@@ -334,15 +334,15 @@ export default function Dashboard() {
         {/* Recent Comms */}
         <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <Radio size={11} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">COMMS LOG — RECENT</span>
+            <Radio size={11} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">COMMS LOG — RECENT</span>
           </div>
           <div className="divide-y divide-border">
             {recentComms.map(c => (
               <div key={c.id} className={`px-3 py-2 min-w-0 ${!c.acknowledged ? "bg-yellow-950/10" : ""}`}>
                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                   <span className={`badge-${c.priority} text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase shrink-0`}>{c.priority}</span>
-                  <span className="text-[10px] font-bold text-green-400 shrink-0">{c.fromCallsign}</span>
+                  <span className="text-[10px] font-bold text-blue-400 shrink-0">{c.fromCallsign}</span>
                   <span className="text-[9px] text-muted-foreground shrink-0">→</span>
                   <span className="text-[10px] text-muted-foreground shrink-0">{c.toCallsign}</span>
                   <span className="text-[9px] text-muted-foreground sm:ml-auto shrink-0">[{c.channel}]</span>
@@ -357,8 +357,8 @@ export default function Dashboard() {
         {/* Intel Summary */}
         <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <TrendingUp size={11} className="text-green-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-green-400">INTEL SUMMARY</span>
+            <TrendingUp size={11} className="text-blue-400" />
+            <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">INTEL SUMMARY</span>
           </div>
           <div className="divide-y divide-border">
             {recentIntel.map(r => (

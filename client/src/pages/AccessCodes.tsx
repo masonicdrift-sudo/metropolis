@@ -24,8 +24,8 @@ function CopyButton({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} className="p-1 text-muted-foreground hover:text-green-400 transition-colors" title="Copy code">
-      {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
+    <button onClick={copy} className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Copy code">
+      {copied ? <Check size={11} className="text-blue-400" /> : <Copy size={11} />}
     </button>
   );
 }
@@ -73,7 +73,7 @@ export default function AccessCodes() {
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>ACCESS CODE MANAGER</h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
-            <span className="text-green-400">{activeCount} ACTIVE</span> ▪ <span className="text-muted-foreground">{usedCount} REDEEMED</span> ▪ {codes.length} TOTAL
+            <span className="text-blue-400">{activeCount} ACTIVE</span> ▪ <span className="text-muted-foreground">{usedCount} REDEEMED</span> ▪ {codes.length} TOTAL
           </div>
         </div>
         <Button size="sm" onClick={() => generate.mutate()}
@@ -97,7 +97,7 @@ export default function AccessCodes() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
         <div className="bg-card border border-border rounded px-3 py-2">
           <div className="text-[9px] text-muted-foreground tracking-wider">ACTIVE CODES</div>
-          <div className="kpi-value text-xl text-green-400">{activeCount}</div>
+          <div className="kpi-value text-xl text-blue-400">{activeCount}</div>
         </div>
         <div className="bg-card border border-border rounded px-3 py-2">
           <div className="text-[9px] text-muted-foreground tracking-wider">REDEEMED</div>
@@ -159,7 +159,7 @@ export default function AccessCodes() {
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="CREATED">{formatDate(c.createdAt)}</td>
                     <td className="px-4 py-3 text-[10px] font-mono" data-label="REDEEMED BY">
-                      {c.usedBy ? <span className="text-green-400">{c.usedBy}</span> : <span className="text-muted-foreground">—</span>}
+                      {c.usedBy ? <span className="text-blue-400">{c.usedBy}</span> : <span className="text-muted-foreground">—</span>}
                     </td>
                     <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="REDEEMED AT">{formatDate(c.usedAt)}</td>
                     <td className="px-4 py-3" data-label="ACTIONS">

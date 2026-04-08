@@ -305,6 +305,29 @@ export const insertPerstatSchema = createInsertSchema(perstat).omit({ id: true }
 export type InsertPerstat = z.infer<typeof insertPerstatSchema>;
 export type Perstat = typeof perstat.$inferSelect;
 
+// ─── Personnel roster (fillable line roster — not tied to login accounts) ─────
+export const personnelRosterEntries = sqliteTable("personnel_roster_entries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  lineNo: text("line_no").notNull().default(""),
+  lastName: text("last_name").notNull().default(""),
+  firstName: text("first_name").notNull().default(""),
+  rank: text("rank").notNull().default(""),
+  mos: text("mos").notNull().default(""),
+  billet: text("billet").notNull().default(""),
+  unit: text("unit").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  bloodType: text("blood_type").notNull().default(""),
+  status: text("status").notNull().default("present"),
+  notes: text("notes").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertPersonnelRosterEntrySchema = createInsertSchema(personnelRosterEntries).omit({ id: true });
+export type InsertPersonnelRosterEntry = z.infer<typeof insertPersonnelRosterEntrySchema>;
+export type PersonnelRosterEntry = typeof personnelRosterEntries.$inferSelect;
+
 // ─── After Action Reports ─────────────────────────────────────────────────────
 export const afterActionReports = sqliteTable("after_action_reports", {
   id: integer("id").primaryKey({ autoIncrement: true }),

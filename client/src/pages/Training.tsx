@@ -13,10 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const RESULT_COLOR: Record<string, string> = {
-  pass: "text-green-400", fail: "text-red-400", qualified: "text-blue-400", expired: "text-orange-400",
+  pass: "text-blue-400", fail: "text-red-400", qualified: "text-blue-400", expired: "text-orange-400",
 };
 const CAT_COLOR: Record<string, string> = {
-  general: "text-muted-foreground", weapons: "text-red-400", medical: "text-green-400",
+  general: "text-muted-foreground", weapons: "text-red-400", medical: "text-blue-400",
   comms: "text-blue-400", leadership: "text-yellow-400", special: "text-orange-400",
 };
 
@@ -93,7 +93,7 @@ function TrainingForm({ onClose, users }: { onClose: () => void; users: any[] })
       </div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" size="sm" className="text-xs" onClick={onClose}>CANCEL</Button>
-        <Button size="sm" className="text-xs bg-green-800 hover:bg-green-700"
+        <Button size="sm" className="text-xs bg-blue-800 hover:bg-blue-700"
           onClick={() => {
             if (!form.username || !form.eventName) { toast({ title: "Operator and event name required", variant: "destructive" }); return; }
             create.mutate(form);
@@ -107,7 +107,7 @@ export default function TrainingPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
-  const canAdmin = user?.role === "admin" || user?.role === "owner";
+  const canAdmin = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [open, setOpen] = useState(false);
   const [filterUser, setFilterUser] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
@@ -154,7 +154,7 @@ export default function TrainingPage() {
         {canAdmin && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-green-800 hover:bg-green-700 text-xs tracking-wider gap-1">
+              <Button size="sm" className="bg-blue-800 hover:bg-blue-700 text-xs tracking-wider gap-1">
                 <Plus size={12} /> LOG TRAINING
               </Button>
             </DialogTrigger>
@@ -180,7 +180,7 @@ export default function TrainingPage() {
         <div className="tac-filter-row mb-2">
           {["all", ...allUsers].map(u => (
             <button key={u} onClick={() => setFilterUser(u)}
-              className={`px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterUser === u ? "bg-green-900/50 text-green-400 border border-green-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
+              className={`px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${filterUser === u ? "bg-blue-900/50 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"}`}>
               {u === "all" ? "ALL OPERATORS" : u}
             </button>
           ))}

@@ -36,18 +36,18 @@ export default function Login() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <svg viewBox="0 0 64 64" width="56" height="56" aria-label="TACEDGE logo">
-              <rect width="64" height="64" fill="hsl(150 8% 6%)" rx="8" />
-              <polygon points="32,6 58,54 6,54" fill="none" stroke="hsl(142 50% 50%)" strokeWidth="3" />
-              <line x1="32" y1="6" x2="32" y2="54" stroke="hsl(142 50% 50%)" strokeWidth="1.5" strokeDasharray="3,4" />
-              <circle cx="32" cy="32" r="4" fill="hsl(142 50% 60%)" />
-              <circle cx="32" cy="32" r="8" fill="none" stroke="hsl(142 50% 40%)" strokeWidth="1" strokeDasharray="2,3" />
+            <svg viewBox="0 0 64 64" width="56" height="56" aria-label="METROPOLIS logo">
+              <rect width="64" height="64" fill="hsl(226 35% 6%)" rx="8" />
+              <polygon points="32,6 58,54 6,54" fill="none" stroke="hsl(217 91% 60%)" strokeWidth="3" />
+              <line x1="32" y1="6" x2="32" y2="54" stroke="hsl(217 91% 60%)" strokeWidth="1.5" strokeDasharray="3,4" />
+              <circle cx="32" cy="32" r="4" fill="hsl(217 91% 70%)" />
+              <circle cx="32" cy="32" r="8" fill="none" stroke="hsl(217 91% 50%)" strokeWidth="1" strokeDasharray="2,3" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold tracking-[0.2em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-            TACEDGE
+          <h1 className="text-lg font-bold tracking-[0.2em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
+            METROPOLIS
           </h1>
-          <div className="text-[10px] text-muted-foreground tracking-[0.3em] mt-1">TACTICAL EDGE NODE // SECURE ACCESS</div>
+          <div className="text-[10px] text-muted-foreground tracking-[0.3em] mt-1">TACTICAL NODE // SECURE ACCESS</div>
         </div>
 
         {/* Login card */}

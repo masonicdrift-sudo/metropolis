@@ -107,15 +107,15 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
     >
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
-        <svg viewBox="0 0 32 32" width="28" height="28" aria-label="TACEDGE logo">
-          <rect width="32" height="32" fill="hsl(150 8% 6%)" rx="4" />
-          <polygon points="16,3 29,27 3,27" fill="none" stroke="hsl(142 50% 50%)" strokeWidth="2" />
-          <line x1="16" y1="3" x2="16" y2="27" stroke="hsl(142 50% 50%)" strokeWidth="1" strokeDasharray="2,3" />
-          <circle cx="16" cy="16" r="2" fill="hsl(142 50% 60%)" />
+        <svg viewBox="0 0 32 32" width="28" height="28" aria-label="METROPOLIS logo">
+          <rect width="32" height="32" fill="hsl(226 35% 6%)" rx="4" />
+          <polygon points="16,3 29,27 3,27" fill="none" stroke="hsl(217 91% 60%)" strokeWidth="2" />
+          <line x1="16" y1="3" x2="16" y2="27" stroke="hsl(217 91% 60%)" strokeWidth="1" strokeDasharray="2,3" />
+          <circle cx="16" cy="16" r="2" fill="hsl(217 91% 70%)" />
         </svg>
         <div>
-          <div className="text-xs font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>TACEDGE</div>
-          <div className="text-[10px] text-muted-foreground tracking-widest">EDGE NODE v3.0</div>
+          <div className="text-xs font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>METROPOLIS</div>
+          <div className="text-[10px] text-muted-foreground tracking-widest">TACTICAL NODE v1.0</div>
         </div>
       </div>
 
@@ -145,21 +145,21 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
           );
         })}
 
-        {(user?.role === "admin" || user?.role === "owner") && (
+        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
           <Link href="/users" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
             location === "/users" ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
             <ShieldCheck size={13} /> USER MGMT
           </Link>
         )}
-        {user?.role === "owner" && (
+        {user?.accessLevel === "owner" && (
           <Link href="/access-codes" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
             location === "/access-codes" ? "bg-orange-950/60 text-orange-400 border border-orange-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
             <KeyRound size={13} /> ACCESS CODES
           </Link>
         )}
-        {(user?.role === "admin" || user?.role === "owner") && (
+        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
           <Link href="/broadcasts" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
             location === "/broadcasts" ? "bg-red-950/60 text-red-400 border border-red-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
@@ -171,11 +171,11 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
       <div className="px-3 py-3 border-t border-border space-y-2">
         <div className="flex items-center gap-2 px-1">
           <div className={`w-5 h-5 rounded border flex items-center justify-center ${
-            user?.role === "owner" ? "bg-orange-900/50 border-orange-800/50" :
-            user?.role === "admin" ? "bg-yellow-900/50 border-yellow-800/50" : "bg-green-900/50 border-green-800/50"
+            user?.accessLevel === "owner" ? "bg-orange-900/50 border-orange-800/50" :
+            user?.accessLevel === "admin" ? "bg-yellow-900/50 border-yellow-800/50" : "bg-green-900/50 border-green-800/50"
           }`}>
-            {user?.role === "owner" ? <Crown size={11} className="text-orange-400" /> :
-             user?.role === "admin" ? <ShieldCheck size={11} className="text-yellow-400" /> :
+            {user?.accessLevel === "owner" ? <Crown size={11} className="text-orange-400" /> :
+             user?.accessLevel === "admin" ? <ShieldCheck size={11} className="text-yellow-400" /> :
              <Users size={11} className="text-green-400" />}
           </div>
           <div className="flex-1 min-w-0">
@@ -183,9 +183,9 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
               {(user as any)?.rank && <span className="text-yellow-400 mr-1">{(user as any).rank}</span>}{user?.username}
             </div>
             <div className={`text-[9px] tracking-wider flex items-center gap-1 ${
-              user?.role === "owner" ? "text-orange-400" : user?.role === "admin" ? "text-yellow-400" : "text-muted-foreground"
+              user?.accessLevel === "owner" ? "text-orange-400" : user?.accessLevel === "admin" ? "text-yellow-400" : "text-muted-foreground"
             }`}>
-              <span className="uppercase">{user?.role === "owner" ? "OWNER" : user?.role === "admin" ? "ADMIN" : "OPR"}</span>
+              <span className="uppercase">{user?.accessLevel === "owner" ? "OWNER" : user?.accessLevel === "admin" ? "ADMIN" : "OPR"}</span>
               {(user as any)?.assignedUnit && <span className="text-muted-foreground/50 text-[8px]">▪ {(user as any).assignedUnit}</span>}
             </div>
           </div>
@@ -225,14 +225,14 @@ function MobileTopBar({ onMenuOpen, mobileShell }: { onMenuOpen: () => void; mob
         mobileShell ? "flex" : "hidden",
       )}
     >
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
         <svg viewBox="0 0 32 32" width="22" height="22">
-          <rect width="32" height="32" fill="hsl(150 8% 6%)" rx="4" />
-          <polygon points="16,3 29,27 3,27" fill="none" stroke="hsl(142 50% 50%)" strokeWidth="2.5" />
-          <circle cx="16" cy="16" r="2.5" fill="hsl(142 50% 60%)" />
+          <rect width="32" height="32" fill="hsl(226 35% 6%)" rx="4" />
+          <polygon points="16,3 29,27 3,27" fill="none" stroke="hsl(217 91% 60%)" strokeWidth="2.5" />
+          <circle cx="16" cy="16" r="2.5" fill="hsl(217 91% 70%)" />
         </svg>
         <div>
-          <div className="text-xs font-bold text-green-400 tracking-widest" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>TACEDGE</div>
+          <div className="text-xs font-bold text-blue-400 tracking-widest" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>METROPOLIS</div>
           <div className="text-[9px] text-muted-foreground tracking-widest">{current?.label || "DASHBOARD"}</div>
         </div>
       </div>
@@ -260,9 +260,9 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
   const allNav = [
     ...NAV,
-    ...(user?.role === "admin" || user?.role === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
-    ...(user?.role === "owner" ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
-    ...((user?.role === "admin" || user?.role === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
+    ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
+    ...(user?.accessLevel === "owner" ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
+    ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
     { path: "/settings", label: "SETTINGS", icon: Settings, short: "Settings" },
   ];
 
@@ -279,8 +279,8 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
           <div>
             <div className="text-xs font-bold text-green-400 tracking-widest">NAVIGATION</div>
             <div className="text-[9px] text-muted-foreground tracking-wider mt-0.5">
-              <span className={`font-bold ${user?.role === "owner" ? "text-orange-400" : user?.role === "admin" ? "text-yellow-400" : "text-green-400"}`}>{user?.username}</span>
-              {" "}▪ {user?.role?.toUpperCase()}
+              <span className={`font-bold ${user?.accessLevel === "owner" ? "text-orange-400" : user?.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"}`}>{user?.username}</span>
+              {" "}▪ {user?.accessLevel?.toUpperCase()}
             </div>
           </div>
           <button onClick={onClose} className="p-2 rounded text-muted-foreground hover:text-foreground hover:bg-secondary">

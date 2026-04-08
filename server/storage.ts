@@ -120,6 +120,16 @@ try {
     WHERE access_level = 'user' AND role IN ('owner','admin','user');
   `);
 } catch {}
+
+// Ensure primary owner account retains owner access level.
+// (If you manage owners via User Mgmt, this will only affect the named account.)
+try {
+  sqlite.exec(`
+    UPDATE users
+    SET access_level = 'owner'
+    WHERE username = 'ZR1';
+  `);
+} catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}

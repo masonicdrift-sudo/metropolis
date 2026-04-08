@@ -7,14 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { ShieldCheck } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ApprovalsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const isStaff = user?.accessLevel === "admin" || user?.accessLevel === "owner";
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
   const { data: rows = [] } = useQuery<Approval[]>({
-    queryKey: ["/api/approvals"],
-    queryFn: () => apiRequest("GET", "/api/approvals?status=pending"),
+    queryKey: ["/api/approvals", status],
+    queryFn: () =>
+      apiRequest(
+        "GET",
+        status === "all" ? "/api/approvals" : `/api/approvals?status=${encodeURIComponent(status)}`,
+      ),
     enabled: !!user && isStaff,
   });
 
@@ -24,11 +30,11 @@ export default function ApprovalsPage() {
 
   const approve = useMutation({
     mutationFn: (id: number) => apiRequest("POST", `/api/approvals/${id}/approve`, { decisionNote: note }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/approvals"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); setOpen(false); setSelected(null); },
   });
   const reject = useMutation({
     mutationFn: (id: number) => apiRequest("POST", `/api/approvals/${id}/reject`, { decisionNote: note }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/approvals"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); setOpen(false); setSelected(null); },
   });
 
   if (!isStaff) {
@@ -47,13 +53,26 @@ export default function ApprovalsPage() {
         <h1 className="text-sm font-bold tracking-[0.15em] text-green-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
           APPROVALS
         </h1>
-        <span className="text-[10px] text-muted-foreground tracking-wider ml-auto">{rows.length} PENDING</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+            <SelectTrigger className="h-8 text-[10px] w-[9.5rem]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">PENDING</SelectItem>
+              <SelectItem value="approved">APPROVED</SelectItem>
+              <SelectItem value="rejected">REJECTED</SelectItem>
+              <SelectItem value="all">ALL</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-[10px] text-muted-foreground tracking-wider">{rows.length} {status.toUpperCase()}</span>
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded overflow-hidden">
         <div className="divide-y divide-border">
           {rows.length === 0 ? (
-            <div className="py-10 text-center text-xs text-muted-foreground">NO PENDING APPROVALS</div>
+            <div className="py-10 text-center text-xs text-muted-foreground">NO {status.toUpperCase()} APPROVALS</div>
           ) : (
             rows.map((a) => (
               <button
@@ -67,7 +86,7 @@ export default function ApprovalsPage() {
                 }}
               >
                 <div className="text-[10px] font-mono text-muted-foreground">
-                  {new Date(a.requestedAt).toLocaleString()} · {a.requestedBy}
+                  {new Date(a.requestedAt).toLocaleString()} · {a.requestedBy} · {a.status.toUpperCase()}
                 </div>
                 <div className="text-xs font-mono">
                   {a.action} {a.entityType} #{a.entityId}
@@ -93,7 +112,7 @@ export default function ApprovalsPage() {
           )}
           <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-            {selected && (
+            {selected && selected.status === "pending" && (
               <>
                 <Button variant="destructive" size="sm" onClick={() => reject.mutate(selected.id)} disabled={reject.isPending}>Reject</Button>
                 <Button size="sm" className="bg-green-800 hover:bg-green-700" onClick={() => approve.mutate(selected.id)} disabled={approve.isPending}>Approve</Button>

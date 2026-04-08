@@ -187,6 +187,42 @@
   0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
 }
 
+/* ── Metropolis blue/black enforcement ─────────────────────────
+   Large parts of the UI used Tailwind "green" utility classes as the
+   tactical accent. Override them to blue so the whole UI stays blue/black
+   without editing every component. */
+:where(
+  .text-green-100, .text-green-200, .text-green-300, .text-green-400, .text-green-500, .text-green-600,
+  .hover\:text-green-300:hover, .hover\:text-green-400:hover
+) { color: rgb(147 197 253) !important; } /* blue-300 */
+
+:where(
+  .bg-green-700, .bg-green-800, .bg-green-900, .bg-green-950,
+  .hover\:bg-green-700:hover, .hover\:bg-green-800:hover, .hover\:bg-green-900:hover
+) { background-color: rgb(30 58 138) !important; } /* blue-900 */
+
+:where(
+  .border-green-700, .border-green-800, .border-green-900,
+  .hover\:border-green-800:hover, .hover\:border-green-900:hover
+) { border-color: rgba(59,130,246,0.45) !important; } /* blue-500-ish */
+
+:where(
+  .ring-green-600, .ring-green-700,
+  .focus\:ring-green-700:focus, .focus\:border-green-700:focus
+) { --tw-ring-color: rgba(59,130,246,0.55) !important; border-color: rgba(59,130,246,0.55) !important; }
+
+:where(.bg-green-900\/50, .bg-green-950\/60, .bg-green-950\/40, .bg-green-950\/30) {
+  background-color: rgba(30,58,138,0.35) !important;
+}
+
+:where(.border-green-900\/60, .border-green-900\/50, .border-green-900\/40) {
+  border-color: rgba(59,130,246,0.35) !important;
+}
+
+:where(.text-green-400\/80, .text-green-400\/70, .text-green-400\/60, .text-green-200\/90) {
+  color: rgba(147,197,253,0.75) !important;
+}
+
 /* ── Grid / mono coords ───────────────────────────────────────── */
 .grid-coord {
   font-family: 'JetBrains Mono', monospace;

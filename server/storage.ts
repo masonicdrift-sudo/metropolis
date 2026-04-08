@@ -10,7 +10,6 @@ import type {
   IntelReport, InsertIntelReport,
   CommsLog, InsertCommsLog,
   Asset, InsertAsset,
-  Threat, InsertThreat,
   User, InsertUser,
   AccessCode,
   Message,
@@ -140,12 +139,15 @@ try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN releasability TEXT NOT N
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE intel_reports ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE operations ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
-try { sqlite.exec(`ALTER TABLE threats ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE operations ADD COLUMN attendees TEXT NOT NULL DEFAULT '[]'`); } catch {}
 try { sqlite.exec(`ALTER TABLE assets ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE after_action_reports ADD COLUMN doc_number TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN end_date TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN end_time TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE calendar_events ADD COLUMN color TEXT NOT NULL DEFAULT 'blue'`); } catch {}
+
+// Threat board removed — drop legacy table if present
+try { sqlite.exec(`DROP TABLE IF EXISTS threats`); } catch {}
 
 // Backfill ISOFAC doc_number where missing
 try {
@@ -167,7 +169,7 @@ try {
   }
 } catch {}
 
-function backfillDocNumber(table: "commo_cards" | "operations" | "threats" | "assets" | "after_action_reports") {
+function backfillDocNumber(table: "commo_cards" | "operations" | "assets" | "after_action_reports") {
   try {
     const existing = new Set<string>(
       (sqlite.prepare(`SELECT doc_number FROM ${table} WHERE doc_number != ''`).all() as any[]).map((r) => String(r.doc_number)),
@@ -186,7 +188,6 @@ function backfillDocNumber(table: "commo_cards" | "operations" | "threats" | "as
 
 backfillDocNumber("commo_cards");
 backfillDocNumber("operations");
-backfillDocNumber("threats");
 backfillDocNumber("assets");
 backfillDocNumber("after_action_reports");
 
@@ -219,6 +220,7 @@ try {
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN phone`); } catch {}
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN operation_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_lines (
@@ -416,17 +418,6 @@ sqlite.exec(`
     fuel_pct INTEGER DEFAULT 100,
     ammo_pct INTEGER DEFAULT 100,
     serial_number TEXT NOT NULL,
-    notes TEXT DEFAULT ''
-  );
-  CREATE TABLE IF NOT EXISTS threats (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    label TEXT NOT NULL,
-    category TEXT NOT NULL,
-    confidence TEXT NOT NULL DEFAULT 'possible',
-    grid TEXT NOT NULL,
-    reported_by TEXT NOT NULL,
-    timestamp TEXT NOT NULL,
-    active INTEGER DEFAULT 1,
     notes TEXT DEFAULT ''
   );
   CREATE TABLE IF NOT EXISTS site_settings (
@@ -761,11 +752,6 @@ export interface IStorage {
   createAsset(a: InsertAsset): Asset;
   updateAsset(id: number, a: Partial<InsertAsset>): Asset | undefined;
   deleteAsset(id: number): void;
-  // Threats
-  getThreats(): Threat[];
-  createThreat(t: InsertThreat): Threat;
-  updateThreat(id: number, t: Partial<InsertThreat>): Threat | undefined;
-  deleteTheat(id: number): void;
   // PERSTAT
   getPerstat(): Perstat[];
   upsertPerstat(username: string, dutyStatus: string, notes?: string): Perstat;
@@ -797,6 +783,8 @@ export interface IStorage {
   deleteAward(id: number): void;
   // Training
   getTrainingRecords(username?: string): TrainingRecord[];
+  /** Sign-in row counts per operation id (operation_id > 0). */
+  getTrainingSignInCountsByOperationId(): Record<number, number>;
   createTrainingRecord(t: InsertTraining): TrainingRecord;
   updateTrainingRecord(id: number, t: Partial<InsertTraining>): TrainingRecord | undefined;
   deleteTrainingRecord(id: number): void;
@@ -1302,26 +1290,6 @@ export class Storage implements IStorage {
   }
   deleteAsset(id: number) { db.delete(schema.assets).where(eq(schema.assets.id, id)).run(); }
 
-  // Threats
-  getThreats() { return db.select().from(schema.threats).orderBy(desc(schema.threats.id)).all(); }
-  createThreat(t: InsertThreat) {
-    const gen = () => String(Math.floor(100000 + Math.random() * 900000)).padStart(6, "0");
-    let docNumber = (t as any).docNumber ? String((t as any).docNumber) : "";
-    if (!docNumber) {
-      const existing = new Set<string>(
-        db.select({ n: schema.threats.docNumber }).from(schema.threats).all().map((r) => String(r.n || "")),
-      );
-      docNumber = gen();
-      let tries = 0;
-      while (existing.has(docNumber) && tries < 50) { docNumber = gen(); tries++; }
-    }
-    return db.insert(schema.threats).values({ ...(t as any), docNumber }).returning().get();
-  }
-  updateThreat(id: number, t: Partial<InsertThreat>) {
-    return db.update(schema.threats).set(t).where(eq(schema.threats.id, id)).returning().get();
-  }
-  deleteTheat(id: number) { db.delete(schema.threats).where(eq(schema.threats.id, id)).run(); }
-
   // PERSTAT
   getPerstat() { return db.select().from(schema.perstat).all(); }
   upsertPerstat(username: string, dutyStatus: string, notes = ""): Perstat {
@@ -1407,6 +1375,19 @@ export class Storage implements IStorage {
   getTrainingRecords(username?: string) {
     const all = db.select().from(schema.trainingRecords).orderBy(desc(schema.trainingRecords.id)).all();
     return username ? all.filter(r => r.username === username) : all;
+  }
+  getTrainingSignInCountsByOperationId(): Record<number, number> {
+    const rows = db
+      .select({ operationId: schema.trainingRecords.operationId })
+      .from(schema.trainingRecords)
+      .all();
+    const m: Record<number, number> = {};
+    for (const r of rows) {
+      const oid = r.operationId;
+      if (!oid) continue;
+      m[oid] = (m[oid] ?? 0) + 1;
+    }
+    return m;
   }
   createTrainingRecord(t: InsertTraining) { return db.insert(schema.trainingRecords).values(t).returning().get(); }
   updateTrainingRecord(id: number, t: Partial<InsertTraining>) {

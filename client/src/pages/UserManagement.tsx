@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ARMY_RANKS, TACTICAL_ROLE_PRESETS } from "@shared/schema";
 import type { Unit } from "@shared/schema";
 import { US_ARMY_MOS_OPTIONS, US_ARMY_MOS_BY_CODE } from "@shared/usArmyMos";
+import { ProfileLink } from "@/components/ProfileLink";
 
 interface AppUser {
   id: number;
@@ -487,7 +488,9 @@ export default function UserManagement() {
                     {u.accessLevel === "owner" ? <Crown size={12} className="text-orange-400 shrink-0" />
                       : u.accessLevel === "admin" ? <ShieldCheck size={12} className="text-yellow-400 shrink-0" />
                       : <User size={12} className="text-blue-400 shrink-0" />}
-                    <span className="font-mono font-bold tracking-wider">{u.username}</span>
+                    <ProfileLink username={u.username} className="font-mono font-bold tracking-wider text-foreground hover:text-blue-400">
+                      {u.username}
+                    </ProfileLink>
                     {u.username === me?.username && <span className="text-[9px] text-blue-500">(YOU)</span>}
                   </div>
                 </td>

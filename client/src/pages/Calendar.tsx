@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const EVENT_COLORS: { key: string; label: string; cls: string }[] = [
   { key: "blue", label: "BLUE", cls: "bg-blue-950/40 border-blue-900/40 text-blue-200/90 hover:bg-blue-900/40" },
@@ -420,7 +421,10 @@ export default function CalendarPage() {
             </div>
             {editing && (
               <div className="text-[9px] text-muted-foreground">
-                Scheduled by {editing.createdBy}
+                Scheduled by{" "}
+                <ProfileLink username={editing.createdBy} className="text-muted-foreground hover:text-foreground">
+                  {editing.createdBy}
+                </ProfileLink>
                 {canEdit(editing) ? null : " — you can only view this event"}
               </div>
             )}

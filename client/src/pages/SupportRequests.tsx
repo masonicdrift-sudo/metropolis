@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { LifeBuoy, Plus, Trash2 } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { SUPPORT_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const CATEGORIES = ["general", "intel", "log", "comms", "fires", "admin", "it", "other"];
 const PRIORITIES = ["routine", "priority", "immediate", "flash"];
@@ -162,11 +163,18 @@ export default function SupportRequestsPage() {
             </div>
             <div className="divide-y divide-border overflow-y-auto min-h-0 max-h-[min(32dvh,360px)] md:max-h-[calc(100vh-260px)]">
               {rows.map((r) => (
-                <button
+                <div
                   key={r.id}
-                  type="button"
-                  className="w-full text-left px-3 py-2 hover:bg-secondary/20 transition-colors"
+                  role="button"
+                  tabIndex={0}
+                  className="w-full text-left px-3 py-2 hover:bg-secondary/20 transition-colors cursor-pointer"
                   onClick={() => openEdit(r)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openEdit(r);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{r.priority.toUpperCase()}</span>
@@ -174,10 +182,24 @@ export default function SupportRequestsPage() {
                   </div>
                   <div className="text-[9px] text-muted-foreground mt-1 flex flex-wrap gap-2">
                     <span>CAT: {r.category}</span>
-                    {r.assignedTo ? <span>ASSN: {r.assignedTo}</span> : <span>ASSN: —</span>}
-                    <span className="ml-auto">BY: {r.createdBy}</span>
+                    {r.assignedTo ? (
+                      <span>
+                        ASSN:{" "}
+                        <ProfileLink username={r.assignedTo} className="text-muted-foreground hover:text-foreground">
+                          {r.assignedTo}
+                        </ProfileLink>
+                      </span>
+                    ) : (
+                      <span>ASSN: —</span>
+                    )}
+                    <span className="ml-auto">
+                      BY:{" "}
+                      <ProfileLink username={r.createdBy} className="text-muted-foreground hover:text-foreground">
+                        {r.createdBy}
+                      </ProfileLink>
+                    </span>
                   </div>
-                </button>
+                </div>
               ))}
               {rows.length === 0 && !isLoading && (
                 <div className="py-6 text-center text-xs text-muted-foreground">NONE</div>
@@ -239,7 +261,11 @@ export default function SupportRequestsPage() {
             </div>
             {editing && (
               <div className="text-[9px] text-muted-foreground">
-                Created by {editing.createdBy} · Updated {new Date(editing.updatedAt).toLocaleString()}
+                Created by{" "}
+                <ProfileLink username={editing.createdBy} className="text-muted-foreground hover:text-foreground">
+                  {editing.createdBy}
+                </ProfileLink>{" "}
+                · Updated {new Date(editing.updatedAt).toLocaleString()}
               </div>
             )}
           </div>

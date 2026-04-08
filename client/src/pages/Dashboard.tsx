@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import type { Unit, Operation, IntelReport, CommsLog, Asset, Threat } from "@shared/schema";
-import { Activity, AlertTriangle, Radio, Shield, Package, TrendingUp } from "lucide-react";
+import type { Unit, Operation, IntelReport, CommsLog, Asset } from "@shared/schema";
+import { Activity, Radio, Shield, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -151,7 +151,7 @@ function ThreatLevelCard({
               <SelectValue placeholder="Set level…" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__auto__">Automatic (from threat board)</SelectItem>
+              <SelectItem value="__auto__">Automatic (baseline)</SelectItem>
               {levels.map(l => (
                 <SelectItem key={l} value={l}>Manual — {l}</SelectItem>
               ))}
@@ -178,22 +178,15 @@ export default function Dashboard() {
   const { data: intel = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel") });
   const { data: comms = [] } = useQuery<CommsLog[]>({ queryKey: ["/api/comms"], queryFn: () => apiRequest("GET", "/api/comms") });
   const { data: assets = [] } = useQuery<Asset[]>({ queryKey: ["/api/assets"], queryFn: () => apiRequest("GET", "/api/assets") });
-  const { data: threatsRaw = [] } = useQuery<Threat[]>({ queryKey: ["/api/threats"], queryFn: () => apiRequest("GET", "/api/threats") });
-  const threats: Threat[] = threatsRaw;
 
   const activeOps = ops.filter(o => o.status === "active").length;
   const activeUnits = units.filter(u => u.status === "active").length;
   const criticalIntel = intel.filter(r => r.threat === "critical").length;
   const unackComms = comms.filter(c => !c.acknowledged).length;
   const opAssets = assets.filter(a => a.status === "operational").length;
-  const activeThreats = threats.filter(t => t.active).length;
-  const criticalThreats = threats.filter(t => t.active && t.confidence === "confirmed").length;
   const totalPax = units.reduce((acc, u) => acc + u.pax, 0);
 
-  const computedThreat: ThreatLevel =
-    criticalThreats >= 3 ? "SEVERE" :
-    criticalThreats >= 2 ? "HIGH" :
-    activeThreats >= 3 ? "ELEVATED" : "GUARDED";
+  const computedThreat: ThreatLevel = "GUARDED";
 
   const { data: threatSetting } = useQuery<{ computed: ThreatLevel; mode: "auto" | "manual"; display: ThreatLevel }>({
     queryKey: ["/api/dashboard/threat-level"],
@@ -235,14 +228,12 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2">
+      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
         <KPICard label="ACTIVE OPS" value={activeOps} sub={`${ops.length} total`} color={activeOps > 0 ? "text-blue-400" : "text-muted-foreground"} />
         <KPICard label="ACTIVE UNITS" value={activeUnits} sub={`${totalPax} PAX`} />
         <KPICard label="CRIT INTEL" value={criticalIntel} color={criticalIntel > 0 ? "text-red-400" : "text-blue-400"} alert={criticalIntel > 0} sub="unverified rpts" />
         <KPICard label="UNACK COMMS" value={unackComms} color={unackComms > 0 ? "text-yellow-400" : "text-blue-400"} />
         <KPICard label="ASSETS OP" value={`${opAssets}/${assets.length}`} sub="operational" />
-        <KPICard label="ACT THREATS" value={activeThreats} color={activeThreats > 0 ? "text-orange-400" : "text-blue-400"} alert={criticalThreats > 0} />
-        <KPICard label="CONFIRMED" value={criticalThreats} color={criticalThreats > 0 ? "text-red-400" : "text-blue-400"} sub="threats" />
         <ThreatLevelCard
           level={displayThreat}
           canEdit={!!canEditThreat}
@@ -258,7 +249,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
 
         {/* Ops Status */}
-        <div className="md:col-span-5 bg-card border border-border rounded">
+        <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Activity size={11} className="text-blue-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">OPERATIONS STATUS</span>
@@ -287,7 +278,7 @@ export default function Dashboard() {
         </div>
 
         {/* Units Board */}
-        <div className="md:col-span-4 bg-card border border-border rounded">
+        <div className="md:col-span-6 bg-card border border-border rounded">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
             <Shield size={11} className="text-blue-400" />
             <span className="text-[10px] font-bold tracking-[0.15em] text-blue-400">UNIT STATUS BOARD</span>
@@ -308,29 +299,6 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Active Threats */}
-        <div className="md:col-span-3 bg-card border border-border rounded">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-            <AlertTriangle size={11} className="text-red-400" />
-            <span className="text-[10px] font-bold tracking-[0.15em] text-red-400">THREAT BOARD</span>
-          </div>
-          <div className="divide-y divide-border">
-            {threats.filter(t => t.active).slice(0, 5).map(t => (
-              <div key={t.id} className="px-3 py-2">
-                <div className="flex items-center gap-1 mb-0.5">
-                  <span className={`badge-${t.confidence} text-[9px] px-1 py-0.5 rounded font-bold tracking-wider uppercase`}>{t.confidence}</span>
-                </div>
-                <div className="text-[11px] font-bold text-foreground leading-tight">{t.label}</div>
-                <div className="text-[10px] text-muted-foreground">{t.category.replace(/_/g, " ").toUpperCase()}</div>
-                <div className="grid-coord text-[10px] mt-0.5">{t.grid.slice(-9)}</div>
-              </div>
-            ))}
-            {threats.filter(t => t.active).length === 0 && (
-              <div className="px-3 py-4 text-[11px] text-blue-400 text-center tracking-wider">NO ACTIVE THREATS</div>
-            )}
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import { Send, Hash, MessageSquare, Users, Trash2, Crown, ShieldCheck, User as U
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { ProfileLink } from "@/components/ProfileLink";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -37,16 +38,20 @@ function formatMessageContent(raw: string, knownUsers: Set<string>): ReactNode {
     const name = m[1];
     const known = knownUsers.has(name);
     parts.push(
-      <span
-        key={`${m.index}-${name}`}
-        className={
-          known
-            ? "font-semibold text-amber-400/95 bg-amber-500/15 rounded px-0.5"
-            : "text-muted-foreground"
-        }
-      >
-        @{name}
-      </span>,
+      known ? (
+        <Link
+          key={`${m.index}-${name}`}
+          href={`/profile/${encodeURIComponent(name)}`}
+          className="font-semibold text-amber-400/95 bg-amber-500/15 rounded px-0.5 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          @{name}
+        </Link>
+      ) : (
+        <span key={`${m.index}-${name}`} className="text-muted-foreground">
+          @{name}
+        </span>
+      ),
     );
     last = m.index + m[0].length;
   }
@@ -333,7 +338,7 @@ function CreateGroupDialog({ allUsers, currentUser, onCreated }: {
             <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-2">ADD MEMBERS ({selected.length} selected)</label>
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {others.map(u => (
-                <button key={u.username} onClick={() => toggle(u.username)}
+                <button key={u.username} type="button" onClick={() => toggle(u.username)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-all ${
                     selected.includes(u.username)
                       ? "bg-blue-950/60 border border-blue-800/50"
@@ -395,7 +400,7 @@ function AddMemberDialog({ group, allUsers, currentUser }: {
         <DialogHeader><DialogTitle className="text-xs tracking-widest">ADD TO {group.name.toUpperCase()}</DialogTitle></DialogHeader>
         <div className="space-y-1">
           {nonMembers.map(u => (
-            <button key={u.username} onClick={() => add.mutate(u.username)}
+            <button key={u.username} type="button" onClick={() => add.mutate(u.username)}
               className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-secondary text-left transition-colors">
               <div className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold border ${
                 u.role === "owner" ? "bg-orange-900/40 border-orange-800/50 text-orange-400" :
@@ -684,9 +689,18 @@ export default function Messaging() {
               const isActive = activeChannel === `DM:${u.username}` || activeChannel === u.username;
               const lastDM = dmList.find(d => d.username === u.username);
               return (
-                <button key={u.id}
+                <div
+                  key={u.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => openDM(u.username)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openDM(u.username);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-left transition-all cursor-pointer ${
                     isActive ? "bg-blue-950/60 border border-blue-900/50" : "hover:bg-secondary"
                   }`}
                   data-testid={`dm-user-${u.username}`}
@@ -697,7 +711,11 @@ export default function Messaging() {
                     "bg-blue-900/40 border-blue-800/50 text-blue-400"
                   }`}>{u.username[0].toUpperCase()}</div>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-[10px] font-mono font-bold truncate ${roleColor(u.role)}`}>{u.username}</div>
+                    <div className={`text-[10px] font-mono font-bold truncate ${roleColor(u.role)}`}>
+                      <ProfileLink username={u.username} className={roleColor(u.role)}>
+                        {u.username}
+                      </ProfileLink>
+                    </div>
                     {lastDM && (
                       <div className="text-[9px] text-muted-foreground/50 truncate">{lastDM.lastMessage}</div>
                     )}
@@ -707,7 +725,7 @@ export default function Messaging() {
                       {unreadCount}
                     </span>
                   )}
-                </button>
+                </div>
               );
             })}
             {filteredUsers.length === 0 && (
@@ -751,7 +769,14 @@ export default function Messaging() {
               <div className="min-w-0 flex-1">
                 <span className="text-sm font-bold tracking-wider text-blue-400 font-mono block truncate" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>{activeGroup.name}</span>
                 <span className="text-[9px] text-muted-foreground truncate hidden md:block">
-                  {JSON.parse(activeGroup.members || "[]").join(", ")}
+                  {(JSON.parse(activeGroup.members || "[]") as string[]).map((name, i) => (
+                    <span key={name}>
+                      {i > 0 ? ", " : null}
+                      <ProfileLink username={name} className="text-muted-foreground hover:text-foreground">
+                        {name}
+                      </ProfileLink>
+                    </span>
+                  ))}
                 </span>
               </div>
               <div className="ml-auto flex items-center gap-1 shrink-0">
@@ -777,7 +802,12 @@ export default function Messaging() {
               }`}>{(activeDMUser || "?")[0].toUpperCase()}</div>
               <div className="min-w-0 flex-1">
                 <span className={`text-sm font-bold tracking-wider font-mono truncate block ${roleColor(userMap[activeDMUser || ""])}`} style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>
-                  {activeDMUser}
+                  <ProfileLink
+                    username={activeDMUser || undefined}
+                    className={`block truncate max-w-full ${roleColor(userMap[activeDMUser || ""])}`}
+                  >
+                    {activeDMUser}
+                  </ProfileLink>
                 </span>
                 <span className="text-[9px] text-muted-foreground hidden sm:inline">Direct message</span>
               </div>

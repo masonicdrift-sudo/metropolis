@@ -33,8 +33,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   UNIT:             [["/api/units"]],
   // Assets
   ASSET:            [["/api/assets"]],
-  // Threats + dashboard threat level (manual/auto) stay in sync for everyone
-  THREAT:           [["/api/threats"], ["/api/dashboard/threat-level"]],
+  THREAT:           [["/api/dashboard/threat-level"]],
   // PERSTAT
   PERSTAT:          [["/api/perstat"]],
   PERSONNEL_ROSTER: [["/api/personnel-roster"]],

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
 import { TRAINING_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   medal:         { label: "MEDAL",         color: "text-yellow-400", icon: "🎖" },
@@ -164,8 +165,16 @@ export default function AwardsPage() {
                     <span className="text-xs font-bold font-mono">{a.awardName}</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                    AWARDED TO: <span className="text-foreground font-bold">{a.username}</span>
-                    {" "}▪ BY {a.awardedBy} ▪ {fmt(a.awardedAt)}
+                    AWARDED TO:{" "}
+                    <ProfileLink username={a.username} className="text-foreground font-bold hover:text-blue-400">
+                      {a.username}
+                    </ProfileLink>
+                    {" "}
+                    ▪ BY{" "}
+                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                      {a.awardedBy}
+                    </ProfileLink>{" "}
+                    ▪ {fmt(a.awardedAt)}
                     {a.relatedOpName ? ` ▪ OP: ${a.relatedOpName}` : ""}
                   </div>
                   {a.reason && <div className="text-[11px] mt-1 text-muted-foreground italic">"{a.reason}"</div>}

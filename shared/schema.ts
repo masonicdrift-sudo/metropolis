@@ -400,6 +400,8 @@ export const trainingRecords = sqliteTable("training_records", {
   notes: text("notes").default(""),
   /** ISOFAC document id (OPORD, CONOP, etc.) this sign-in roster is attached to. */
   attachedIsofacDocId: integer("attached_isofac_doc_id").notNull().default(0),
+  /** When set, this sign-in row counts as attendance for that operation (see Operations → sign-in count). */
+  operationId: integer("operation_id").notNull().default(0),
   createdAt: text("created_at").notNull(),
 });
 export const insertTrainingSchema = createInsertSchema(trainingRecords).omit({ id: true });
@@ -579,24 +581,6 @@ export const broadcasts = sqliteTable("broadcasts", {
 export const insertBroadcastSchema = createInsertSchema(broadcasts).omit({ id: true });
 export type InsertBroadcast = z.infer<typeof insertBroadcastSchema>;
 export type Broadcast = typeof broadcasts.$inferSelect;
-
-// ─── Threat Markers ───────────────────────────────────────────────────────────
-export const threats = sqliteTable("threats", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  /** Server-generated 6-digit tracking number (e.g. "042391"). */
-  docNumber: text("doc_number").notNull().default(""),
-  label: text("label").notNull(),
-  category: text("category").notNull(), // IED, enemy_force, sniper, artillery, drone, cyber
-  confidence: text("confidence").notNull().default("possible"), // confirmed, probable, possible
-  grid: text("grid").notNull(),
-  reportedBy: text("reported_by").notNull(),
-  timestamp: text("timestamp").notNull(),
-  active: integer("active", { mode: "boolean" }).default(true),
-  notes: text("notes").default(""),
-});
-export const insertThreatSchema = createInsertSchema(threats).omit({ id: true });
-export type InsertThreat = z.infer<typeof insertThreatSchema>;
-export type Threat = typeof threats.$inferSelect;
 
 // ─── Tactical terrain map markers (NATO symbology, game X/Z per export) ───────
 export const tacticalMapMarkers = sqliteTable("tactical_map_markers", {

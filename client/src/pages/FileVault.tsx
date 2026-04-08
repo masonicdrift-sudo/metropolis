@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { SubPageNav } from "@/components/SubPageNav";
 import { INTEL_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const CLASS_COLOR: Record<string, string> = {
   UNCLASS: "text-blue-400 border-blue-900/50",
@@ -146,7 +147,12 @@ export default function FileVault() {
                   <span className={`text-[9px] font-bold tracking-wider ${STATUS_COLOR[doc.status] || ""}`}>{doc.status}</span>
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2">
-                  <span>BY {doc.createdBy}</span>
+                  <span>
+                    BY{" "}
+                    <ProfileLink username={doc.createdBy} className="text-muted-foreground hover:text-foreground">
+                      {doc.createdBy}
+                    </ProfileLink>
+                  </span>
                   {doc.opName && <span>▪ OP: {doc.opName}</span>}
                   <span>▪ {fmt(doc.createdAt)}</span>
                   {attaches.length > 0 && <span>▪ {attaches.length} ATTACHMENT{attaches.length > 1 ? "S" : ""}</span>}

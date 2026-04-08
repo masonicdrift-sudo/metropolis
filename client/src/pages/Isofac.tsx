@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { ProfileLink } from "@/components/ProfileLink";
 
 // ── Document type definitions ────────────────────────────────────────────────
 const DOC_TYPES = [
@@ -1477,7 +1478,12 @@ function DocViewer({ doc }: { doc: IsofacDoc }) {
             <h2 className="text-base font-bold tracking-wider font-mono text-foreground uppercase">{doc.title}</h2>
             <div className="text-[9px] text-muted-foreground/60 mt-0.5 flex flex-wrap gap-3">
               {doc.docNumber ? <span>DOC #: <span className="font-mono text-muted-foreground/80">#{doc.docNumber}</span></span> : null}
-              <span>BY: {doc.createdBy}</span>
+              <span>
+                BY:{" "}
+                <ProfileLink username={doc.createdBy} className="text-muted-foreground/80 hover:text-foreground">
+                  {doc.createdBy}
+                </ProfileLink>
+              </span>
               {doc.opName && <span>OP: {doc.opName}</span>}
               {doc.targetGrid && <span className="grid-coord">{doc.targetGrid}</span>}
               <span>UPDATED: {new Date(doc.updatedAt).toLocaleDateString()}</span>

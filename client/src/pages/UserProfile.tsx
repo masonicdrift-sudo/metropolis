@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProfileLink } from "@/components/ProfileLink";
 import type { TrainingRecord } from "@shared/schema";
 
 type AwardRow = {
@@ -23,6 +24,7 @@ type AwardRow = {
 type SignInRow = TrainingRecord & {
   attachedDocTitle?: string | null;
   attachedDocType?: string | null;
+  operationName?: string | null;
 };
 
 type ProfilePayload = {
@@ -66,10 +68,11 @@ export default function UserProfilePage() {
 
   const canView = !!user && !!username;
 
-  const { data: profile, isLoading } = useQuery<ProfilePayload>({
+  const { data: profile, isLoading, isError, error } = useQuery<ProfilePayload>({
     queryKey: ["/api/profile", username],
     queryFn: () => apiRequest("GET", `/api/profile/${encodeURIComponent(username)}`),
     enabled: canView,
+    retry: false,
   });
 
   const isSelf = useMemo(() => profile?.username && profile.username === user?.username, [profile?.username, user?.username]);
@@ -105,10 +108,22 @@ export default function UserProfilePage() {
           </Button>
         </Link>
         <div className="ml-auto text-[10px] text-muted-foreground tracking-wider">
-          {isLoading ? "LOADING…" : isSelf ? "YOU" : "OPERATOR"}
+          {isLoading ? "LOADING…" : isError ? "NOT FOUND" : isSelf ? "YOU" : "OPERATOR"}
         </div>
       </div>
 
+      {isError ? (
+        <div className="bg-destructive/10 border border-destructive/30 rounded p-4 text-xs text-muted-foreground">
+          <div className="font-bold tracking-wider text-destructive/90 mb-1">PROFILE UNAVAILABLE</div>
+          <p>
+            No operator named <span className="font-mono text-foreground">{username}</span> exists on this node, or you do not have access.
+            {error instanceof Error && error.message ? ` (${error.message})` : ""}
+          </p>
+        </div>
+      ) : null}
+
+      {!isError ? (
+      <>
       <div className="bg-card border border-border rounded p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -164,7 +179,10 @@ export default function UserProfilePage() {
                 <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
                   <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
                   <div className="text-[9px] text-muted-foreground">
-                    {fmtDate(a.awardedAt)} · BY {a.awardedBy}
+                    {fmtDate(a.awardedAt)} · BY{" "}
+                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                      {a.awardedBy}
+                    </ProfileLink>
                     {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
                   </div>
                 </div>
@@ -189,7 +207,10 @@ export default function UserProfilePage() {
                 <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
                   <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
                   <div className="text-[9px] text-muted-foreground">
-                    {fmtDate(a.awardedAt)} · BY {a.awardedBy}
+                    {fmtDate(a.awardedAt)} · BY{" "}
+                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                      {a.awardedBy}
+                    </ProfileLink>
                     {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
                   </div>
                 </div>
@@ -212,6 +233,7 @@ export default function UserProfilePage() {
                 <div className="font-bold">{r.eventName}</div>
                 <div className="text-muted-foreground mt-0.5">
                   {fmtDate(r.date)} · {r.category.toUpperCase()} · {r.result.toUpperCase()}
+                  {r.operationName ? ` · OP: ${r.operationName}` : ""}
                 </div>
                 {r.attachedIsofacDocId > 0 && (r.attachedDocTitle || r.attachedDocType) ? (
                   <div className="text-blue-300/90 mt-0.5">
@@ -223,6 +245,8 @@ export default function UserProfilePage() {
           </div>
         )}
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

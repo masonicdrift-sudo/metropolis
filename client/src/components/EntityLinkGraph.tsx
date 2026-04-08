@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Network } from "vis-network";
 import type { Data, Edge, Node, Options } from "vis-network";
-import type { EntityLink, IntelReport, Threat } from "@shared/schema";
+import type { EntityLink, IntelReport } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import "vis-network/styles/vis-network.css";
 
@@ -42,12 +42,11 @@ export function buildEntityGraph(
   links: EntityLink[],
   maps: EntityLabelMaps,
   opts: {
-    threats?: Threat[];
     intel?: IntelReport[];
     includeDerivedGridEdges?: boolean;
   },
 ): { nodes: Node[]; edges: Edge[] } {
-  const { threats = [], intel = [], includeDerivedGridEdges = true } = opts;
+  const { intel = [], includeDerivedGridEdges = true } = opts;
   const nodeMap = new Map<string, Node>();
 
   const ensureNode = (type: string, id: string) => {
@@ -79,22 +78,6 @@ export function buildEntityGraph(
 
   if (includeDerivedGridEdges) {
     const norm = (g: string) => g.trim().replace(/\s+/g, " ");
-    for (const t of threats) {
-      const g = norm(t.grid || "");
-      if (!g) continue;
-      ensureNode("threats", String(t.id));
-      ensureNode("location", g);
-      edges.push({
-        id: `derived-t-${t.id}-loc`,
-        from: entityNodeKey("threats", String(t.id)),
-        to: entityNodeKey("location", g),
-        label: "grid",
-        dashes: [6, 6],
-        color: { color: "#64748b" },
-        arrows: "to",
-        font: { size: 8, color: "#64748b" },
-      });
-    }
     for (const r of intel) {
       const g = norm(r.grid || "");
       if (!g) continue;
@@ -141,7 +124,6 @@ function buildGroups(): NonNullable<Options["groups"]> {
 type EntityLinkGraphProps = {
   links: EntityLink[];
   maps: EntityLabelMaps;
-  threats?: Threat[];
   intel?: IntelReport[];
   includeDerivedGridEdges?: boolean;
   focusNodeId?: string | null;
@@ -152,7 +134,6 @@ type EntityLinkGraphProps = {
 export function EntityLinkGraph({
   links,
   maps,
-  threats = [],
   intel = [],
   includeDerivedGridEdges = true,
   focusNodeId,
@@ -163,8 +144,8 @@ export function EntityLinkGraph({
   const networkRef = useRef<Network | null>(null);
 
   const { nodes, edges } = useMemo(
-    () => buildEntityGraph(links, maps, { threats, intel, includeDerivedGridEdges }),
-    [links, maps, threats, intel, includeDerivedGridEdges],
+    () => buildEntityGraph(links, maps, { intel, includeDerivedGridEdges }),
+    [links, maps, intel, includeDerivedGridEdges],
   );
 
   const graphData = useMemo((): Data => ({ nodes, edges }), [nodes, edges]);
@@ -237,7 +218,7 @@ export function EntityLinkGraph({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none px-4 text-center bg-background/75">
           <span className="text-xs text-muted-foreground tracking-wide">No nodes yet.</span>
           <span className="text-[10px] text-muted-foreground/80 max-w-sm">
-            Create links between people, units, grids, threats, and intel — or add data with grid coordinates to see dashed &quot;grid&quot; edges.
+            Create links between people, units, grids, and intel — or add intel with grid coordinates to see dashed &quot;grid&quot; edges.
           </span>
         </div>
       )}

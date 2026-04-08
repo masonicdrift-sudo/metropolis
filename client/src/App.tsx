@@ -10,7 +10,6 @@ import Operations from "./pages/Operations";
 import Intel from "./pages/Intel";
 import Communications from "./pages/Communications";
 import Assets from "./pages/Assets";
-import Threats from "./pages/Threats";
 import Units from "./pages/Units";
 import UserManagement from "./pages/UserManagement";
 import AccessCodes from "./pages/AccessCodes";
@@ -40,6 +39,7 @@ import TacticalHub from "./pages/TacticalHub";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import { MetropolisLogo } from "@/components/MetropolisLogo";
 import { ClassificationBanner } from "@/components/ClassificationBanner";
+import { ProfileLink } from "@/components/ProfileLink";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
 import { useQuery } from "@tanstack/react-query";
@@ -165,7 +165,7 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
     >
       {/* Logo */}
       <div className="px-4 py-3 border-b border-border">
-        <MetropolisLogo size="md" className="max-w-[min(100%,11rem)]" />
+        <MetropolisLogo size="md" className="max-w-[min(100%,11rem)]" showText />
         <div className="text-[10px] text-muted-foreground tracking-widest mt-2">TACTICAL NODE v1.0</div>
       </div>
 
@@ -245,7 +245,10 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] font-bold text-foreground truncate font-mono tracking-wider">
-              {(user as any)?.rank && <span className="text-yellow-400 mr-1">{(user as any).rank}</span>}{user?.username}
+              {(user as any)?.rank && <span className="text-yellow-400 mr-1">{(user as any).rank}</span>}
+              <ProfileLink username={user?.username} className="text-foreground hover:text-blue-400 font-bold">
+                {user?.username}
+              </ProfileLink>
             </div>
             <div className={`text-[9px] tracking-wider flex items-center gap-1 ${
               user?.accessLevel === "owner" ? "text-orange-400" : user?.accessLevel === "admin" ? "text-yellow-400" : "text-muted-foreground"
@@ -290,7 +293,7 @@ function MobileTopBar({ onMenuOpen, mobileShell }: { onMenuOpen: () => void; mob
       )}
     >
         <div className="flex items-center gap-3 min-w-0">
-        <MetropolisLogo size="sm" className="shrink-0 max-w-[7rem]" />
+        <MetropolisLogo size="sm" className="shrink-0 max-w-[7rem]" showText textLayout="inline" />
         <div className="min-w-0">
           <div className="text-[9px] text-muted-foreground tracking-widest truncate">{pageTitle}</div>
         </div>
@@ -335,11 +338,16 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
       <div className="fixed inset-y-0 right-0 z-50 w-[min(100vw,18rem)] sm:w-72 max-w-full bg-card border-l border-border flex flex-col shadow-2xl safe-top">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border gap-3">
-          <MetropolisLogo size="sm" className="shrink-0 opacity-90 max-w-[5.5rem]" />
+          <MetropolisLogo size="sm" className="shrink-0 opacity-90 max-w-[5.5rem]" showText />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-blue-400 tracking-widest">NAVIGATION</div>
             <div className="text-[9px] text-muted-foreground tracking-wider mt-0.5">
-              <span className={`font-bold ${user?.accessLevel === "owner" ? "text-orange-400" : user?.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"}`}>{user?.username}</span>
+              <ProfileLink
+                username={user?.username}
+                className={`font-bold inline ${user?.accessLevel === "owner" ? "text-orange-400 hover:text-orange-300" : user?.accessLevel === "admin" ? "text-yellow-400 hover:text-yellow-300" : "text-blue-400 hover:text-blue-300"}`}
+              >
+                {user?.username}
+              </ProfileLink>
               {" "}▪ {user?.accessLevel?.toUpperCase()}
             </div>
           </div>
@@ -471,6 +479,12 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ProfileIndexRedirect() {
+  const { user } = useAuth();
+  if (!user?.username) return <Redirect to="/" />;
+  return <Redirect to={`/profile/${encodeURIComponent(user.username)}`} />;
+}
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -479,7 +493,7 @@ function AppRoutes() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center scanlines">
         <div className="text-center space-y-4 flex flex-col items-center px-4">
-          <MetropolisLogo size="md" className="opacity-90" />
+          <MetropolisLogo size="md" className="opacity-90" showText />
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           <div className="text-[10px] text-muted-foreground tracking-widest">INITIALIZING NODE...</div>
         </div>
@@ -515,7 +529,6 @@ function AppRoutes() {
         <Route path="/personnel/units" component={Units} />
         <Route path="/personnel" component={PersonnelHub} />
 
-        <Route path="/tactical/threats" component={Threats} />
         <Route path="/tactical/map" component={TacticalTerrainMap} />
         <Route path="/tactical/grid" component={GridTool} />
         <Route path="/tactical" component={TacticalHub} />
@@ -533,6 +546,7 @@ function AppRoutes() {
         <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.accessLevel === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
+        <Route path="/profile" component={ProfileIndexRedirect} />
         <Route path="/profile/:username" component={UserProfilePage} />
 
         <Route path="/medical"><Redirect to="/support/medical" /></Route>
@@ -544,7 +558,6 @@ function AppRoutes() {
         <Route path="/perstat"><Redirect to="/personnel/perstat" /></Route>
         <Route path="/personnel-roster"><Redirect to="/personnel/roster" /></Route>
         <Route path="/units"><Redirect to="/personnel/units" /></Route>
-        <Route path="/threats"><Redirect to="/tactical/threats" /></Route>
         <Route path="/terrain"><Redirect to="/tactical/map" /></Route>
         <Route path="/grid-tool"><Redirect to="/tactical/grid" /></Route>
         <Route path="/awards"><Redirect to="/training/awards" /></Route>

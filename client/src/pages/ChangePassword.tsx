@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { KeyRound, Check, Eye, EyeOff, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProfileLink } from "@/components/ProfileLink";
 
 export default function ChangePassword() {
   const { user, refreshUser } = useAuth();
@@ -96,7 +97,10 @@ export default function ChangePassword() {
           SETTINGS
         </h1>
         <div className="text-[10px] text-muted-foreground tracking-wider">
-          Signed in as <span className="text-blue-400 font-mono">{user?.username}</span>
+          Signed in as{" "}
+          <ProfileLink username={user?.username} className="text-blue-400 font-mono hover:text-blue-300">
+            {user?.username}
+          </ProfileLink>
         </div>
       </div>
 

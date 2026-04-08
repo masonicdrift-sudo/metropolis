@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
 import { PERSONNEL_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   active:   { label: "ACTIVE",    color: "text-blue-400",  dot: "bg-blue-500" },
@@ -124,7 +125,11 @@ export default function PerstatPage() {
                 <div className="flex items-center gap-3">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                   <div>
-                    <div className="text-xs font-bold font-mono tracking-wider">{e.username}</div>
+                    <div className="text-xs font-bold font-mono tracking-wider">
+                      <ProfileLink username={e.username} className="text-foreground hover:text-blue-400 font-bold">
+                        {e.username}
+                      </ProfileLink>
+                    </div>
                     {e.notes && <div className="text-[10px] text-muted-foreground">{e.notes}</div>}
                   </div>
                 </div>

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Textarea } from "@/components/ui/textarea";
 import { ShieldCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ProfileLink } from "@/components/ProfileLink";
 
 export default function ApprovalsPage() {
   const qc = useQueryClient();
@@ -75,23 +76,36 @@ export default function ApprovalsPage() {
             <div className="py-10 text-center text-xs text-muted-foreground">NO {status.toUpperCase()} APPROVALS</div>
           ) : (
             rows.map((a) => (
-              <button
+              <div
                 key={a.id}
-                type="button"
-                className="w-full text-left px-3 py-2 hover:bg-secondary/20"
+                role="button"
+                tabIndex={0}
+                className="w-full text-left px-3 py-2 hover:bg-secondary/20 cursor-pointer"
                 onClick={() => {
                   setSelected(a);
                   setNote("");
                   setOpen(true);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelected(a);
+                    setNote("");
+                    setOpen(true);
+                  }
+                }}
               >
                 <div className="text-[10px] font-mono text-muted-foreground">
-                  {new Date(a.requestedAt).toLocaleString()} · {a.requestedBy} · {a.status.toUpperCase()}
+                  {new Date(a.requestedAt).toLocaleString()} ·{" "}
+                  <ProfileLink username={a.requestedBy} className="text-muted-foreground hover:text-foreground">
+                    {a.requestedBy}
+                  </ProfileLink>{" "}
+                  · {a.status.toUpperCase()}
                 </div>
                 <div className="text-xs font-mono">
                   {a.action} {a.entityType} #{a.entityId}
                 </div>
-              </button>
+              </div>
             ))
           )}
         </div>

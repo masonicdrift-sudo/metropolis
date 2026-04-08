@@ -14,6 +14,9 @@ import { useAuth } from "@/lib/auth";
 import { SubPageNav } from "@/components/SubPageNav";
 import { OPS_SUB } from "@/lib/appNav";
 
+/** API appends sign-in sheet row counts (linked via Training → operation). */
+type OperationRow = Operation & { signInCount?: number };
+
 const STATUS_FLOW: Record<string, string> = {
   planning: "active", active: "complete", complete: "complete", aborted: "aborted",
 };
@@ -100,6 +103,12 @@ function OpForm({ op, onClose }: { op?: Operation; onClose: () => void }) {
           <Textarea placeholder="Mission objective..." value={form.objective || ""} onChange={e => set("objective")(e.target.value)} className="text-xs h-16" /></div>
         <div className="col-span-2"><Label className="text-[10px] tracking-wider">NOTES</Label>
           <Textarea placeholder="Additional notes..." value={form.notes || ""} onChange={e => set("notes")(e.target.value)} className="text-xs h-14" /></div>
+        {op ? (
+          <div className="col-span-2 rounded border border-border/50 bg-secondary/10 px-3 py-2 text-[9px] text-muted-foreground">
+            <span className="font-bold tracking-wider text-foreground/90">ATTENDANCE</span> comes from the{" "}
+            <span className="text-blue-400/90">Sign-in sheet</span>: add rows under Training and link each entry to this operation.
+          </div>
+        ) : null}
       </div>
 
       {op && (
@@ -182,7 +191,7 @@ export default function Operations() {
   const [editOp, setEditOp] = useState<Operation | undefined>();
   const [filter, setFilter] = useState("all");
 
-  const { data: ops = [], isLoading } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations") });
+  const { data: ops = [], isLoading } = useQuery<OperationRow[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations") });
 
   const advance = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => apiRequest("POST", `/api/operations/${id}/request-approval`, { status }),
@@ -245,6 +254,7 @@ export default function Operations() {
                 <th className="text-left px-3 py-2">STATUS</th>
                 <th className="text-left px-3 py-2">PRIORITY</th>
                 <th className="text-left px-3 py-2">GRID</th>
+                <th className="text-left px-3 py-2">SIGN-INS</th>
                 <th className="text-left px-3 py-2">OBJECTIVE</th>
                 <th className="text-left px-3 py-2">ACTIONS</th>
               </tr>
@@ -260,6 +270,9 @@ export default function Operations() {
                   <td className="px-3 py-2" data-label="STATUS"><span className={`badge-${op.status} text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase`}>{op.status}</span></td>
                   <td className="px-3 py-2" data-label="PRIORITY"><span className={`badge-${op.priority} text-[9px] px-2 py-0.5 rounded tracking-wider uppercase`}>{op.priority}</span></td>
                   <td className="px-3 py-2 grid-coord" data-label="GRID">{op.grid}</td>
+                  <td className="px-3 py-2 text-[10px] font-mono text-muted-foreground" data-label="SIGN-INS" title="Rows on Sign-in sheet linked to this operation">
+                    {op.signInCount ?? 0}
+                  </td>
                   <td className="px-3 py-2 text-muted-foreground max-w-[200px] truncate" data-label="OBJECTIVE">{op.objective}</td>
                   <td className="px-3 py-2">
                     <div className="flex gap-1">

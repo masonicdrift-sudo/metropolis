@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import type { TrainingRecord, IsofacDoc } from "@shared/schema";
+import type { TrainingRecord, IsofacDoc, Operation } from "@shared/schema";
 import { SIGN_IN_ISO_FAC_TYPES } from "@shared/schema";
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, List, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
 import { TRAINING_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const SIGN_IN_TYPE_SET = new Set<string>(SIGN_IN_ISO_FAC_TYPES);
 
@@ -28,6 +29,7 @@ const CAT_COLOR: Record<string, string> = {
 type TrainingRow = TrainingRecord & {
   attachedDocTitle?: string | null;
   attachedDocType?: string | null;
+  operationName?: string | null;
 };
 
 function SignInForm({ onClose, users }: { onClose: () => void; users: { username: string }[] }) {
@@ -43,6 +45,12 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
     expiresAt: "",
     notes: "",
     attachedIsofacDocId: "0",
+    operationId: "0",
+  });
+
+  const { data: operations = [] } = useQuery<Operation[]>({
+    queryKey: ["/api/operations"],
+    queryFn: () => apiRequest("GET", "/api/operations"),
   });
 
   const { data: isofacDocs = [] } = useQuery<IsofacDoc[]>({
@@ -59,6 +67,7 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
     mutationFn: (d: Record<string, unknown>) => apiRequest("POST", "/api/training", d),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/training"] });
+      qc.invalidateQueries({ queryKey: ["/api/operations"] });
       toast({ title: "Sign-in recorded" });
       onClose();
     },
@@ -93,6 +102,26 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
         <div>
           <Label className="text-[10px] tracking-wider">EVENT / ENTRY NAME *</Label>
           <Input value={form.eventName} onChange={(e) => set("eventName")(e.target.value)} placeholder="e.g. Range day, Rehearsal, Lane training" className="text-xs" />
+        </div>
+        <div>
+          <Label className="text-[10px] tracking-wider">LINK TO OPERATION (ATTENDANCE)</Label>
+          <Select value={form.operationId} onValueChange={set("operationId")}>
+            <SelectTrigger className="text-xs">
+              <SelectValue placeholder="— None —" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">— None —</SelectItem>
+              {operations.map((op) => (
+                <SelectItem key={op.id} value={String(op.id)}>
+                  {op.docNumber ? `#${op.docNumber} ` : ""}
+                  {op.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[9px] text-muted-foreground mt-1">
+            Counts this operator toward that operation&apos;s attendance on the Operations page (sign-in rows linked to this op).
+          </p>
         </div>
         <div>
           <Label className="text-[10px] tracking-wider">ATTACH TO ORDER / PLAN (ISOFAC)</Label>
@@ -148,6 +177,7 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
               return;
             }
             const attachedIsofacDocId = Number(form.attachedIsofacDocId) || 0;
+            const operationId = Number(form.operationId) || 0;
             create.mutate({
               username: form.username,
               eventName: form.eventName,
@@ -158,6 +188,7 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
               expiresAt: form.expiresAt,
               notes: form.notes,
               attachedIsofacDocId,
+              operationId,
             });
           }}
           disabled={create.isPending}
@@ -177,6 +208,8 @@ export default function TrainingPage() {
   const [open, setOpen] = useState(false);
   const [filterUser, setFilterUser] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
+  /** Flat list vs one block per event/date (roster) — each name links to profile. */
+  const [viewMode, setViewMode] = useState<"list" | "roster">("roster");
 
   useEffect(() => {
     if (!canAdmin) setFilterUser("all");
@@ -196,6 +229,7 @@ export default function TrainingPage() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/training/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/training"] });
+      qc.invalidateQueries({ queryKey: ["/api/operations"] });
       toast({ title: "Entry removed" });
     },
   });
@@ -208,6 +242,28 @@ export default function TrainingPage() {
     if (filterCat !== "all" && r.category !== filterCat) return false;
     return true;
   });
+
+  const rosterGroups = useMemo(() => {
+    const map = new Map<string, TrainingRow[]>();
+    for (const r of filtered) {
+      const key = JSON.stringify([r.eventName.trim(), r.date]);
+      const arr = map.get(key) || [];
+      arr.push(r);
+      map.set(key, arr);
+    }
+    const groups = Array.from(map.entries()).map(([key, rows]) => {
+      const sorted = [...rows].sort((a, b) => a.username.localeCompare(b.username));
+      const head = rows[0]!;
+      return { key, eventName: head.eventName, date: head.date, rows: sorted };
+    });
+    groups.sort((a, b) => {
+      const ta = new Date(a.date).getTime();
+      const tb = new Date(b.date).getTime();
+      if (tb !== ta) return tb - ta;
+      return a.eventName.localeCompare(b.eventName);
+    });
+    return groups;
+  }, [filtered]);
 
   const expiring = records.filter((r) => {
     if (!r.expiresAt) return false;
@@ -291,10 +347,78 @@ export default function TrainingPage() {
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="text-[9px] text-muted-foreground tracking-widest uppercase">View</span>
+        <button
+          type="button"
+          onClick={() => setViewMode("roster")}
+          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${
+            viewMode === "roster" ? "bg-blue-900/50 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"
+          }`}
+        >
+          <Users size={12} /> By event roster
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("list")}
+          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] tracking-wider uppercase transition-all ${
+            viewMode === "list" ? "bg-blue-900/50 text-blue-400 border border-blue-800" : "text-muted-foreground hover:text-foreground bg-secondary"
+          }`}
+        >
+          <List size={12} /> All entries
+        </button>
+        <span className="text-[9px] text-muted-foreground/80 hidden sm:inline">Roster groups the same event + date; click a name for profile.</span>
+      </div>
+
       {filtered.length === 0 && (
         <div className="bg-card border border-border rounded p-8 text-center text-muted-foreground text-xs">NO SIGN-IN ENTRIES</div>
       )}
-      <div className="space-y-2">
+
+      {viewMode === "roster" && filtered.length > 0 && (
+        <div className="space-y-3 mb-4">
+          {rosterGroups.map((g) => (
+            <div key={g.key} className="bg-card border border-border rounded overflow-hidden">
+              <div className="px-3 py-2 border-b border-border bg-secondary/25 flex flex-wrap items-baseline justify-between gap-2">
+                <div className="text-[11px] font-bold tracking-wide text-foreground">{g.eventName}</div>
+                <div className="text-[9px] text-muted-foreground font-mono">
+                  {fmt(g.date)} · {g.rows.length} signed
+                </div>
+              </div>
+              <ul className="divide-y divide-border">
+                {g.rows.map((r) => (
+                  <li key={r.id} className="px-3 py-2 flex items-start justify-between gap-2 hover:bg-secondary/15">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <ProfileLink
+                          username={r.username}
+                          className="text-xs font-bold font-mono text-blue-300 hover:text-blue-200"
+                        >
+                          {r.username}
+                        </ProfileLink>
+                        <span className={`text-[9px] font-bold tracking-widest ${CAT_COLOR[r.category] || ""}`}>{r.category.toUpperCase()}</span>
+                        <span className={`text-[9px] font-bold tracking-wider ${RESULT_COLOR[r.result] || ""}`}>{r.result.toUpperCase()}</span>
+                        {r.operationName ? (
+                          <span className="text-[9px] text-cyan-400/90 font-mono tracking-tight" title="Operation attendance">
+                            OP: {r.operationName}
+                          </span>
+                        ) : null}
+                      </div>
+                      {r.notes ? <div className="text-[9px] text-muted-foreground/80 mt-0.5 line-clamp-2">{r.notes}</div> : null}
+                    </div>
+                    {canAdmin && (
+                      <button type="button" onClick={() => del.mutate(r.id)} className="p-1 text-muted-foreground hover:text-red-400 shrink-0" title="Remove entry">
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={`space-y-2 ${viewMode === "roster" ? "hidden" : ""}`}>
         {filtered.map((r) => {
           const isExpiringSoon = r.expiresAt && (() => {
             const exp = new Date(r.expiresAt!);
@@ -311,9 +435,19 @@ export default function TrainingPage() {
                     <span className="text-xs font-bold">{r.eventName}</span>
                     <span className={`text-[9px] font-bold tracking-wider ${RESULT_COLOR[r.result] || ""}`}>{r.result.toUpperCase()}</span>
                     {isExpiringSoon && <span className="text-[9px] text-orange-400 font-bold">⚠ EXPIRING</span>}
+                    {r.operationName ? (
+                      <span className="text-[9px] text-cyan-400/90 font-mono" title="Linked operation (attendance)">
+                        OP: {r.operationName}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap gap-2">
-                    <span>OPR: <span className="text-foreground font-bold font-mono">{r.username}</span></span>
+                    <span>
+                      OPR:{" "}
+                      <ProfileLink username={r.username} className="text-foreground font-bold font-mono hover:text-blue-400">
+                        {r.username}
+                      </ProfileLink>
+                    </span>
                     <span>▪ {fmt(r.date)}</span>
                     {r.instructor && <span>▪ INSTR: {r.instructor}</span>}
                     {r.expiresAt && (

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   flash:     { label: "FLASH",     color: "text-red-400",    bg: "bg-red-950/60",    border: "border-red-700" },
@@ -144,7 +145,11 @@ export default function BroadcastsPage() {
                   </div>
                   <div className="text-[11px] text-foreground/80 mb-1">{b.message}</div>
                   <div className="text-[10px] text-muted-foreground">
-                    SENT BY {b.sentBy} ▪ {fmt(b.sentAt)}
+                    SENT BY{" "}
+                    <ProfileLink username={b.sentBy} className="text-muted-foreground hover:text-foreground">
+                      {b.sentBy}
+                    </ProfileLink>{" "}
+                    ▪ {fmt(b.sentAt)}
                     {b.expiresAt && ` ▪ EXPIRES: ${fmt(b.expiresAt)}`}
                   </div>
                 </div>

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { SubPageNav } from "@/components/SubPageNav";
 import { TACTICAL_SUB } from "@/lib/appNav";
-import type { Unit, Threat } from "@shared/schema";
+import type { Unit } from "@shared/schema";
 import { MapPin, Plus, Trash2, Copy, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,6 @@ export default function GridTool() {
   const [calcResult, setCalcResult] = useState("");
 
   const { data: units = [] } = useQuery<Unit[]>({ queryKey: ["/api/units"], queryFn: () => apiRequest("GET", "/api/units") });
-  const { data: threats = [] } = useQuery<Threat[]>({ queryKey: ["/api/threats"], queryFn: () => apiRequest("GET", "/api/threats") });
 
   const addMarker = () => {
     if (!form.label || !form.grid) return;
@@ -62,9 +61,7 @@ export default function GridTool() {
     setCalcResult(clean ? `FORMATTED: ${clean}` : "");
   };
 
-  // Pull units and threats as quick-add references
   const unitRefs = units.map(u => ({ label: u.callsign, grid: u.grid, type: "friendly" as const }));
-  const threatRefs = threats.filter(t => t.active).map(t => ({ label: t.label, grid: t.grid, type: "enemy" as const }));
 
   return (
     <div className="p-3 md:p-4 tac-page">
@@ -127,10 +124,9 @@ export default function GridTool() {
             )}
           </div>
 
-          {/* Quick ref from Units / Threats */}
-          {(unitRefs.length > 0 || threatRefs.length > 0) && (
+          {unitRefs.length > 0 && (
             <div className="bg-card border border-border rounded p-3">
-              <div className="text-[10px] text-muted-foreground tracking-widest mb-2">QUICK REFERENCE — LIVE DATA</div>
+              <div className="text-[10px] text-muted-foreground tracking-widest mb-2">QUICK REFERENCE — UNITS</div>
               <div className="space-y-1 max-h-40 overflow-y-auto">
                 {unitRefs.map(r => (
                   <div key={r.label} className="flex items-center justify-between text-[10px] py-0.5">
@@ -139,17 +135,6 @@ export default function GridTool() {
                       <span className="font-mono text-muted-foreground">{r.grid}</span>
                       <CopyBtn value={r.grid} />
                       <button onClick={() => setForm(f => ({ ...f, label: r.label, grid: r.grid, type: "friendly" }))}
-                        className="text-[9px] text-muted-foreground hover:text-foreground px-1 py-0.5 bg-secondary rounded">USE</button>
-                    </div>
-                  </div>
-                ))}
-                {threatRefs.map(r => (
-                  <div key={r.label} className="flex items-center justify-between text-[10px] py-0.5">
-                    <span className="text-red-400 font-bold">✕ {r.label}</span>
-                    <div className="flex items-center gap-1">
-                      <span className="font-mono text-muted-foreground">{r.grid}</span>
-                      <CopyBtn value={r.grid} />
-                      <button onClick={() => setForm(f => ({ ...f, label: r.label, grid: r.grid, type: "enemy" }))}
                         className="text-[9px] text-muted-foreground hover:text-foreground px-1 py-0.5 bg-secondary rounded">USE</button>
                     </div>
                   </div>

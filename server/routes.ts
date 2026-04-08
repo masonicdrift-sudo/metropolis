@@ -9,7 +9,7 @@ import { upload } from "./upload";
 import { z } from "zod";
 import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
-  insertCommsLogSchema, insertAssetSchema, insertThreatSchema,
+  insertCommsLogSchema, insertAssetSchema,
   ACCESS_RANK,
   SIGN_IN_ISO_FAC_TYPES,
 } from "@shared/schema";
@@ -490,7 +490,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
           attachedType = doc.type;
         }
       }
-      return { ...r, attachedDocTitle: attachedTitle, attachedDocType: attachedType };
+      let operationName: string | null = null;
+      if (r.operationId) {
+        const op = storage.getOperation(r.operationId);
+        if (op) operationName = op.name;
+      }
+      return { ...r, attachedDocTitle: attachedTitle, attachedDocType: attachedType, operationName };
     });
     res.json({
       username: u.username,
@@ -940,7 +945,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── Operations ───────────────────────────────────────────────────────────────
-  app.get("/api/operations", requireAuth, (_, res) => res.json(storage.getOperations()));
+  app.get("/api/operations", requireAuth, (_, res) => {
+    const ops = storage.getOperations();
+    const counts = storage.getTrainingSignInCountsByOperationId();
+    res.json(ops.map((o) => ({ ...o, signInCount: counts[o.id] ?? 0 })));
+  });
   app.post("/api/operations", requireAuth, (req, res) => {
     const parsed = insertOperationSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json(parsed.error);
@@ -1214,74 +1223,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
-  // ── Threats ──────────────────────────────────────────────────────────────────
-  app.get("/api/threats", requireAuth, (_, res) => res.json(storage.getThreats()));
-  app.post("/api/threats", requireAuth, (req, res) => {
-    const parsed = insertThreatSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json(parsed.error);
-    const threat = storage.createThreat(parsed.data);
-    wsPush("THREAT");
-    appendActivity(req, { action: "CREATE", entityType: "threats", entityId: threat.id, summary: `Created threat: ${threat.label}`, after: threat });
-    res.status(201).json(threat);
-  });
-  app.patch("/api/threats/:id", requireAuth, (req, res) => {
-    const id = Number(req.params.id);
-    const before = storage.getThreats().find((x) => x.id === id);
-    const t = storage.updateThreat(id, req.body);
-    if (!t) return res.status(404).json({ error: "Not found" });
-    wsPush("THREAT");
-    appendActivity(req, { action: "UPDATE", entityType: "threats", entityId: t.id, summary: `Updated threat: ${t.label}`, before, after: t });
-    res.json(t);
-  });
-  app.delete("/api/threats/:id", requireAuth, (req, res) => {
-    const id = Number(req.params.id);
-    const before = storage.getThreats().find((x) => x.id === id);
-    storage.deleteTheat(id);
-    wsPush("THREAT");
-    appendActivity(req, { action: "DELETE", entityType: "threats", entityId: id, summary: `Deleted threat ${id}`, before });
-    res.status(204).send();
-  });
-
-  // Request action on a threat-board target (admin/owner -> approval)
-  app.post("/api/threats/:id/request-action", requireAdmin, (req, res) => {
-    const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
-    const threat = storage.getThreats().find((x) => x.id === id);
-    if (!threat) return res.status(404).json({ error: "Not found" });
-    const actionType = typeof req.body?.actionType === "string" ? req.body.actionType : "action_request";
-    const note = typeof req.body?.note === "string" ? req.body.note : "";
-    const now = new Date().toISOString();
-    const approval = storage.createApproval({
-      entityType: "threat_action",
-      entityId: String(id),
-      action: "REQUEST_ACTION",
-      status: "pending",
-      requestedBy: req.session.username!,
-      requestedAt: now,
-      requestedNote: note,
-      approvedBy: "",
-      approvedAt: "",
-      decisionNote: "",
-      payloadJson: JSON.stringify({ actionType }),
-    });
-    wsPush("APPROVALS");
-    appendActivity(req, { action: "CREATE", entityType: "approval", entityId: approval.id, summary: `Requested threat action: ${threat.label} (${id})`, after: approval });
-    res.status(202).json({ ok: true, approvalId: approval.id });
-  });
-
   const THREAT_LEVELS = ["LOW", "GUARDED", "ELEVATED", "HIGH", "SEVERE"] as const;
-  function computeDashboardThreatLevel(threats: ReturnType<typeof storage.getThreats>) {
-    const activeThreats = threats.filter(t => t.active).length;
-    const criticalThreats = threats.filter(t => t.active && t.confidence === "confirmed").length;
-    if (criticalThreats >= 3) return "SEVERE";
-    if (criticalThreats >= 2) return "HIGH";
-    if (activeThreats >= 3) return "ELEVATED";
-    return "GUARDED";
-  }
 
   app.get("/api/dashboard/threat-level", requireAuth, (_, res) => {
-    const threats = storage.getThreats();
-    const computed = computeDashboardThreatLevel(threats);
+    const computed = "GUARDED" as const;
     let mode: "auto" | "manual" = "auto";
     let manualLevel: string | null = null;
     const raw = storage.getSiteSetting("dashboard_threat");
@@ -1520,6 +1465,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     expiresAt: z.string().optional().default(""),
     notes: z.string().optional().default(""),
     attachedIsofacDocId: z.number().int().nonnegative().optional().default(0),
+    operationId: z.number().int().nonnegative().optional().default(0),
   });
 
   function enrichTrainingRows(rows: ReturnType<typeof storage.getTrainingRecords>) {
@@ -1533,7 +1479,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
           attachedDocType = doc.type;
         }
       }
-      return { ...r, attachedDocTitle, attachedDocType };
+      let operationName: string | null = null;
+      if (r.operationId) {
+        const op = storage.getOperation(r.operationId);
+        if (op) operationName = op.name;
+      }
+      return { ...r, attachedDocTitle, attachedDocType, operationName };
     });
   }
 
@@ -1567,6 +1518,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         });
       }
     }
+    if (p.operationId) {
+      const op = storage.getOperation(p.operationId);
+      if (!op) return res.status(400).json({ error: "Operation not found" });
+    }
     const rec = storage.createTrainingRecord({
       username: p.username,
       eventName: p.eventName,
@@ -1577,6 +1532,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       expiresAt: p.expiresAt,
       notes: p.notes,
       attachedIsofacDocId: p.attachedIsofacDocId,
+      operationId: p.operationId,
       createdAt: new Date().toISOString(),
     });
     wsPush("TRAINING");
@@ -2035,30 +1991,6 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         });
         wsPush("SUPPORT_REQUESTS");
         appendActivity(req, { action: "CREATE", entityType: "support_request", entityId: sr.id, summary: `Created support request from intel action approval`, after: sr });
-      } catch {}
-    }
-    if (row.entityType === "threat_action" && row.action === "REQUEST_ACTION") {
-      try {
-        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
-        const actionType = typeof payload?.actionType === "string" ? payload.actionType : "action_request";
-        const threat = storage.getThreats().find((x) => x.id === Number(row.entityId));
-        const label = threat ? threat.label : `Threat ${row.entityId}`;
-        const priority =
-          threat?.confidence === "confirmed" ? "critical" : threat?.confidence === "probable" ? "high" : "medium";
-        const sr = storage.createSupportRequest({
-          title: `Target action: ${label}`,
-          category: "fires",
-          priority,
-          status: "open",
-          assignedTo: "",
-          dueAt: "",
-          details: `${actionType}\n\n${row.requestedNote || ""}`.trim(),
-          createdBy: row.requestedBy,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        wsPush("SUPPORT_REQUESTS");
-        appendActivity(req, { action: "CREATE", entityType: "support_request", entityId: sr.id, summary: `Created support request from threat action approval`, after: sr });
       } catch {}
     }
     wsPush("APPROVALS");

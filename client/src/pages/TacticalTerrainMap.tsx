@@ -30,6 +30,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
 import { TACTICAL_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 import type { TacAffiliation } from "@shared/natoSidc";
 import {
   NATO_FRIENDLY_SIDCS,
@@ -1400,7 +1401,10 @@ export default function TacticalTerrainMap() {
                         {m.label || (m.markerType.startsWith("custom:") ? "Custom SIDC" : m.markerType)}
                       </div>
                       <div className="text-muted-foreground text-[9px]">
-                        {affiliationUiLabel(m.affiliation)} · {m.createdBy}
+                        {affiliationUiLabel(m.affiliation)} ·{" "}
+                        <ProfileLink username={m.createdBy} className="text-muted-foreground hover:text-foreground">
+                          {m.createdBy}
+                        </ProfileLink>
                       </div>
                       <div className="text-[9px] text-muted-foreground/80 font-mono">
                         X {m.gameX.toFixed(0)} · Z {m.gameZ.toFixed(0)}
@@ -1453,7 +1457,10 @@ export default function TacticalTerrainMap() {
                         {rr.label || `Ring ${rr.radiusMeters.toFixed(0)} m`}
                       </div>
                       <div className="text-muted-foreground text-[9px]">
-                        r={rr.radiusMeters.toFixed(0)} m · {rr.createdBy}
+                        r={rr.radiusMeters.toFixed(0)} m ·{" "}
+                        <ProfileLink username={rr.createdBy} className="text-muted-foreground hover:text-foreground">
+                          {rr.createdBy}
+                        </ProfileLink>
                       </div>
                     </div>
                     {canDel ? (
@@ -1502,7 +1509,9 @@ export default function TacticalTerrainMap() {
                         {bl.label?.trim() || "(no label)"}
                       </div>
                       <div className="text-muted-foreground text-[9px] truncate font-mono">
-                        {bl.createdBy}
+                        <ProfileLink username={bl.createdBy} className="text-muted-foreground hover:text-foreground font-mono">
+                          {bl.createdBy}
+                        </ProfileLink>
                       </div>
                     </div>
                     {canDel ? (
@@ -1547,7 +1556,11 @@ export default function TacticalTerrainMap() {
                       <div className="font-mono text-sky-400/90 truncate">
                         {ln.label || `Line (${ln.points.length} pts)`}
                       </div>
-                      <div className="text-muted-foreground text-[9px]">{ln.createdBy}</div>
+                      <div className="text-muted-foreground text-[9px]">
+                        <ProfileLink username={ln.createdBy} className="text-muted-foreground hover:text-foreground">
+                          {ln.createdBy}
+                        </ProfileLink>
+                      </div>
                     </div>
                     {canDel ? (
                       <button

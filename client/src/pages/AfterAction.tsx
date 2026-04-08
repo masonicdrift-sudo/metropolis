@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
 import { OPS_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 const CLASS_COLOR: Record<string, string> = {
   UNCLASS: "text-blue-400", CUI: "text-yellow-400", SECRET: "text-orange-400", TS: "text-red-400",
@@ -133,7 +134,11 @@ function AarCard({ aar, canAdmin, onDelete }: { aar: AfterActionReport; canAdmin
             <span className={`text-[9px] font-bold tracking-wider ${cls}`}>{aar.classification}</span>
           </div>
           <div className="text-[10px] text-muted-foreground mt-0.5">
-            {aar.date} ▪ BY {aar.submittedBy}{aar.operationName ? ` ▪ OP: ${aar.operationName}` : ""}
+            {aar.date} ▪ BY{" "}
+            <ProfileLink username={aar.submittedBy} className="text-muted-foreground hover:text-foreground">
+              {aar.submittedBy}
+            </ProfileLink>
+            {aar.operationName ? ` ▪ OP: ${aar.operationName}` : ""}
           </div>
         </div>
         <div className="flex items-center gap-1 ml-2">

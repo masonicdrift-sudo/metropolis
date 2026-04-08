@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Casualty, EntityLink, IntelReport, IsofacDoc, Operation, Threat, Unit } from "@shared/schema";
+import type { Casualty, EntityLink, IntelReport, IsofacDoc, Operation, Unit } from "@shared/schema";
 import { EntityLinkGraph, entityNodeKey, type EntityLabelMaps } from "@/components/EntityLinkGraph";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -16,12 +16,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link2, Plus, Trash2 } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { INTEL_SUB } from "@/lib/appNav";
+import { ProfileLink } from "@/components/ProfileLink";
 
 type EntityType =
   | "users"
   | "units"
   | "location"
-  | "threats"
   | "intel"
   | "operations"
   | "isofac"
@@ -31,7 +31,6 @@ type EntityOption = { id: string; label: string };
 const ENTITY_TYPES: { value: EntityType; label: string }[] = [
   { value: "users", label: "PERSON (USER)" },
   { value: "units", label: "UNIT" },
-  { value: "threats", label: "THREAT" },
   { value: "location", label: "LOCATION (GRID)" },
   { value: "intel", label: "INTEL" },
   { value: "operations", label: "OPERATIONS" },
@@ -43,13 +42,8 @@ function normGrid(g: string): string {
   return g.trim().replace(/\s+/g, " ");
 }
 
-function buildLocationOptions(threats: Threat[], intel: IntelReport[], units: Unit[]): EntityOption[] {
+function buildLocationOptions(intel: IntelReport[], units: Unit[]): EntityOption[] {
   const m = new Map<string, string>();
-  for (const t of threats) {
-    const g = normGrid(t.grid || "");
-    if (!g) continue;
-    m.set(g, g);
-  }
   for (const r of intel) {
     const g = normGrid(r.grid || "");
     if (!g) continue;
@@ -84,9 +78,6 @@ function optionsFor(type: EntityType, data: unknown): EntityOption[] {
   }
   if (type === "isofac") {
     return ((data as IsofacDoc[]) || []).map((d) => ({ id: String(d.id), label: `${d.id} — ${d.type} — ${d.title}` }));
-  }
-  if (type === "threats") {
-    return ((data as Threat[]) || []).map((t) => ({ id: String(t.id), label: `${t.id} — ${t.category} — ${t.label}` }));
   }
   return ((data as Casualty[]) || []).map((c) => ({ id: String(c.id), label: `${c.id} — ${c.precedence.toUpperCase()} — ${c.displayName}` }));
 }
@@ -141,10 +132,9 @@ export default function LinkAnalysisPage() {
   const { data: intel = [] } = useQuery<IntelReport[]>({ queryKey: ["/api/intel"], queryFn: () => apiRequest("GET", "/api/intel"), enabled: !!user });
   const { data: operations = [] } = useQuery<Operation[]>({ queryKey: ["/api/operations"], queryFn: () => apiRequest("GET", "/api/operations"), enabled: !!user });
   const { data: isofac = [] } = useQuery<IsofacDoc[]>({ queryKey: ["/api/isofac"], queryFn: () => apiRequest("GET", "/api/isofac"), enabled: !!user });
-  const { data: threats = [] } = useQuery<Threat[]>({ queryKey: ["/api/threats"], queryFn: () => apiRequest("GET", "/api/threats"), enabled: !!user });
   const { data: casualties = [] } = useQuery<Casualty[]>({ queryKey: ["/api/casualties"], queryFn: () => apiRequest("GET", "/api/casualties"), enabled: !!user });
 
-  const locationOptions = useMemo(() => buildLocationOptions(threats, intel, units), [threats, intel, units]);
+  const locationOptions = useMemo(() => buildLocationOptions(intel, units), [intel, units]);
 
   const labelMaps = useMemo((): EntityLabelMaps => {
     const location = new Map<string, string>();
@@ -155,13 +145,13 @@ export default function LinkAnalysisPage() {
       users: new Map(directory.map((u) => [u.username, u.username])),
       units: new Map(units.map((u) => [String(u.id), `${u.callsign} — ${u.type}`])),
       location,
-      threats: new Map(threats.map((t) => [String(t.id), `${t.label} (${t.category})`])),
+      threats: new Map<string, string>(),
       intel: new Map(intel.map((r) => [String(r.id), r.title])),
       isofac: new Map(isofac.map((d) => [String(d.id), `${d.type} — ${d.title}`])),
       operations: new Map(operations.map((o) => [String(o.id), o.name])),
       casualties: new Map(casualties.map((c) => [String(c.id), `${c.displayName} (${c.precedence})`])),
     };
-  }, [directory, units, locationOptions, threats, intel, isofac, operations, casualties]);
+  }, [directory, units, locationOptions, intel, isofac, operations, casualties]);
 
   const dataFor = (t: EntityType) => {
     if (t === "users") return directory;
@@ -170,7 +160,6 @@ export default function LinkAnalysisPage() {
     if (t === "intel") return intel;
     if (t === "operations") return operations;
     if (t === "isofac") return isofac;
-    if (t === "threats") return threats;
     return casualties;
   };
 
@@ -218,7 +207,7 @@ export default function LinkAnalysisPage() {
             </h1>
           </div>
           <div className="text-[10px] text-muted-foreground tracking-wider mt-0.5">
-            Person → unit → threat → grid → intel: explore the network and filter links by target.
+            Person → unit → grid → intel: explore the network and filter links by target.
           </div>
         </div>
         <Button size="sm" className="h-8 text-[10px] tracking-wider bg-blue-800 hover:bg-blue-700" onClick={() => setOpen(true)}>
@@ -273,7 +262,6 @@ export default function LinkAnalysisPage() {
           className="border-0 rounded-none"
           links={allEntityLinks}
           maps={labelMaps}
-          threats={threats}
           intel={intel}
           includeDerivedGridEdges={includeDerivedGridEdges}
           focusNodeId={focusNodeId}
@@ -304,7 +292,12 @@ export default function LinkAnalysisPage() {
                   <span className="text-[9px] text-muted-foreground">↔</span>
                   <span className="text-[9px] font-mono text-muted-foreground">{right}</span>
                   <span className="text-[9px] bg-secondary px-1.5 rounded text-muted-foreground">{l.relation}</span>
-                  <span className="text-[9px] text-muted-foreground ml-auto">BY {l.createdBy}</span>
+                  <span className="text-[9px] text-muted-foreground ml-auto">
+                    BY{" "}
+                    <ProfileLink username={l.createdBy} className="text-muted-foreground hover:text-foreground">
+                      {l.createdBy}
+                    </ProfileLink>
+                  </span>
                   {canDel && (
                     <button
                       type="button"

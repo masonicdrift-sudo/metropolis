@@ -63,6 +63,8 @@ type ProfilePayload = {
   teamAssignment: string;
   milIdNumber: string;
   mos: string;
+  /** Shown on profile header when set by admin/owner. */
+  profileImageUrl?: string;
   createdAt?: string;
   lastLogin?: string;
   /** Approved LOA window (YYYY-MM-DD). */
@@ -204,9 +206,17 @@ export default function UserProfilePage() {
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded border border-border bg-secondary/30 flex items-center justify-center shrink-0">
-            <BadgeCheck className="h-5 w-5 text-blue-300" />
-          </div>
+          {profile?.profileImageUrl ? (
+            <img
+              src={profile.profileImageUrl}
+              alt=""
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg border border-border object-cover shrink-0 bg-secondary/30"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded border border-border bg-secondary/30 flex items-center justify-center shrink-0">
+              <BadgeCheck className="h-5 w-5 text-blue-300" />
+            </div>
+          )}
         </div>
       </div>
 

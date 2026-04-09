@@ -375,6 +375,16 @@ function requireOwner(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+/** Accept only same-origin upload paths for profile photos. */
+function sanitizeProfileImageUrl(raw: unknown): string | null {
+  if (raw === undefined) return null;
+  if (raw === null || raw === "") return "";
+  const s = String(raw).trim().slice(0, 512);
+  if (!s) return "";
+  if (s.startsWith("/uploads/") && !s.includes("..") && !s.includes("\\")) return s;
+  return null;
+}
+
 /** Public session fields for /api/auth/me and login (no password hash). */
 function sessionUserJson(user: User) {
   const tacticalRoles = storage.getTacticalRolesDisplayForUser(user.id);
@@ -392,6 +402,7 @@ function sessionUserJson(user: User) {
     loaStart: user.loaStart || "",
     loaEnd: user.loaEnd || "",
     loaApprover: user.loaApprover || "",
+    profileImageUrl: user.profileImageUrl || "",
     tacticalRoles,
     permissions,
   };
@@ -594,6 +605,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       teamAssignment: u.teamAssignment || "",
       milIdNumber: u.milIdNumber || "",
       mos: u.mos || "",
+      profileImageUrl: u.profileImageUrl || "",
       createdAt: u.createdAt,
       lastLogin: u.lastLogin,
       loaStart,
@@ -722,6 +734,15 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (typeof req.body.teamAssignment !== "undefined") {
       updates.teamAssignment =
         typeof req.body.teamAssignment === "string" ? req.body.teamAssignment.trim().slice(0, 128) : "";
+    }
+    if (typeof req.body.profileImageUrl !== "undefined") {
+      const v = sanitizeProfileImageUrl(req.body.profileImageUrl);
+      if (v === null) {
+        return res.status(400).json({
+          error: "Invalid profile image URL — use an uploaded file path starting with /uploads/ or clear the field",
+        });
+      }
+      updates.profileImageUrl = v;
     }
     if (canEditSensitive && password) {
       if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });

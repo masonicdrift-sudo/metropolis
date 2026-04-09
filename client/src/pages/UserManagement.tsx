@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2, Users, ShieldCheck, User, Crown, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ interface AppUser {
   teamAssignment: string;
   milIdNumber: string;
   mos: string;
+  /** Profile header image (`/uploads/...`). */
+  profileImageUrl?: string;
   createdAt: string;
   lastLogin: string;
   /** Assigned tactical permission role ids (Discord-style). */
@@ -278,6 +280,8 @@ function EditUserForm({
     queryFn: () => apiRequest("GET", "/api/tactical-roles"),
   });
   const [permRoleIds, setPermRoleIds] = useState<number[]>(() => [...(target.tacticalRoleIds ?? [])]);
+  const profileFileRef = useRef<HTMLInputElement>(null);
+  const [profileUploading, setProfileUploading] = useState(false);
   const roleInPresets = (TACTICAL_ROLE_PRESETS as readonly string[]).includes(target.role);
   const [form, setForm] = useState({
     username: target.username,
@@ -289,13 +293,20 @@ function EditUserForm({
     teamAssignment: target.teamAssignment || "",
     milIdNumber: target.milIdNumber || "",
     mos: target.mos || "00",
+    profileImageUrl: target.profileImageUrl || "",
     password: "",
     confirm: "",
   });
 
   const update = useMutation({
     mutationFn: (data: any) => apiRequest("PATCH", `/api/users/${target.id}`, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/users"] }); toast({ title: "User updated" }); onClose(); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/users"] });
+      qc.invalidateQueries({ queryKey: ["/api/profile"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({ title: "User updated" });
+      onClose();
+    },
     onError: (err: any) => toast({ title: err?.message || "Update failed", variant: "destructive" }),
   });
 
@@ -310,6 +321,7 @@ function EditUserForm({
     if (form.teamAssignment !== (target.teamAssignment || "")) payload.teamAssignment = form.teamAssignment.trim();
     if (form.milIdNumber !== (target.milIdNumber || "")) payload.milIdNumber = form.milIdNumber;
     if (form.mos !== (target.mos || "00")) payload.mos = form.mos;
+    if (form.profileImageUrl !== (target.profileImageUrl || "")) payload.profileImageUrl = form.profileImageUrl;
     if (form.password) {
       if (form.password !== form.confirm) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
       payload.password = form.password;
@@ -325,6 +337,30 @@ function EditUserForm({
 
   const togglePermRole = (id: number) => {
     setPermRoleIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const onProfileImagePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setProfileUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error((errBody as { error?: string }).error || `Upload failed (${res.status})`);
+      }
+      const j = (await res.json()) as { url?: string };
+      if (!j.url) throw new Error("No file URL returned");
+      setForm((f) => ({ ...f, profileImageUrl: j.url! }));
+      toast({ title: "Image uploaded — save changes to apply" });
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Upload failed", variant: "destructive" });
+    } finally {
+      setProfileUploading(false);
+    }
   };
 
   return (
@@ -453,6 +489,53 @@ function EditUserForm({
           placeholder="Squad / team within unit"
           className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700"
         />
+      </div>
+      <div className="rounded border border-border/60 bg-secondary/20 px-3 py-2.5 space-y-2">
+        <label className="text-[9px] text-muted-foreground tracking-[0.15em] block">PROFILE PHOTO</label>
+        <p className="text-[9px] text-muted-foreground/85 leading-snug">
+          Shown on this operator&apos;s profile. Owners and admins can upload or clear; save applies the change.
+        </p>
+        <div className="flex flex-wrap items-start gap-3">
+          {form.profileImageUrl ? (
+            <img
+              src={form.profileImageUrl}
+              alt=""
+              className="h-16 w-16 rounded-md border border-border object-cover bg-secondary/40"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-md border border-dashed border-border/80 bg-secondary/30 shrink-0" />
+          )}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <input
+              ref={profileFileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              className="hidden"
+              onChange={onProfileImagePick}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="text-[10px] h-8 w-fit"
+              disabled={profileUploading}
+              onClick={() => profileFileRef.current?.click()}
+            >
+              {profileUploading ? "Uploading…" : "Upload image"}
+            </Button>
+            {form.profileImageUrl ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-[10px] h-8 w-fit text-muted-foreground"
+                onClick={() => setForm((f) => ({ ...f, profileImageUrl: "" }))}
+              >
+                Clear photo
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>

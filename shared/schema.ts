@@ -24,6 +24,8 @@ export const users = sqliteTable("users", {
   loaEnd: text("loa_end").notNull().default(""),
   /** Username of admin/owner who approved the active LOA. */
   loaApprover: text("loa_approver").notNull().default(""),
+  /** Public profile image URL (typically `/uploads/...`); set by admin/owner. */
+  profileImageUrl: text("profile_image_url").notNull().default(""),
   createdAt: text("created_at").notNull(),
   lastLogin: text("last_login").default(""),
 });

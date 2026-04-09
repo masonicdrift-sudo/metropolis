@@ -25,6 +25,8 @@ export interface AuthUser {
   loaEnd?: string;
   /** Approver username for active LOA. */
   loaApprover?: string;
+  /** Profile photo URL (e.g. `/uploads/...`), set by staff. */
+  profileImageUrl?: string;
   /** Discord-style permission roles (merged capabilities below). */
   tacticalRoles?: TacticalRoleBadge[];
   /** Effective permission keys (expanded from roles; includes all areas if `*` was granted). */

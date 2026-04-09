@@ -235,6 +235,7 @@ try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`)
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN operation_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE awards ADD COLUMN award_catalog_id TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN profile_image_url TEXT NOT NULL DEFAULT ''`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS qualification_definitions (
@@ -1282,6 +1283,7 @@ export class Storage implements IStorage {
       loaStart: schema.users.loaStart,
       loaEnd: schema.users.loaEnd,
       loaApprover: schema.users.loaApprover,
+      profileImageUrl: schema.users.profileImageUrl,
       createdAt: schema.users.createdAt,
       lastLogin: schema.users.lastLogin,
     }).from(schema.users).all();
@@ -1312,6 +1314,7 @@ export class Storage implements IStorage {
       loaStart: "",
       loaEnd: "",
       loaApprover: "",
+      profileImageUrl: "",
       createdAt: new Date().toISOString(),
       lastLogin: "",
     }).returning().get()!;

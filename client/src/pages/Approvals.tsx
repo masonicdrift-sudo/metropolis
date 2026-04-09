@@ -39,6 +39,21 @@ function loaPayloadSummary(payloadJson: string): string | null {
   }
 }
 
+function loaEarlyReturnPayloadSummary(payloadJson: string): string | null {
+  try {
+    const j = JSON.parse(payloadJson) as {
+      subjectUsername?: string;
+      returnDate?: string;
+      previousEndDate?: string;
+      reason?: string;
+    };
+    if (!j.returnDate && !j.subjectUsername) return null;
+    return `${j.subjectUsername ?? "?"} · return by ${j.returnDate ?? "?"} (was ${j.previousEndDate ?? "?"})`;
+  } catch {
+    return null;
+  }
+}
+
 export default function ApprovalsPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -155,6 +170,10 @@ export default function ApprovalsPage() {
                       <span className="text-cyan-300/90">
                         LOA REQUEST — {loaPayloadSummary(a.payloadJson) ?? `${a.action} #${a.entityId}`}
                       </span>
+                    ) : a.entityType === "loa_early_return" ? (
+                      <span className="text-teal-300/90">
+                        LOA EARLY RETURN — {loaEarlyReturnPayloadSummary(a.payloadJson) ?? `${a.action} #${a.entityId}`}
+                      </span>
                     ) : (
                       <>
                         {a.action} {a.entityType} #{a.entityId}
@@ -201,6 +220,11 @@ export default function ApprovalsPage() {
                 {selected.entityType === "loa_request" && (
                   <div className="text-[10px] text-cyan-200/90 whitespace-pre-wrap border border-cyan-900/40 rounded p-2 bg-cyan-950/20">
                     {loaPayloadSummary(selected.payloadJson) ?? selected.payloadJson}
+                  </div>
+                )}
+                {selected.entityType === "loa_early_return" && (
+                  <div className="text-[10px] text-teal-200/90 whitespace-pre-wrap border border-teal-900/40 rounded p-2 bg-teal-950/20">
+                    {loaEarlyReturnPayloadSummary(selected.payloadJson) ?? selected.payloadJson}
                   </div>
                 )}
                 {selected.requestedNote?.trim() ? (

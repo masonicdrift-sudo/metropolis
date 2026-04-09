@@ -353,7 +353,7 @@ export const loaRequests = sqliteTable("loa_requests", {
   /** Inclusive end date YYYY-MM-DD. */
   endDate: text("end_date").notNull(),
   reason: text("reason").notNull().default(""),
-  status: text("status").notNull().default("pending"), // pending | approved | rejected
+  status: text("status").notNull().default("pending"), // pending | approved | rejected | retracted
   requestedBy: text("requested_by").notNull(),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),

@@ -14,6 +14,10 @@ import {
   ARMY_RANKS,
   SIGN_IN_ISO_FAC_TYPES,
 } from "@shared/schema";
+
+/** Only this username may have `accessLevel === "owner"` (see ensureSingleOwnerOverlord in storage). */
+const OWNER_ACCOUNT_USERNAME = "Overlord";
+
 import { buildPromotionOrdersMessage } from "@shared/promotionOrders";
 import type { PromotionOrdersLine } from "@shared/promotionOrders";
 import type { User } from "@shared/schema";
@@ -246,6 +250,11 @@ const promotionPacketRequestSchema = z.object({
 const loaRequestPostSchema = z.object({
   startDate: z.string().min(8).max(32),
   endDate: z.string().min(8).max(32),
+  reason: z.string().max(4000).optional().default(""),
+});
+
+const loaEarlyReturnPostSchema = z.object({
+  returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reason: z.string().max(4000).optional().default(""),
 });
 
@@ -637,6 +646,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     //  - Admin (rank 2): can create Admin and Operator, NOT Owner
     //  - Operator (rank 1): cannot create anyone (blocked by requireAdmin above)
     const requestedAccess = accessLevel || "user";
+    if (requestedAccess === "owner" && username !== OWNER_ACCOUNT_USERNAME) {
+      return res.status(403).json({ error: "Only the Overlord account may have owner access" });
+    }
     const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
     const targetRank = ACCESS_RANK[requestedAccess] ?? 0;
     if (targetRank > callerRank) return res.status(403).json({ error: "Cannot create a user with a role higher than your own" });
@@ -707,6 +719,17 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       updates.username = username;
     }
     if (canEditSensitive && accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
+      const nextLevel = String(accessLevel);
+      if (nextLevel === "owner" && target.username !== OWNER_ACCOUNT_USERNAME) {
+        return res.status(403).json({ error: "Only the Overlord account may have owner access" });
+      }
+      if (
+        target.username === OWNER_ACCOUNT_USERNAME &&
+        target.accessLevel === "owner" &&
+        nextLevel !== "owner"
+      ) {
+        return res.status(403).json({ error: "Cannot remove owner access from the Overlord account" });
+      }
       const nextRank = ACCESS_RANK[accessLevel] ?? 0;
       if (callerRank < ACCESS_RANK.owner && nextRank > callerRank) {
         return res.status(403).json({ error: "Cannot grant a role higher than your own" });
@@ -2539,6 +2562,99 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(storage.listLoaRequestsForUser(req.session.username!));
   });
 
+  app.get("/api/loa/pending-early-return", requireAuth, (req, res) => {
+    storage.reconcileExpiredLoas();
+    const row = storage.getPendingEarlyReturnApprovalForUser(req.session.username!);
+    res.json(row ?? null);
+  });
+
+  app.get("/api/loa/approved-for-admin", requireAuth, requireAdmin, (_req, res) => {
+    storage.reconcileExpiredLoas();
+    res.json(storage.listApprovedLoaRequests());
+  });
+
+  app.post("/api/loa/early-return", requireAuth, (req, res) => {
+    const parsed = loaEarlyReturnPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const me = req.session.username!;
+    storage.reconcileExpiredLoas();
+    const u = storage.getUserByUsername(me);
+    if (!u) return res.status(400).json({ error: "User not found" });
+    const loaStart = (u.loaStart || "").trim();
+    const loaEnd = (u.loaEnd || "").trim();
+    if (!loaStart || !loaEnd) {
+      return res.status(400).json({ error: "You do not have an active approved leave on file." });
+    }
+    const match = storage.findApprovedLoaMatchingUserWindow(me);
+    if (!match) {
+      return res.status(400).json({ error: "No matching approved LOA record — contact an administrator." });
+    }
+    if (storage.hasPendingEarlyReturnApproval(me)) {
+      return res.status(400).json({ error: "You already have a pending early return request." });
+    }
+    const ret = parsed.data.returnDate.trim();
+    if (ret < loaStart || ret > loaEnd) {
+      return res.status(400).json({ error: "Return date must be within your current leave window." });
+    }
+    if (ret >= loaEnd) {
+      return res.status(400).json({ error: "Choose a date before your scheduled leave end date to return early." });
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    if (ret < today) {
+      return res.status(400).json({ error: "Return date cannot be before today." });
+    }
+    const now = new Date().toISOString();
+    const reason = (parsed.data.reason || "").trim().slice(0, 4000);
+    const payload = {
+      loaRequestId: match.id,
+      subjectUsername: me,
+      returnDate: ret,
+      previousEndDate: loaEnd,
+      reason,
+    };
+    const approval = storage.createApproval({
+      entityType: "loa_early_return",
+      entityId: String(match.id),
+      action: "REQUEST_EARLY_RETURN",
+      status: "pending",
+      requestedBy: me,
+      requestedAt: now,
+      requestedNote: reason.slice(0, 2000),
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify(payload),
+    });
+    wsPush("APPROVALS");
+    wsPush("USER");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "approval",
+      entityId: approval.id,
+      summary: `Early return requested: ${me} by ${ret}`,
+      after: approval,
+    });
+    res.status(202).json({ ok: true, approvalId: approval.id });
+  });
+
+  app.post("/api/loa/:id/retract", requireAuth, requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    storage.reconcileExpiredLoas();
+    const r = storage.retractApprovedLoa(id);
+    if (!r.ok) return res.status(400).json({ error: r.error });
+    wsPush("USER");
+    wsPush("PERSTAT");
+    wsPush("PERSONNEL_ROSTER");
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "loa_request",
+      entityId: id,
+      summary: `Retracted approved LOA #${id}`,
+    });
+    res.json({ ok: true });
+  });
+
   // ── Approvals (admin/owner) ────────────────────────────────────────────────
   app.get("/api/approvals", requireAdmin, (req, res) => {
     const raw = req.query.status;
@@ -2708,6 +2824,26 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         }
       } catch (e) {
         console.error("loa_request approve:", e);
+      }
+    }
+    if (row.entityType === "loa_early_return" && row.action === "REQUEST_EARLY_RETURN") {
+      try {
+        const r = storage.applyApprovedEarlyReturn(row, req.session.username!);
+        if (r.ok) {
+          wsPush("USER");
+          wsPush("PERSTAT");
+          wsPush("PERSONNEL_ROSTER");
+          appendActivity(req, {
+            action: "UPDATE",
+            entityType: "loa_early_return",
+            entityId: row.entityId,
+            summary: `Approved early return for ${row.requestedBy}`,
+          });
+        } else {
+          console.error("loa_early_return approve:", r.error);
+        }
+      } catch (e) {
+        console.error("loa_early_return approve:", e);
       }
     }
     wsPush("APPROVALS");

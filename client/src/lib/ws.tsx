@@ -54,7 +54,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   // Commo Cards
   COMMO_CARD:       [["/api/commo-cards"]],
   // Users (role/rank/unit changes)
-  USER:             [["/api/users"], ["/api/auth/me"], ["/api/loa/mine"], ["/api/profile"]],
+  USER:             [["/api/users"], ["/api/auth/me"], ["/api/loa/mine"], ["/api/loa/pending-early-return"], ["/api/loa/approved-for-admin"], ["/api/profile"]],
   // Activity / Links / Support
   ACTIVITY:         [["/api/activity"]],
   LINKS:            [["/api/entity-links"], ["/api/entity-links/all"]],

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc, and, asc, gte, lte, inArray, or, sql } from "drizzle-orm";
+import { eq, desc, and, asc, gte, lte, inArray, or, sql, ne } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
 import {
@@ -129,15 +129,6 @@ try {
   `);
 } catch {}
 
-// Ensure primary owner account retains owner access level.
-// (If you manage owners via User Mgmt, this will only affect the named account.)
-try {
-  sqlite.exec(`
-    UPDATE users
-    SET access_level = 'owner'
-    WHERE username = 'ZR1';
-  `);
-} catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN releasability TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_at TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE isofac_docs ADD COLUMN released_by TEXT NOT NULL DEFAULT ''`); } catch {}
@@ -749,25 +740,12 @@ if (!commoCardExists) {
   }).run();
 }
 
-// Seed ZR1 as Owner (highest privilege)
+// Seed ZR1 as admin (only Overlord may be owner; see ensureSingleOwnerOverlord)
 const zr1Exists = db.select().from(schema.users).where(eq(schema.users.username, "ZR1")).get();
 if (!zr1Exists) {
   const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
   db.insert(schema.users).values({
     username: "ZR1",
-    passwordHash: hash,
-    role: "owner",
-    createdAt: new Date().toISOString(),
-    lastLogin: "",
-  }).run();
-}
-
-// Seed Overlord admin account
-const adminExists = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
-if (!adminExists) {
-  const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
-  db.insert(schema.users).values({
-    username: "Overlord",
     passwordHash: hash,
     accessLevel: "admin",
     role: "",
@@ -775,6 +753,37 @@ if (!adminExists) {
     lastLogin: "",
   }).run();
 }
+
+// Seed Overlord owner account (only account that may have access_level owner; see ensureSingleOwnerOverlord)
+const adminExists = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
+if (!adminExists) {
+  const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
+  db.insert(schema.users).values({
+    username: "Overlord",
+    passwordHash: hash,
+    accessLevel: "owner",
+    role: "",
+    createdAt: new Date().toISOString(),
+    lastLogin: "",
+  }).run();
+}
+
+/** Exactly one owner: Overlord. Everyone else with owner becomes admin. */
+function ensureSingleOwnerOverlord() {
+  db.update(schema.users)
+    .set({ accessLevel: "admin" })
+    .where(and(eq(schema.users.accessLevel, "owner"), ne(schema.users.username, "Overlord")))
+    .run();
+  const overlord = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
+  if (overlord) {
+    db.update(schema.users)
+      .set({ accessLevel: "owner" })
+      .where(eq(schema.users.id, overlord.id))
+      .run();
+  }
+}
+
+ensureSingleOwnerOverlord();
 
 ensureTacticalPermissionRolesSeed();
 
@@ -997,6 +1006,12 @@ export interface IStorage {
   listLoaRequestsForUser(username: string): LoaRequest[];
   applyApprovedLoa(loaId: number, approverUsername: string): { ok: true } | { ok: false; error: string };
   rejectLoaRequest(loaId: number): void;
+  retractApprovedLoa(loaId: number): { ok: true } | { ok: false; error: string };
+  listApprovedLoaRequests(): LoaRequest[];
+  findApprovedLoaMatchingUserWindow(username: string): LoaRequest | undefined;
+  hasPendingEarlyReturnApproval(username: string): boolean;
+  getPendingEarlyReturnApprovalForUser(username: string): Approval | undefined;
+  applyApprovedEarlyReturn(row: Approval, approverUsername: string): { ok: true } | { ok: false; error: string };
   syncPersonnelRosterStatusForLinkedUser(username: string, status: string): void;
   // Medical / Casualty
   getCasualties(): Casualty[];
@@ -2087,6 +2102,146 @@ export class Storage implements IStorage {
       .set({ status: "rejected", updatedAt: now })
       .where(eq(schema.loaRequests.id, loaId))
       .run();
+  }
+
+  listApprovedLoaRequests() {
+    return db
+      .select()
+      .from(schema.loaRequests)
+      .where(eq(schema.loaRequests.status, "approved"))
+      .orderBy(desc(schema.loaRequests.id))
+      .all();
+  }
+
+  findApprovedLoaMatchingUserWindow(username: string) {
+    const u = db.select().from(schema.users).where(eq(schema.users.username, username)).get();
+    if (!u) return undefined;
+    const ls = (u.loaStart || "").trim();
+    const le = (u.loaEnd || "").trim();
+    if (!ls || !le) return undefined;
+    return db
+      .select()
+      .from(schema.loaRequests)
+      .where(
+        and(
+          eq(schema.loaRequests.subjectUsername, username),
+          eq(schema.loaRequests.status, "approved"),
+          eq(schema.loaRequests.startDate, ls),
+          eq(schema.loaRequests.endDate, le),
+        ),
+      )
+      .orderBy(desc(schema.loaRequests.id))
+      .get();
+  }
+
+  retractApprovedLoa(loaId: number): { ok: true } | { ok: false; error: string } {
+    const row = db.select().from(schema.loaRequests).where(eq(schema.loaRequests.id, loaId)).get();
+    if (!row) return { ok: false, error: "LOA request not found" };
+    if (row.status !== "approved") return { ok: false, error: "Only an approved leave can be retracted" };
+    const now = new Date().toISOString();
+    db.update(schema.loaRequests)
+      .set({ status: "retracted", updatedAt: now })
+      .where(eq(schema.loaRequests.id, loaId))
+      .run();
+    const u = db.select().from(schema.users).where(eq(schema.users.username, row.subjectUsername)).get();
+    if (!u) return { ok: true };
+    const ls = (u.loaStart || "").trim();
+    const le = (u.loaEnd || "").trim();
+    if (ls === row.startDate.trim() && le === row.endDate.trim()) {
+      db.update(schema.users)
+        .set({ loaStart: "", loaEnd: "", loaApprover: "" })
+        .where(eq(schema.users.id, u.id))
+        .run();
+      const ps = db.select().from(schema.perstat).where(eq(schema.perstat.username, u.username)).get();
+      if (ps?.dutyStatus === "leave") {
+        this.upsertPerstat(u.username, "active", ps.notes || "");
+      }
+      this.syncPersonnelRosterStatusForLinkedUser(u.username, "present");
+    }
+    return { ok: true };
+  }
+
+  hasPendingEarlyReturnApproval(username: string) {
+    const row = db
+      .select()
+      .from(schema.approvals)
+      .where(
+        and(
+          eq(schema.approvals.requestedBy, username),
+          eq(schema.approvals.status, "pending"),
+          eq(schema.approvals.entityType, "loa_early_return"),
+        ),
+      )
+      .get();
+    return !!row;
+  }
+
+  getPendingEarlyReturnApprovalForUser(username: string) {
+    return db
+      .select()
+      .from(schema.approvals)
+      .where(
+        and(
+          eq(schema.approvals.requestedBy, username),
+          eq(schema.approvals.status, "pending"),
+          eq(schema.approvals.entityType, "loa_early_return"),
+        ),
+      )
+      .orderBy(desc(schema.approvals.id))
+      .get();
+  }
+
+  applyApprovedEarlyReturn(row: Approval, _approverUsername: string): { ok: true } | { ok: false; error: string } {
+    let payload: {
+      loaRequestId?: number;
+      subjectUsername?: string;
+      returnDate?: string;
+      previousEndDate?: string;
+      reason?: string;
+    };
+    try {
+      payload = JSON.parse(row.payloadJson || "{}");
+    } catch {
+      return { ok: false, error: "Invalid payload" };
+    }
+    const subject = String(payload.subjectUsername || "").trim();
+    const returnDate = String(payload.returnDate || "").trim();
+    const prevEnd = String(payload.previousEndDate || "").trim();
+    if (!subject || !returnDate || !prevEnd) return { ok: false, error: "Invalid early return payload" };
+    const u = db.select().from(schema.users).where(eq(schema.users.username, subject)).get();
+    if (!u) return { ok: false, error: "User not found" };
+    if ((u.loaEnd || "").trim() !== prevEnd) {
+      return { ok: false, error: "Leave end date changed since this request was submitted" };
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    if (returnDate <= today) {
+      db.update(schema.users)
+        .set({ loaStart: "", loaEnd: "", loaApprover: "" })
+        .where(eq(schema.users.id, u.id))
+        .run();
+      const ps = db.select().from(schema.perstat).where(eq(schema.perstat.username, subject)).get();
+      this.upsertPerstat(subject, "active", ps?.notes || "");
+      this.syncPersonnelRosterStatusForLinkedUser(subject, "present");
+    } else {
+      db.update(schema.users).set({ loaEnd: returnDate }).where(eq(schema.users.id, u.id)).run();
+    }
+    const loaReqId = Number(payload.loaRequestId);
+    if (Number.isFinite(loaReqId)) {
+      const lr = this.getLoaRequestById(loaReqId);
+      if (lr && lr.status === "approved") {
+        const note = returnDate <= today ? `Early return ${returnDate} (completed)` : `Early return approved; new end ${returnDate}`;
+        const now = new Date().toISOString();
+        db.update(schema.loaRequests)
+          .set({
+            endDate: returnDate,
+            reason: [lr.reason, note].filter(Boolean).join(" · ").slice(0, 4000),
+            updatedAt: now,
+          })
+          .where(eq(schema.loaRequests.id, loaReqId))
+          .run();
+      }
+    }
+    return { ok: true };
   }
 
   syncPersonnelRosterStatusForLinkedUser(username: string, status: string) {

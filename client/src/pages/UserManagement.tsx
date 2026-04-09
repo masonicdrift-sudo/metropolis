@@ -183,8 +183,8 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
             {(callerAccess === "admin" || callerAccess === "owner") && (
               <option value="admin">ADMIN — Can manage users and content</option>
             )}
-            {callerAccess === "owner" && (
-              <option value="owner">OWNER — Full system control</option>
+            {callerAccess === "owner" && form.username === "Overlord" && (
+              <option value="owner">OWNER — Full system control (Overlord account only)</option>
             )}
           </select>
           {form.accessLevel === "owner" && (
@@ -402,7 +402,7 @@ function EditUserForm({
             {(callerAccess === "admin" || callerAccess === "owner") && (
               <option value="admin">ADMIN</option>
             )}
-            {callerAccess === "owner" && (
+            {callerAccess === "owner" && form.username === "Overlord" && (
               <option value="owner">OWNER</option>
             )}
           </select>

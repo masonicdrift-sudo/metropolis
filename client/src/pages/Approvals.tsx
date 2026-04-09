@@ -23,6 +23,21 @@ function promotionPayloadSummary(payloadJson: string): string | null {
   }
 }
 
+function loaPayloadSummary(payloadJson: string): string | null {
+  try {
+    const j = JSON.parse(payloadJson) as {
+      subjectUsername?: string;
+      startDate?: string;
+      endDate?: string;
+      loaRequestId?: number;
+    };
+    if (!j.subjectUsername && !j.startDate) return null;
+    return `${j.subjectUsername ?? "?"} · ${j.startDate ?? "?"} → ${j.endDate ?? "?"}`;
+  } catch {
+    return null;
+  }
+}
+
 export default function ApprovalsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -120,6 +135,10 @@ export default function ApprovalsPage() {
                     <span className="text-amber-300/90">
                       PROMOTION PACKET — {promotionPayloadSummary(a.payloadJson) ?? "—"}
                     </span>
+                  ) : a.entityType === "loa_request" ? (
+                    <span className="text-cyan-300/90">
+                      LOA REQUEST — {loaPayloadSummary(a.payloadJson) ?? `${a.action} #${a.entityId}`}
+                    </span>
                   ) : (
                     <>
                       {a.action} {a.entityType} #{a.entityId}
@@ -146,6 +165,11 @@ export default function ApprovalsPage() {
                 {selected.entityType === "promotion_packet" && (
                   <div className="text-[10px] text-amber-200/90 whitespace-pre-wrap border border-amber-900/40 rounded p-2 bg-amber-950/20">
                     {promotionPayloadSummary(selected.payloadJson) ?? selected.payloadJson}
+                  </div>
+                )}
+                {selected.entityType === "loa_request" && (
+                  <div className="text-[10px] text-cyan-200/90 whitespace-pre-wrap border border-cyan-900/40 rounded p-2 bg-cyan-950/20">
+                    {loaPayloadSummary(selected.payloadJson) ?? selected.payloadJson}
                   </div>
                 )}
                 {selected.requestedNote?.trim() ? (

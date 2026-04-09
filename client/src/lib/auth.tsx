@@ -20,6 +20,11 @@ export interface AuthUser {
   teamAssignment: string;
   milIdNumber: string;
   mos: string;
+  /** Approved LOA window (YYYY-MM-DD); empty when not on leave from an approved LOA. */
+  loaStart?: string;
+  loaEnd?: string;
+  /** Approver username for active LOA. */
+  loaApprover?: string;
   /** Discord-style permission roles (merged capabilities below). */
   tacticalRoles?: TacticalRoleBadge[];
   /** Effective permission keys (expanded from roles; includes all areas if `*` was granted). */

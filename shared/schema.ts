@@ -19,6 +19,11 @@ export const users = sqliteTable("users", {
   mos: text("mos").default(""),
   /** Team / sub-unit assignment within the unit (write-in; e.g. A TEAM, ASSAULT). */
   teamAssignment: text("team_assignment").notNull().default(""),
+  /** Approved LOA window (YYYY-MM-DD); empty when not on approved leave. */
+  loaStart: text("loa_start").notNull().default(""),
+  loaEnd: text("loa_end").notNull().default(""),
+  /** Username of admin/owner who approved the active LOA. */
+  loaApprover: text("loa_approver").notNull().default(""),
   createdAt: text("created_at").notNull(),
   lastLogin: text("last_login").default(""),
 });
@@ -335,6 +340,25 @@ export const perstat = sqliteTable("perstat", {
 export const insertPerstatSchema = createInsertSchema(perstat).omit({ id: true });
 export type InsertPerstat = z.infer<typeof insertPerstatSchema>;
 export type Perstat = typeof perstat.$inferSelect;
+
+// ─── Leave of Absence (LOA) requests ───────────────────────────────────────────
+export const loaRequests = sqliteTable("loa_requests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Operator going on leave (usually same as requestedBy). */
+  subjectUsername: text("subject_username").notNull(),
+  /** Inclusive start date YYYY-MM-DD. */
+  startDate: text("start_date").notNull(),
+  /** Inclusive end date YYYY-MM-DD. */
+  endDate: text("end_date").notNull(),
+  reason: text("reason").notNull().default(""),
+  status: text("status").notNull().default("pending"), // pending | approved | rejected
+  requestedBy: text("requested_by").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+export const insertLoaRequestSchema = createInsertSchema(loaRequests).omit({ id: true });
+export type InsertLoaRequest = z.infer<typeof insertLoaRequestSchema>;
+export type LoaRequest = typeof loaRequests.$inferSelect;
 
 // ─── Personnel roster (fillable line roster — not tied to login accounts) ─────
 export const personnelRosterEntries = sqliteTable("personnel_roster_entries", {

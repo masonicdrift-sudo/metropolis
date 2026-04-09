@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ClipboardList, UserCheck, Users, Medal } from "lucide-react";
+import { ClipboardList, UserCheck, Users, Medal, Palmtree } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { PERSONNEL_SUB } from "@/lib/appNav";
 
@@ -28,6 +28,12 @@ const CARDS = [
     desc: "Submit promotion packets; approved soldiers get orders FLASH + auto rank.",
     icon: Medal,
   },
+  {
+    href: "/personnel/loa",
+    title: "LOA",
+    desc: "Request leave of absence; approval updates PERSTAT and linked roster lines.",
+    icon: Palmtree,
+  },
 ] as const;
 
 export default function PersonnelHub() {
@@ -42,7 +48,7 @@ export default function PersonnelHub() {
         </p>
       </div>
       <SubPageNav items={PERSONNEL_SUB} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {CARDS.map(({ href, title, desc, icon: Icon }) => (
           <Link
             key={href}

@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc, and, asc, gte, lte, inArray } from "drizzle-orm";
+import { eq, desc, and, asc, gte, lte, inArray, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
 import {
@@ -38,6 +38,8 @@ import type {
   TacticalMapRangeRing,
   TacticalMapBuildingLabel,
   TacticalPermissionRole,
+  LoaRequest,
+  InsertLoaRequest,
 } from "@shared/schema";
 import type { TacticalMapLine, TacticalMapLineRow } from "@shared/schema";
 
@@ -218,6 +220,9 @@ try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN team_assignme
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN linked_username TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN cell_tags TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE broadcasts ADD COLUMN recipient_username TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN loa_start TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN loa_end TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN loa_approver TEXT NOT NULL DEFAULT ''`); } catch {}
 try {
   sqlite.exec(
     `UPDATE personnel_roster_entries SET team_assignment = phone WHERE (team_assignment = '' OR team_assignment IS NULL) AND COALESCE(phone,'') != ''`,
@@ -227,6 +232,21 @@ try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN phone`); } c
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN operation_id INTEGER NOT NULL DEFAULT 0`); } catch {}
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS loa_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subject_username TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    requested_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_loa_subject ON loa_requests(subject_username, status);
+`);
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS tactical_map_lines (
@@ -926,6 +946,14 @@ export interface IStorage {
   createApproval(a: InsertApproval): Approval;
   approveApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
   rejectApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
+  // Leave of Absence (LOA)
+  reconcileExpiredLoas(): void;
+  createLoaRequest(e: InsertLoaRequest): LoaRequest;
+  getLoaRequestById(id: number): LoaRequest | undefined;
+  listLoaRequestsForUser(username: string): LoaRequest[];
+  applyApprovedLoa(loaId: number, approverUsername: string): { ok: true } | { ok: false; error: string };
+  rejectLoaRequest(loaId: number): void;
+  syncPersonnelRosterStatusForLinkedUser(username: string, status: string): void;
   // Medical / Casualty
   getCasualties(): Casualty[];
   getCasualty(id: number): Casualty | undefined;
@@ -1208,6 +1236,9 @@ export class Storage implements IStorage {
       teamAssignment: schema.users.teamAssignment,
       milIdNumber: schema.users.milIdNumber,
       mos: schema.users.mos,
+      loaStart: schema.users.loaStart,
+      loaEnd: schema.users.loaEnd,
+      loaApprover: schema.users.loaApprover,
       createdAt: schema.users.createdAt,
       lastLogin: schema.users.lastLogin,
     }).from(schema.users).all();
@@ -1235,6 +1266,9 @@ export class Storage implements IStorage {
       teamAssignment: profile?.teamAssignment ?? "",
       milIdNumber: profile?.milIdNumber ?? "",
       mos: profile?.mos ?? "",
+      loaStart: "",
+      loaEnd: "",
+      loaApprover: "",
       createdAt: new Date().toISOString(),
       lastLogin: "",
     }).returning().get()!;
@@ -1290,6 +1324,9 @@ export class Storage implements IStorage {
       db.update(schema.opTasks).set({ assignedTo: newUsername }).where(eq(schema.opTasks.assignedTo, oldUsername)).run();
       db.update(schema.accessCodes).set({ createdBy: newUsername }).where(eq(schema.accessCodes.createdBy, oldUsername)).run();
       db.update(schema.accessCodes).set({ usedBy: newUsername }).where(eq(schema.accessCodes.usedBy, oldUsername)).run();
+      db.update(schema.loaRequests).set({ subjectUsername: newUsername }).where(eq(schema.loaRequests.subjectUsername, oldUsername)).run();
+      db.update(schema.loaRequests).set({ requestedBy: newUsername }).where(eq(schema.loaRequests.requestedBy, oldUsername)).run();
+      db.update(schema.users).set({ loaApprover: newUsername }).where(eq(schema.users.loaApprover, oldUsername)).run();
       return db.update(schema.users).set({ username: newUsername }).where(eq(schema.users.id, userId)).returning().get();
     });
     return run();
@@ -1873,6 +1910,93 @@ export class Storage implements IStorage {
       .where(eq(schema.approvals.id, id))
       .returning()
       .get();
+  }
+
+  reconcileExpiredLoas() {
+    const today = new Date().toISOString().slice(0, 10);
+    const all = db.select().from(schema.users).all();
+    for (const u of all) {
+      const end = (u.loaEnd || "").trim();
+      if (!end || end >= today) continue;
+      db.update(schema.users)
+        .set({ loaStart: "", loaEnd: "", loaApprover: "" })
+        .where(eq(schema.users.id, u.id))
+        .run();
+      const ps = db.select().from(schema.perstat).where(eq(schema.perstat.username, u.username)).get();
+      if (ps?.dutyStatus === "leave") {
+        this.upsertPerstat(u.username, "active", ps.notes || "");
+      }
+      this.syncPersonnelRosterStatusForLinkedUser(u.username, "present");
+    }
+  }
+
+  createLoaRequest(e: InsertLoaRequest) {
+    return db.insert(schema.loaRequests).values(e).returning().get()!;
+  }
+
+  getLoaRequestById(id: number) {
+    return db.select().from(schema.loaRequests).where(eq(schema.loaRequests.id, id)).get();
+  }
+
+  listLoaRequestsForUser(username: string) {
+    return db
+      .select()
+      .from(schema.loaRequests)
+      .where(
+        or(
+          eq(schema.loaRequests.subjectUsername, username),
+          eq(schema.loaRequests.requestedBy, username),
+        ),
+      )
+      .orderBy(desc(schema.loaRequests.createdAt), desc(schema.loaRequests.id))
+      .all();
+  }
+
+  applyApprovedLoa(loaId: number, approverUsername: string): { ok: true } | { ok: false; error: string } {
+    const row = db.select().from(schema.loaRequests).where(eq(schema.loaRequests.id, loaId)).get();
+    if (!row || row.status !== "pending") return { ok: false, error: "Invalid LOA request" };
+    const now = new Date().toISOString();
+    db.update(schema.loaRequests)
+      .set({ status: "approved", updatedAt: now })
+      .where(eq(schema.loaRequests.id, loaId))
+      .run();
+    const u = db.select().from(schema.users).where(eq(schema.users.username, row.subjectUsername)).get();
+    if (!u) return { ok: false, error: "User not found" };
+    db.update(schema.users)
+      .set({
+        loaStart: row.startDate,
+        loaEnd: row.endDate,
+        loaApprover: approverUsername,
+      })
+      .where(eq(schema.users.id, u.id))
+      .run();
+    const note = `LOA ${row.startDate}–${row.endDate} · Approver: ${approverUsername}`;
+    this.upsertPerstat(row.subjectUsername, "leave", note);
+    this.syncPersonnelRosterStatusForLinkedUser(row.subjectUsername, "leave");
+    return { ok: true };
+  }
+
+  rejectLoaRequest(loaId: number) {
+    const now = new Date().toISOString();
+    db.update(schema.loaRequests)
+      .set({ status: "rejected", updatedAt: now })
+      .where(eq(schema.loaRequests.id, loaId))
+      .run();
+  }
+
+  syncPersonnelRosterStatusForLinkedUser(username: string, status: string) {
+    const now = new Date().toISOString();
+    const rows = db
+      .select()
+      .from(schema.personnelRosterEntries)
+      .where(eq(schema.personnelRosterEntries.linkedUsername, username))
+      .all();
+    for (const r of rows) {
+      db.update(schema.personnelRosterEntries)
+        .set({ status, updatedAt: now })
+        .where(eq(schema.personnelRosterEntries.id, r.id))
+        .run();
+    }
   }
 
   // Medical / Casualty

@@ -24,6 +24,7 @@ export const PERSONNEL_SUB: SubNavItem[] = [
   { href: "/personnel/roster", label: "ROSTER", short: "Roster" },
   { href: "/personnel/units", label: "UNITS", short: "Units" },
   { href: "/personnel/promotions", label: "PROMOTIONS", short: "Promo" },
+  { href: "/personnel/loa", label: "LOA", short: "LOA" },
 ];
 
 export const TACTICAL_SUB: SubNavItem[] = [
@@ -74,6 +75,7 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/personnel/roster", label: "ROSTER" },
   { path: "/personnel/units", label: "UNITS" },
   { path: "/personnel/promotions", label: "PROMOTIONS" },
+  { path: "/personnel/loa", label: "LOA" },
   { path: "/personnel", label: "PERSONNEL" },
   { path: "/tactical/map", label: "TAC MAP" },
   { path: "/tactical/grid", label: "GRID TOOL" },

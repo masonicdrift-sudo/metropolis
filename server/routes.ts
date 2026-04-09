@@ -232,6 +232,12 @@ const promotionPacketRequestSchema = z.object({
   requestedNote: z.string().max(2000).optional().default(""),
 });
 
+const loaRequestPostSchema = z.object({
+  startDate: z.string().min(8).max(32),
+  endDate: z.string().min(8).max(32),
+  reason: z.string().max(4000).optional().default(""),
+});
+
 function armyRankIndex(abbr: string): number {
   const t = abbr.trim();
   if (!t) return -1;
@@ -373,6 +379,9 @@ function sessionUserJson(user: User) {
     teamAssignment: user.teamAssignment || "",
     milIdNumber: user.milIdNumber || "",
     mos: user.mos || "",
+    loaStart: user.loaStart || "",
+    loaEnd: user.loaEnd || "",
+    loaApprover: user.loaApprover || "",
     tacticalRoles,
     permissions,
   };
@@ -427,8 +436,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     req.session.username = user.username;
     req.session.accessLevel = user.accessLevel;
     req.session.tacticalRole = user.role || "";
+    storage.reconcileExpiredLoas();
+    const userFresh = storage.getUserById(user.id) || user;
     appendActivity(req, { action: "LOGIN", entityType: "user_session", entityId: user.id, summary: `Login: ${user.username}`, after: { username: user.username, accessLevel: user.accessLevel } });
-    res.json(sessionUserJson(user));
+    res.json(sessionUserJson(userFresh));
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -474,6 +485,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
 
   app.get("/api/auth/me", (req, res) => {
     if (!req.session?.userId) return res.status(401).json({ error: "Not logged in" });
+    storage.reconcileExpiredLoas();
     const user = storage.getUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Not logged in" });
     res.json(sessionUserJson(user));
@@ -1462,7 +1474,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── PERSTAT ───────────────────────────────────────────────────────────────────
-  app.get("/api/perstat", requireAuth, (_, res) => res.json(storage.getPerstat()));
+  app.get("/api/perstat", requireAuth, (_, res) => {
+    storage.reconcileExpiredLoas();
+    res.json(storage.getPerstat());
+  });
   app.post("/api/perstat", requireAuth, (req, res) => {
     const { username, dutyStatus, notes } = req.body;
     const target = username || req.session.username!;
@@ -1491,6 +1506,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   const personnelRosterPatchSchema = personnelRosterPostSchema.partial();
 
   app.get("/api/personnel-roster", requireAuth, (_, res) => {
+    storage.reconcileExpiredLoas();
     res.json(storage.getPersonnelRosterEntries());
   });
 
@@ -2208,6 +2224,66 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(202).json({ ok: true, approvalId: approval.id });
   });
 
+  // ── Leave of Absence (LOA) ───────────────────────────────────────────────────
+  app.post("/api/loa/request", requireAuth, (req, res) => {
+    const parsed = loaRequestPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const me = req.session.username!;
+    storage.reconcileExpiredLoas();
+    const existingPending = storage.listLoaRequestsForUser(me).find(
+      (r) => r.subjectUsername === me && r.status === "pending",
+    );
+    if (existingPending) {
+      return res.status(400).json({ error: "You already have a pending LOA request." });
+    }
+    const start = parsed.data.startDate.trim();
+    const end = parsed.data.endDate.trim();
+    if (start > end) return res.status(400).json({ error: "End date must be on or after start date" });
+    const now = new Date().toISOString();
+    const loa = storage.createLoaRequest({
+      subjectUsername: me,
+      startDate: start,
+      endDate: end,
+      reason: (parsed.data.reason || "").trim().slice(0, 4000),
+      status: "pending",
+      requestedBy: me,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const approval = storage.createApproval({
+      entityType: "loa_request",
+      entityId: String(loa.id),
+      action: "REQUEST_LEAVE",
+      status: "pending",
+      requestedBy: me,
+      requestedAt: now,
+      requestedNote: (parsed.data.reason || "").trim().slice(0, 2000),
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({
+        loaRequestId: loa.id,
+        subjectUsername: me,
+        startDate: start,
+        endDate: end,
+      }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "approval",
+      entityId: approval.id,
+      summary: `LOA requested: ${me} ${start}–${end}`,
+      after: approval,
+    });
+    res.status(202).json({ ok: true, loaRequestId: loa.id, approvalId: approval.id });
+  });
+
+  app.get("/api/loa/mine", requireAuth, (req, res) => {
+    storage.reconcileExpiredLoas();
+    res.json(storage.listLoaRequestsForUser(req.session.username!));
+  });
+
   // ── Approvals (admin/owner) ────────────────────────────────────────────────
   app.get("/api/approvals", requireAdmin, (req, res) => {
     const raw = req.query.status;
@@ -2358,6 +2434,27 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         console.error("promotion_packet approve:", e);
       }
     }
+    if (row.entityType === "loa_request" && row.action === "REQUEST_LEAVE") {
+      try {
+        const loaId = Number(row.entityId);
+        if (Number.isFinite(loaId)) {
+          const r = storage.applyApprovedLoa(loaId, req.session.username!);
+          if (r.ok) {
+            wsPush("USER");
+            wsPush("PERSTAT");
+            wsPush("PERSONNEL_ROSTER");
+            appendActivity(req, {
+              action: "UPDATE",
+              entityType: "loa_request",
+              entityId: loaId,
+              summary: `Approved LOA #${loaId} for subject`,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("loa_request approve:", e);
+      }
+    }
     wsPush("APPROVALS");
     appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Approved: ${row.entityType} ${row.entityId}`, after: row });
     res.json(row);
@@ -2368,8 +2465,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
     const parsed = approvalDecisionSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const before = storage.getApproval(id);
     const row = storage.rejectApproval(id, req.session.username!, parsed.data.decisionNote);
     if (!row) return res.status(404).json({ error: "Not found" });
+    if (before?.entityType === "loa_request" && before.action === "REQUEST_LEAVE") {
+      const loaId = Number(before.entityId);
+      if (Number.isFinite(loaId)) storage.rejectLoaRequest(loaId);
+    }
     wsPush("APPROVALS");
     appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Rejected: ${row.entityType} ${row.entityId}`, after: row });
     res.json(row);

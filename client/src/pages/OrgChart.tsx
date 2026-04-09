@@ -1,4 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  pointerWithin,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
@@ -58,42 +68,37 @@ import {
 } from "lucide-react";
 import type { User } from "@shared/schema";
 
-const DND = "application/x-tacedge-org-username";
+const userDragId = (username: string) => `org-assign-user:${username}`;
+const slotDropId = (slotId: string) => `org-assign-slot:${slotId}`;
 
 function SlotCard({
   slot,
   editable,
-  onDropUser,
   onClear,
   onEditBillet,
   onRemoveBillet,
 }: {
   slot: OrgSlotView;
   editable: boolean;
-  onDropUser: (username: string) => void;
   onClear: () => void;
   onEditBillet: () => void;
   onRemoveBillet: () => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: slotDropId(slot.id),
+    disabled: !editable,
+  });
   const filled = !!(slot.assignedUsername || "").trim();
   const line = filled ? slot.displayLine || slot.assignedUsername : "";
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         "rounded border border-border/80 bg-zinc-950/80 px-2 py-1.5 text-[10px] relative group",
         editable && "min-h-[52px]",
+        editable && isOver && "ring-1 ring-blue-400/70 border-blue-500/50",
       )}
-      onDragOver={editable ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } : undefined}
-      onDrop={
-        editable
-          ? (e) => {
-              e.preventDefault();
-              const u = e.dataTransfer.getData(DND);
-              if (u) onDropUser(u);
-            }
-          : undefined
-      }
     >
       <div className="flex justify-between gap-1 items-start">
         <div className="min-w-0 flex-1">
@@ -158,6 +163,31 @@ function SlotCard({
   );
 }
 
+function RosterUserDraggable({ user }: { user: User }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: userDragId(user.username),
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "text-[10px] px-2 py-1.5 rounded border border-border bg-background/80 cursor-grab active:cursor-grabbing hover:bg-secondary/60 touch-none",
+        isDragging && "opacity-60 ring-1 ring-blue-400/60",
+      )}
+    >
+      <span className="text-muted-foreground">{(user.rank || "").trim() || "—"}</span>{" "}
+      <span className="font-mono font-semibold">{user.username}</span>
+    </div>
+  );
+}
+
 type FormState = { a: string; b: string; c: string };
 
 const emptyForm = (): FormState => ({ a: "", b: "", c: "" });
@@ -205,7 +235,12 @@ export default function OrgChartPage() {
   const scaleRef = useRef(0.88);
   scaleRef.current = scale;
   const dragRef = useRef<{ active: boolean; sx: number; sy: number; px: number; py: number } | null>(null);
+  const assignDragActiveRef = useRef(false);
   const viewportRef = useRef<HTMLDivElement>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   /** Dialog: ladder | hq-slot | column | col-slot */
   const [dlg, setDlg] = useState<
@@ -259,6 +294,7 @@ export default function OrgChartPage() {
 
   useEffect(() => {
     const move = (e: MouseEvent) => {
+      if (assignDragActiveRef.current) return;
       const d = dragRef.current;
       if (!d?.active) return;
       setPan({ x: d.px + (e.clientX - d.sx), y: d.py + (e.clientY - d.sy) });
@@ -282,6 +318,24 @@ export default function OrgChartPage() {
       persist(merged);
     },
     [chart, persist],
+  );
+
+  const handleAssignDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      assignDragActiveRef.current = false;
+      const { active, over } = event;
+      if (!over) return;
+      const aid = String(active.id);
+      const oid = String(over.id);
+      const up = "org-assign-user:";
+      const sp = "org-assign-slot:";
+      if (!aid.startsWith(up) || !oid.startsWith(sp)) return;
+      const username = aid.slice(up.length);
+      const slotId = oid.slice(sp.length);
+      if (!username || !slotId) return;
+      handleAssign(slotId, username);
+    },
+    [handleAssign],
   );
 
   const applyStruct = useCallback(
@@ -397,35 +451,35 @@ export default function OrgChartPage() {
       <SubPageNav items={PERSONNEL_SUB} />
 
       <div className="flex-1 flex min-h-0 gap-2 border border-border rounded-md bg-black/40 overflow-hidden">
-        {canEdit ? (
-          <aside className="w-52 shrink-0 border-r border-border bg-card/50 flex flex-col">
-            <div className="text-[10px] font-bold tracking-wider text-muted-foreground px-2 py-2 border-b border-border flex items-center gap-1">
-              <UserPlus className="h-3.5 w-3.5" /> Roster (drag)
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {users.map((u) => (
-                <div
-                  key={u.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData(DND, u.username);
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                  className="text-[10px] px-2 py-1.5 rounded border border-border bg-background/80 cursor-grab active:cursor-grabbing hover:bg-secondary/60"
-                >
-                  <span className="text-muted-foreground">{(u.rank || "").trim() || "—"}</span>{" "}
-                  <span className="font-mono font-semibold">{u.username}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
-        ) : null}
-
-        <div
-          ref={viewportRef}
-          className="flex-1 overflow-hidden relative cursor-grab active:cursor-grabbing select-none"
-          onMouseDown={onBgMouseDown}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={pointerWithin}
+          onDragStart={() => {
+            assignDragActiveRef.current = true;
+          }}
+          onDragCancel={() => {
+            assignDragActiveRef.current = false;
+          }}
+          onDragEnd={handleAssignDragEnd}
         >
+          {canEdit ? (
+            <aside className="w-52 shrink-0 border-r border-border bg-card/50 flex flex-col">
+              <div className="text-[10px] font-bold tracking-wider text-muted-foreground px-2 py-2 border-b border-border flex items-center gap-1">
+                <UserPlus className="h-3.5 w-3.5" /> Roster (drag)
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {users.map((u) => (
+                  <RosterUserDraggable key={u.id} user={u} />
+                ))}
+              </div>
+            </aside>
+          ) : null}
+
+          <div
+            ref={viewportRef}
+            className="flex-1 overflow-hidden relative cursor-grab active:cursor-grabbing select-none"
+            onMouseDown={onBgMouseDown}
+          >
           <div
             className="absolute left-0 top-0 will-change-transform"
             style={{
@@ -555,7 +609,6 @@ export default function OrgChartPage() {
                           key={s.id}
                           slot={s}
                           editable={canEdit}
-                          onDropUser={(u) => handleAssign(s.id, u)}
                           onClear={() => handleAssign(s.id, "")}
                           onEditBillet={() => setDlg({ type: "hq-slot", mode: "edit", id: s.id })}
                           onRemoveBillet={() => setRemoveSlotId(s.id)}
@@ -638,7 +691,6 @@ export default function OrgChartPage() {
                               key={s.id}
                               slot={s}
                               editable={canEdit}
-                              onDropUser={(u) => handleAssign(s.id, u)}
                               onClear={() => handleAssign(s.id, "")}
                               onEditBillet={() =>
                                 setDlg({ type: "col-slot", columnId: col.id, mode: "edit", slotId: s.id })
@@ -661,6 +713,7 @@ export default function OrgChartPage() {
             {canEdit ? " · Drag roster into billets · Use Structure buttons to build the chart" : ""}
           </div>
         </div>
+        </DndContext>
       </div>
 
       <Dialog

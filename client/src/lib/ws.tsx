@@ -44,6 +44,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   AWARD:            [["/api/awards"], ["/api/profile"]],
   // Training
   TRAINING:         [["/api/training"]],
+  QUALIFICATION:    [["/api/qualifications/definitions"], ["/api/qualifications/records"], ["/api/profile"]],
   // Broadcasts
   BROADCAST:        [["/api/broadcasts"], ["/api/broadcasts/all"], ["/api/notifications"]],
   // ISOFAC / File Vault

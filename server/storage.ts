@@ -25,6 +25,8 @@ import type {
   OpTask, InsertOpTask,
   Award, InsertAward,
   TrainingRecord, InsertTraining,
+  QualificationDefinition, InsertQualificationDefinition,
+  UserQualification, InsertUserQualification,
   CalendarEvent, InsertCalendarEvent,
   ActivityLog, InsertActivityLog,
   EntityLink, InsertEntityLink,
@@ -233,6 +235,27 @@ try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`)
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN operation_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE awards ADD COLUMN award_catalog_id TEXT NOT NULL DEFAULT ''`); } catch {}
+
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS qualification_definitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS user_qualifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    qualification_id INTEGER NOT NULL,
+    obtained_at TEXT NOT NULL DEFAULT '',
+    recorded_by TEXT NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS user_qual_username_qid ON user_qualifications(username, qualification_id);
+  CREATE INDEX IF NOT EXISTS idx_user_qual_username ON user_qualifications(username);
+`);
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS loa_requests (
@@ -900,6 +923,23 @@ export interface IStorage {
   createTrainingRecord(t: InsertTraining): TrainingRecord;
   updateTrainingRecord(id: number, t: Partial<InsertTraining>): TrainingRecord | undefined;
   deleteTrainingRecord(id: number): void;
+  // Qualifications (catalog + user records)
+  getQualificationDefinitions(): QualificationDefinition[];
+  createQualificationDefinition(d: InsertQualificationDefinition): QualificationDefinition;
+  updateQualificationDefinition(id: number, d: Partial<Pick<InsertQualificationDefinition, "name" | "description" | "sortOrder">>): QualificationDefinition | undefined;
+  deleteQualificationDefinition(id: number): void;
+  getUserQualificationsForProfile(username: string): Array<{
+    recordId: number;
+    qualificationId: number;
+    name: string;
+    description: string;
+    obtainedAt: string;
+    recordedBy: string;
+    notes: string;
+  }>;
+  getAllUserQualificationRecords(): UserQualification[];
+  createUserQualification(r: InsertUserQualification): UserQualification;
+  deleteUserQualification(id: number): void;
   // Calendar (shared)
   getCalendarEvents(from?: string, to?: string): CalendarEvent[];
   getCalendarEvent(id: number): CalendarEvent | undefined;
@@ -1318,6 +1358,8 @@ export class Storage implements IStorage {
       db.update(schema.perstat).set({ username: newUsername }).where(eq(schema.perstat.username, oldUsername)).run();
       db.update(schema.personnelRosterEntries).set({ linkedUsername: newUsername }).where(eq(schema.personnelRosterEntries.linkedUsername, oldUsername)).run();
       db.update(schema.trainingRecords).set({ username: newUsername }).where(eq(schema.trainingRecords.username, oldUsername)).run();
+      db.update(schema.userQualifications).set({ username: newUsername }).where(eq(schema.userQualifications.username, oldUsername)).run();
+      db.update(schema.userQualifications).set({ recordedBy: newUsername }).where(eq(schema.userQualifications.recordedBy, oldUsername)).run();
       db.update(schema.awards).set({ username: newUsername }).where(eq(schema.awards.username, oldUsername)).run();
       db.update(schema.awards).set({ awardedBy: newUsername }).where(eq(schema.awards.awardedBy, oldUsername)).run();
       db.update(schema.afterActionReports).set({ submittedBy: newUsername }).where(eq(schema.afterActionReports.submittedBy, oldUsername)).run();
@@ -1693,6 +1735,62 @@ export class Storage implements IStorage {
     return db.update(schema.trainingRecords).set(t).where(eq(schema.trainingRecords.id, id)).returning().get();
   }
   deleteTrainingRecord(id: number) { db.delete(schema.trainingRecords).where(eq(schema.trainingRecords.id, id)).run(); }
+
+  getQualificationDefinitions() {
+    return db
+      .select()
+      .from(schema.qualificationDefinitions)
+      .orderBy(asc(schema.qualificationDefinitions.sortOrder), asc(schema.qualificationDefinitions.id))
+      .all();
+  }
+  createQualificationDefinition(d: InsertQualificationDefinition) {
+    return db.insert(schema.qualificationDefinitions).values(d).returning().get();
+  }
+  updateQualificationDefinition(
+    id: number,
+    d: Partial<Pick<InsertQualificationDefinition, "name" | "description" | "sortOrder">>,
+  ) {
+    return db
+      .update(schema.qualificationDefinitions)
+      .set(d)
+      .where(eq(schema.qualificationDefinitions.id, id))
+      .returning()
+      .get();
+  }
+  deleteQualificationDefinition(id: number) {
+    db.delete(schema.userQualifications).where(eq(schema.userQualifications.qualificationId, id)).run();
+    db.delete(schema.qualificationDefinitions).where(eq(schema.qualificationDefinitions.id, id)).run();
+  }
+  getUserQualificationsForProfile(username: string) {
+    const rows = db
+      .select({
+        recordId: schema.userQualifications.id,
+        qualificationId: schema.userQualifications.qualificationId,
+        name: schema.qualificationDefinitions.name,
+        description: schema.qualificationDefinitions.description,
+        obtainedAt: schema.userQualifications.obtainedAt,
+        recordedBy: schema.userQualifications.recordedBy,
+        notes: schema.userQualifications.notes,
+      })
+      .from(schema.userQualifications)
+      .innerJoin(
+        schema.qualificationDefinitions,
+        eq(schema.userQualifications.qualificationId, schema.qualificationDefinitions.id),
+      )
+      .where(eq(schema.userQualifications.username, username))
+      .orderBy(asc(schema.qualificationDefinitions.sortOrder), asc(schema.qualificationDefinitions.name))
+      .all();
+    return rows;
+  }
+  getAllUserQualificationRecords() {
+    return db.select().from(schema.userQualifications).orderBy(desc(schema.userQualifications.id)).all();
+  }
+  createUserQualification(r: InsertUserQualification) {
+    return db.insert(schema.userQualifications).values(r).returning().get();
+  }
+  deleteUserQualification(id: number) {
+    db.delete(schema.userQualifications).where(eq(schema.userQualifications.id, id)).run();
+  }
 
   getCalendarEvent(id: number) {
     return db.select().from(schema.calendarEvents).where(eq(schema.calendarEvents.id, id)).get();

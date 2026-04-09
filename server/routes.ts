@@ -583,6 +583,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       else loaPhase = "active";
     }
 
+    const qualifications = storage.getUserQualificationsForProfile(username);
+
     res.json({
       username: u.username,
       accessLevel: u.accessLevel,
@@ -601,6 +603,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       awards: awardsSorted,
       citations: citationsSorted,
       signInSheets,
+      qualifications,
     });
   });
   /** Roster for any logged-in user — DMs, @mentions (no admin required). */
@@ -1542,7 +1545,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     };
     return {
       ...data,
-      hq: { slots: data.hq.slots.map(slot) },
+      hqSections: data.hqSections.map((sec) => ({
+        ...sec,
+        slots: sec.slots.map(slot),
+      })),
       columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(slot) })),
     };
   }
@@ -1780,6 +1786,98 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
   app.delete("/api/awards/:id", requireAdmin, (req, res) => {
     storage.deleteAward(Number(req.params.id)); wsPush("AWARD");
+    res.status(204).send();
+  });
+
+  // ── Qualifications (catalog + assignments) ───────────────────────────────────
+  const qualDefPostSchema = z.object({
+    name: z.string().min(1),
+    description: z.string().optional().default(""),
+    sortOrder: z.number().int().optional().default(0),
+  });
+  app.get("/api/qualifications/definitions", requireAuth, (_req, res) => {
+    res.json(storage.getQualificationDefinitions());
+  });
+  app.post("/api/qualifications/definitions", requireAdmin, (req, res) => {
+    const parsed = qualDefPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const now = new Date().toISOString();
+    const row = storage.createQualificationDefinition({
+      name: parsed.data.name.trim(),
+      description: (parsed.data.description ?? "").trim(),
+      sortOrder: parsed.data.sortOrder ?? 0,
+      createdAt: now,
+    });
+    wsPush("QUALIFICATION");
+    res.status(201).json(row);
+  });
+  app.patch("/api/qualifications/definitions/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const body = req.body || {};
+    const row = storage.updateQualificationDefinition(id, {
+      ...(typeof body.name === "string" ? { name: String(body.name).trim() } : {}),
+      ...(typeof body.description === "string" ? { description: String(body.description) } : {}),
+      ...(typeof body.sortOrder === "number" ? { sortOrder: body.sortOrder } : {}),
+    });
+    if (!row) return res.status(404).json({ error: "Not found" });
+    wsPush("QUALIFICATION");
+    res.json(row);
+  });
+  app.delete("/api/qualifications/definitions/:id", requireAdmin, (req, res) => {
+    storage.deleteQualificationDefinition(Number(req.params.id));
+    wsPush("QUALIFICATION");
+    res.status(204).send();
+  });
+
+  app.get("/api/qualifications/records", requireAdmin, (_req, res) => {
+    const defs = new Map(storage.getQualificationDefinitions().map((d) => [d.id, d]));
+    const rows = storage.getAllUserQualificationRecords().map((r) => {
+      const def = defs.get(r.qualificationId);
+      return {
+        ...r,
+        qualificationName: def?.name ?? `#${r.qualificationId}`,
+        qualificationDescription: def?.description ?? "",
+      };
+    });
+    res.json(rows);
+  });
+
+  const qualRecordPostSchema = z.object({
+    username: z.string().min(1),
+    qualificationId: z.number().int().positive(),
+    obtainedAt: z.string().optional().default(""),
+    notes: z.string().optional().default(""),
+  });
+  app.post("/api/qualifications/records", requireAdmin, (req, res) => {
+    const parsed = qualRecordPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const { username, qualificationId, obtainedAt, notes } = parsed.data;
+    const un = username.trim();
+    if (!storage.getUserByUsername(un)) return res.status(400).json({ error: "Unknown user" });
+    const defs = storage.getQualificationDefinitions();
+    if (!defs.some((d) => d.id === qualificationId)) return res.status(400).json({ error: "Unknown qualification" });
+    try {
+      const row = storage.createUserQualification({
+        username: un,
+        qualificationId,
+        obtainedAt: (obtainedAt || "").trim(),
+        recordedBy: req.session.username!,
+        notes: (notes || "").trim(),
+        createdAt: new Date().toISOString(),
+      });
+      wsPush("QUALIFICATION");
+      res.status(201).json(row);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/unique|constraint/i.test(msg)) {
+        return res.status(409).json({ error: "That user already has this qualification recorded" });
+      }
+      throw e;
+    }
+  });
+  app.delete("/api/qualifications/records/:id", requireAdmin, (req, res) => {
+    storage.deleteUserQualification(Number(req.params.id));
+    wsPush("QUALIFICATION");
     res.status(204).send();
   });
 

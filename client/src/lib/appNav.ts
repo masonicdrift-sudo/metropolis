@@ -41,6 +41,7 @@ export const SUPPORT_SUB: SubNavItem[] = [
 
 export const TRAINING_SUB: SubNavItem[] = [
   { href: "/training", label: "SIGN IN SHEET", short: "Sign-in" },
+  { href: "/training/qualifications", label: "TRAINING RECORDS", short: "Records" },
   { href: "/training/awards", label: "AWARDS", short: "Awards" },
 ];
 
@@ -82,6 +83,7 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/tactical/map", label: "TAC MAP" },
   { path: "/tactical/grid", label: "GRID TOOL" },
   { path: "/tactical", label: "TACTICAL" },
+  { path: "/training/qualifications", label: "TRAINING RECORDS" },
   { path: "/training/awards", label: "AWARDS" },
   { path: "/training", label: "SIGN IN SHEET" },
   { path: "/isofac", label: "ISOFAC" },

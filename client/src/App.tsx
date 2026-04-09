@@ -24,6 +24,7 @@ import AfterActionPage from "./pages/AfterAction";
 import OpTaskBoard from "./pages/OpTaskBoard";
 import AwardsPage from "./pages/Awards";
 import TrainingPage from "./pages/Training";
+import TrainingQualificationsPage from "./pages/TrainingQualifications";
 import FileVault from "./pages/FileVault";
 import GridTool from "./pages/GridTool";
 import TacticalTerrainMap from "./pages/TacticalTerrainMap";
@@ -60,7 +61,7 @@ import {
   KeyRound, Crown, MessageSquare, BookOpen,
   Settings, Menu, X, ChevronRight,   UserCheck, FileText,
   Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, ScrollText,
-  ClipboardList, Medal, Palmtree, Network
+  ClipboardList, ClipboardCheck, Medal, Palmtree, Network
 } from "lucide-react";
 
 type NavLeaf = { path: string; label: string; icon: LucideIcon; short: string };
@@ -171,6 +172,7 @@ const NAV_BLOCKS: NavBlock[] = [
     title: "TRAINING",
     items: [
       { path: "/training", label: "SIGN IN SHEET", icon: GraduationCap, short: "Sign-in" },
+      { path: "/training/qualifications", label: "TRAINING RECORDS", icon: ClipboardCheck, short: "Records" },
       { path: "/training/awards", label: "AWARDS", icon: Star, short: "Awards" },
     ],
   },
@@ -587,6 +589,7 @@ function AppRoutes() {
         <Route path="/tactical" component={gateRoute("/tactical", TacticalHub)} />
 
         <Route path="/training/awards" component={gateRoute("/training/awards", AwardsPage)} />
+        <Route path="/training/qualifications" component={gateRoute("/training/qualifications", TrainingQualificationsPage)} />
         <Route path="/training" component={gateRoute("/training", TrainingPage)} />
 
         <Route path="/assets" component={gateRoute("/assets", Assets)} />

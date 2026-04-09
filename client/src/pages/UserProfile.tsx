@@ -5,7 +5,18 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText, Activity } from "lucide-react";
+import {
+  BadgeCheck,
+  Crown,
+  ShieldCheck,
+  User as UserIcon,
+  ArrowLeft,
+  Award,
+  GraduationCap,
+  ScrollText,
+  Activity,
+  ClipboardCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/ProfileLink";
 import { InstructorField } from "@/pages/Training";
@@ -33,6 +44,16 @@ type SignInRow = TrainingRecord & {
   operationName?: string | null;
 };
 
+type ProfileQualification = {
+  recordId: number;
+  qualificationId: number;
+  name: string;
+  description: string;
+  obtainedAt: string;
+  recordedBy: string;
+  notes: string;
+};
+
 type ProfilePayload = {
   username: string;
   accessLevel: "user" | "admin" | "owner" | string;
@@ -53,6 +74,7 @@ type ProfilePayload = {
   awards: AwardRow[];
   citations: AwardRow[];
   signInSheets: SignInRow[];
+  qualifications: ProfileQualification[];
 };
 
 function accessIcon(level: string) {
@@ -120,6 +142,7 @@ export default function UserProfilePage() {
   const awards = profile?.awards ?? [];
   const citations = profile?.citations ?? [];
   const signInSheets = profile?.signInSheets ?? [];
+  const qualifications = profile?.qualifications ?? [];
 
   return (
     <div className="p-3 md:p-4 tac-page space-y-3">
@@ -299,6 +322,40 @@ export default function UserProfilePage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="bg-card border border-border rounded p-3">
+        <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+          <ClipboardCheck className="h-3.5 w-3.5 text-emerald-400" /> QUALIFICATIONS
+          <span className="ml-auto text-[9px] text-muted-foreground/70">{qualifications.length}</span>
+        </div>
+        {qualifications.length === 0 ? (
+          <div className="text-xs text-muted-foreground">No recorded qualifications for this operator.</div>
+        ) : (
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+            {qualifications.map((q) => (
+              <div key={q.recordId} className="border border-border/60 rounded p-2 bg-background/40 text-[10px]">
+                <div className="font-semibold text-foreground">{q.name}</div>
+                {q.description ? (
+                  <div className="text-[9px] text-muted-foreground mt-0.5 whitespace-pre-wrap">{q.description}</div>
+                ) : null}
+                <div className="text-[9px] text-muted-foreground mt-1">
+                  {q.obtainedAt ? (
+                    <>
+                      Obtained {fmtDate(q.obtainedAt.length <= 10 ? `${q.obtainedAt}T12:00:00` : q.obtainedAt)}
+                      {" · "}
+                    </>
+                  ) : null}
+                  Recorded by{" "}
+                  <ProfileLink username={q.recordedBy} className="text-muted-foreground hover:text-foreground">
+                    {q.recordedBy}
+                  </ProfileLink>
+                </div>
+                {q.notes ? <div className="text-[9px] text-muted-foreground/90 mt-0.5">{q.notes}</div> : null}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="bg-card border border-border rounded p-3">

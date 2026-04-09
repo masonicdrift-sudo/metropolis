@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, primaryKey } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -464,6 +464,38 @@ export const trainingRecords = sqliteTable("training_records", {
 export const insertTrainingSchema = createInsertSchema(trainingRecords).omit({ id: true });
 export type InsertTraining = z.infer<typeof insertTrainingSchema>;
 export type TrainingRecord = typeof trainingRecords.$inferSelect;
+
+// ─── Qualifications (catalog + per-user records) ─────────────────────────────
+/** Admin-defined qualification types (range qual, medical, etc.). */
+export const qualificationDefinitions = sqliteTable("qualification_definitions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+});
+export const insertQualificationDefinitionSchema = createInsertSchema(qualificationDefinitions).omit({ id: true });
+export type InsertQualificationDefinition = z.infer<typeof insertQualificationDefinitionSchema>;
+export type QualificationDefinition = typeof qualificationDefinitions.$inferSelect;
+
+/** User has obtained a qualification from the catalog. */
+export const userQualifications = sqliteTable(
+  "user_qualifications",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    username: text("username").notNull(),
+    qualificationId: integer("qualification_id").notNull(),
+    /** ISO date or empty */
+    obtainedAt: text("obtained_at").notNull().default(""),
+    recordedBy: text("recorded_by").notNull(),
+    notes: text("notes").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+  },
+  (t) => [uniqueIndex("user_qual_username_qid").on(t.username, t.qualificationId)],
+);
+export const insertUserQualificationSchema = createInsertSchema(userQualifications).omit({ id: true });
+export type InsertUserQualification = z.infer<typeof insertUserQualificationSchema>;
+export type UserQualification = typeof userQualifications.$inferSelect;
 
 /** ISOFAC `type` values allowed when attaching a sign-in roster to an order / plan doc. */
 export const SIGN_IN_ISO_FAC_TYPES = [

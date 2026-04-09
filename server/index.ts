@@ -40,7 +40,8 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
-      imgSrc: ["'self'", "data:", "blob:"],
+      // Award ribbon thumbnails load from Wikimedia Commons (public-domain U.S. military ribbon art)
+      imgSrc: ["'self'", "data:", "blob:", "https://upload.wikimedia.org"],
       mediaSrc: ["'self'"],
       connectSrc: ["'self'", "ws:", "wss:"],
     },

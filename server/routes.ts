@@ -30,6 +30,7 @@ import {
   type OrgChartData,
   type OrgChartView,
   type OrgSlot,
+  type OrgSlotView,
 } from "@shared/orgChart";
 
 const TERRAIN_DIR = path.resolve(process.cwd(), "TDL_TerrainExport", "TDL_TerrainExport");
@@ -1554,23 +1555,47 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   function enrichOrgChartView(data: OrgChartData): OrgChartView {
-    const slot = (s: OrgSlot) => {
+    const rosterRows = storage.getPersonnelRosterEntries();
+    const rosterById = new Map(rosterRows.map((r) => [r.id, r]));
+    const enrichSlot = (s: OrgSlot): OrgSlotView => {
       const un = (s.assignedUsername || "").trim();
       let displayLine = "";
+      let profileLinkUsername: string | undefined;
       if (un) {
         const u = storage.getUserByUsername(un);
         const r = (u?.rank || "").trim();
         displayLine = r && u ? `${r} ${u.username}` : un;
+        profileLinkUsername = un;
+      } else {
+        const rid = s.personnelRosterEntryId ?? 0;
+        if (rid > 0) {
+          const re = rosterById.get(rid);
+          if (re) {
+            const name = [re.lastName, re.firstName].filter(Boolean).join(", ") || "Roster";
+            const rk = (re.rank || "").trim();
+            displayLine = rk ? `${rk} ${name}` : name;
+            const ln = (re.linkedUsername || "").trim();
+            if (ln) profileLinkUsername = ln;
+          } else {
+            displayLine = `Roster row #${rid} (removed)`;
+          }
+        } else if ((s.writtenName || "").trim()) {
+          displayLine = (s.writtenName || "").trim();
+        }
       }
-      return { ...s, displayLine };
+      return { ...s, displayLine, profileLinkUsername };
     };
     return {
       ...data,
       hqSections: data.hqSections.map((sec) => ({
         ...sec,
-        slots: sec.slots.map(slot),
+        slots: sec.slots.map(enrichSlot),
+        branches: (sec.branches ?? []).map((b) => ({
+          ...b,
+          slots: b.slots.map(enrichSlot),
+        })),
       })),
-      columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(slot) })),
+      columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(enrichSlot) })),
     };
   }
 

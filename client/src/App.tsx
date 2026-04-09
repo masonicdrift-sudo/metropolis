@@ -38,6 +38,7 @@ import UserProfilePage from "./pages/UserProfile";
 import PersonnelHub from "./pages/PersonnelHub";
 import PromotionPacketsPage from "./pages/PromotionPackets";
 import LeaveOfAbsencePage from "./pages/LeaveOfAbsence";
+import OrgChartPage from "./pages/OrgChart";
 import TacticalHub from "./pages/TacticalHub";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import { MetropolisLogo } from "@/components/MetropolisLogo";
@@ -59,7 +60,7 @@ import {
   KeyRound, Crown, MessageSquare, BookOpen,
   Settings, Menu, X, ChevronRight,   UserCheck, FileText,
   Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, ScrollText,
-  ClipboardList, Medal, Palmtree
+  ClipboardList, Medal, Palmtree, Network
 } from "lucide-react";
 
 type NavLeaf = { path: string; label: string; icon: LucideIcon; short: string };
@@ -145,6 +146,7 @@ const NAV_BLOCKS: NavBlock[] = [
     title: "PERSONNEL",
     items: [
       { path: "/personnel", label: "OVERVIEW", icon: Users, short: "Home" },
+      { path: "/personnel/org-chart", label: "ORG CHART", icon: Network, short: "Org" },
       { path: "/personnel/perstat", label: "PERSTAT", icon: UserCheck, short: "PERSTAT" },
       { path: "/personnel/roster", label: "ROSTER", icon: ClipboardList, short: "Roster" },
       { path: "/personnel/units", label: "UNITS", icon: Users, short: "Units" },
@@ -572,6 +574,7 @@ function AppRoutes() {
         <Route path="/comms/commo-card" component={gateRoute("/comms/commo-card", CommoCardPage)} />
         <Route path="/comms" component={gateRoute("/comms", Communications)} />
 
+        <Route path="/personnel/org-chart" component={gateRoute("/personnel/org-chart", OrgChartPage)} />
         <Route path="/personnel/perstat" component={gateRoute("/personnel/perstat", PerstatPage)} />
         <Route path="/personnel/roster" component={gateRoute("/personnel/roster", PersonnelRosterPage)} />
         <Route path="/personnel/units" component={gateRoute("/personnel/units", Units)} />

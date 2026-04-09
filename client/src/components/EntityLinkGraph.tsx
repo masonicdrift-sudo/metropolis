@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Network } from "vis-network";
 import type { Data, Edge, Node, Options } from "vis-network";
 import type { EntityLink, IntelReport } from "@shared/schema";
@@ -153,7 +153,8 @@ export function EntityLinkGraph({
   const onSelectRef = useRef(onNodeSelect);
   onSelectRef.current = onNodeSelect;
 
-  const setup = useCallback(() => {
+  /** Rebuild whenever link-derived graph data changes (vis-network does not reliably diff partial updates). */
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     networkRef.current?.destroy();
@@ -188,15 +189,11 @@ export function EntityLinkGraph({
     net.once("stabilizationIterationsDone", () => {
       net.fit({ animation: { duration: 400, easingFunction: "easeInOutQuad" } });
     });
-  }, [graphData, nodes.length, edges.length]);
-
-  useEffect(() => {
-    setup();
     return () => {
-      networkRef.current?.destroy();
+      net.destroy();
       networkRef.current = null;
     };
-  }, [setup]);
+  }, [graphData]);
 
   useEffect(() => {
     const net = networkRef.current;
@@ -209,7 +206,7 @@ export function EntityLinkGraph({
     }
   }, [focusNodeId]);
 
-  const empty = nodes.length === 0;
+  const empty = nodes.length === 0 && edges.length === 0;
 
   return (
     <div className={cn("relative rounded-md border border-border bg-[#050812] overflow-hidden", className)}>
@@ -218,7 +215,7 @@ export function EntityLinkGraph({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none px-4 text-center bg-background/75">
           <span className="text-xs text-muted-foreground tracking-wide">No nodes yet.</span>
           <span className="text-[10px] text-muted-foreground/80 max-w-sm">
-            Create links between people, units, grids, and intel — or add intel with grid coordinates to see dashed &quot;grid&quot; edges.
+            Create stored links below — or enable &quot;Grid-derived edges&quot; to show dashed intel→grid ties (not stored as links).
           </span>
         </div>
       )}

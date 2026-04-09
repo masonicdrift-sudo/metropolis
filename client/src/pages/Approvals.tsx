@@ -6,9 +6,10 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileLink } from "@/components/ProfileLink";
+import { useToast } from "@/hooks/use-toast";
 
 function promotionPayloadSummary(payloadJson: string): string | null {
   try {
@@ -40,6 +41,7 @@ function loaPayloadSummary(payloadJson: string): string | null {
 
 export default function ApprovalsPage() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   const { user } = useAuth();
   const isStaff = user?.accessLevel === "admin" || user?.accessLevel === "owner";
   const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
@@ -64,6 +66,17 @@ export default function ApprovalsPage() {
   const reject = useMutation({
     mutationFn: (id: number) => apiRequest("POST", `/api/approvals/${id}/reject`, { decisionNote: note }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/approvals"] }); setOpen(false); setSelected(null); },
+  });
+
+  const deleteApproval = useMutation({
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/approvals/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/approvals"] });
+      setOpen(false);
+      setSelected(null);
+      toast({ title: "Approval record deleted" });
+    },
+    onError: () => toast({ title: "Delete failed", variant: "destructive" }),
   });
 
   if (!isStaff) {
@@ -106,45 +119,63 @@ export default function ApprovalsPage() {
             rows.map((a) => (
               <div
                 key={a.id}
-                role="button"
-                tabIndex={0}
-                className="w-full text-left px-3 py-2 hover:bg-secondary/20 cursor-pointer"
-                onClick={() => {
-                  setSelected(a);
-                  setNote("");
-                  setOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+                className="w-full flex items-start gap-2 px-3 py-2 hover:bg-secondary/20"
+              >
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="flex-1 min-w-0 text-left cursor-pointer"
+                  onClick={() => {
                     setSelected(a);
                     setNote("");
                     setOpen(true);
-                  }
-                }}
-              >
-                <div className="text-[10px] font-mono text-muted-foreground">
-                  {new Date(a.requestedAt).toLocaleString()} ·{" "}
-                  <ProfileLink username={a.requestedBy} className="text-muted-foreground hover:text-foreground">
-                    {a.requestedBy}
-                  </ProfileLink>{" "}
-                  · {a.status.toUpperCase()}
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelected(a);
+                      setNote("");
+                      setOpen(true);
+                    }
+                  }}
+                >
+                  <div className="text-[10px] font-mono text-muted-foreground">
+                    {new Date(a.requestedAt).toLocaleString()} ·{" "}
+                    <ProfileLink username={a.requestedBy} className="text-muted-foreground hover:text-foreground">
+                      {a.requestedBy}
+                    </ProfileLink>{" "}
+                    · {a.status.toUpperCase()}
+                  </div>
+                  <div className="text-xs font-mono">
+                    {a.entityType === "promotion_packet" ? (
+                      <span className="text-amber-300/90">
+                        PROMOTION PACKET — {promotionPayloadSummary(a.payloadJson) ?? "—"}
+                      </span>
+                    ) : a.entityType === "loa_request" ? (
+                      <span className="text-cyan-300/90">
+                        LOA REQUEST — {loaPayloadSummary(a.payloadJson) ?? `${a.action} #${a.entityId}`}
+                      </span>
+                    ) : (
+                      <>
+                        {a.action} {a.entityType} #{a.entityId}
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs font-mono">
-                  {a.entityType === "promotion_packet" ? (
-                    <span className="text-amber-300/90">
-                      PROMOTION PACKET — {promotionPayloadSummary(a.payloadJson) ?? "—"}
-                    </span>
-                  ) : a.entityType === "loa_request" ? (
-                    <span className="text-cyan-300/90">
-                      LOA REQUEST — {loaPayloadSummary(a.payloadJson) ?? `${a.action} #${a.entityId}`}
-                    </span>
-                  ) : (
-                    <>
-                      {a.action} {a.entityType} #{a.entityId}
-                    </>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  className="shrink-0 p-2 rounded text-muted-foreground hover:text-red-400 hover:bg-red-950/20"
+                  title="Delete approval record"
+                  disabled={deleteApproval.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete approval #${a.id} from the log? This does not undo completed actions.`)) {
+                      deleteApproval.mutate(a.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))
           )}
@@ -181,6 +212,21 @@ export default function ApprovalsPage() {
           )}
           <DialogFooter className="gap-2 sm:gap-0 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+            {selected && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="mr-auto"
+                onClick={() => {
+                  if (confirm(`Delete approval #${selected.id}? This does not undo completed actions.`)) {
+                    deleteApproval.mutate(selected.id);
+                  }
+                }}
+                disabled={deleteApproval.isPending}
+              >
+                Delete record
+              </Button>
+            )}
             {selected && selected.status === "pending" && (
               <>
                 <Button variant="destructive" size="sm" onClick={() => reject.mutate(selected.id)} disabled={reject.isPending}>Reject</Button>

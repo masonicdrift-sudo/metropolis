@@ -37,6 +37,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   // PERSTAT
   PERSTAT:          [["/api/perstat"]],
   PERSONNEL_ROSTER: [["/api/personnel-roster"]],
+  ORG_CHART:        [["/api/org-chart"]],
   // AAR
   AAR:              [["/api/aar"]],
   // Awards

@@ -23,6 +23,14 @@ import ms from "milsymbol";
 import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
 import { MILITARY_AWARDS_CATALOG, getMilitaryAwardById } from "@shared/militaryAwardsCatalog";
 import { enrichAndSortAwards } from "./awardHelpers";
+import {
+  createBlankOrgChart,
+  parseOrgChart,
+  orgChartSchema,
+  type OrgChartData,
+  type OrgChartView,
+  type OrgSlot,
+} from "@shared/orgChart";
 
 const TERRAIN_DIR = path.resolve(process.cwd(), "TDL_TerrainExport", "TDL_TerrainExport");
 
@@ -1521,6 +1529,44 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const ps = storage.upsertPerstat(target, dutyStatus || "active", notes || ""); wsPush("PERSTAT"); res.json(ps);
   });
 
+  function enrichOrgChartView(data: OrgChartData): OrgChartView {
+    const slot = (s: OrgSlot) => {
+      const un = (s.assignedUsername || "").trim();
+      let displayLine = "";
+      if (un) {
+        const u = storage.getUserByUsername(un);
+        const r = (u?.rank || "").trim();
+        displayLine = r && u ? `${r} ${u.username}` : un;
+      }
+      return { ...s, displayLine };
+    };
+    return {
+      ...data,
+      hq: { slots: data.hq.slots.map(slot) },
+      columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(slot) })),
+    };
+  }
+
+  // ── Org chart (unit manning board) ───────────────────────────────────────────
+  app.get("/api/org-chart", requireAuth, (_req, res) => {
+    const raw = storage.getSiteSetting("org_chart");
+    let data: OrgChartData;
+    try {
+      data = raw ? parseOrgChart(JSON.parse(raw)) : createBlankOrgChart();
+    } catch {
+      data = createBlankOrgChart();
+    }
+    res.json(enrichOrgChartView(data));
+  });
+
+  app.put("/api/org-chart", requireAuth, requireAdmin, (req, res) => {
+    const parsed = orgChartSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    storage.setSiteSetting("org_chart", JSON.stringify(parsed.data));
+    wsPush("ORG_CHART");
+    res.json(enrichOrgChartView(parsed.data));
+  });
+
   // ── Personnel roster (fillable line roster) ───────────────────────────────────
   const personnelRosterPostSchema = z.object({
     sortOrder: z.number().int().min(0).max(1_000_000).optional(),
@@ -2537,6 +2583,23 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     wsPush("APPROVALS");
     appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Rejected: ${row.entityType} ${row.entityId}`, after: row });
     res.json(row);
+  });
+
+  app.delete("/api/approvals/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const before = storage.getApproval(id);
+    if (!before) return res.status(404).json({ error: "Not found" });
+    storage.deleteApproval(id);
+    wsPush("APPROVALS");
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "approval",
+      entityId: id,
+      summary: `Deleted approval record #${id} (${before.entityType} ${before.entityId})`,
+      before,
+    });
+    res.status(204).send();
   });
 
   // ── Broadcasts (FLASH) ────────────────────────────────────────────────────────

@@ -187,13 +187,22 @@ export default function LinkAnalysisPage() {
 
   const deleteMut = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/entity-links/${id}`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["/api/entity-links"] });
-      qc.invalidateQueries({ queryKey: ["/api/entity-links/all"] });
+    onSuccess: async () => {
+      await qc.refetchQueries({ queryKey: ["/api/entity-links"] });
+      await qc.refetchQueries({ queryKey: ["/api/entity-links/all"] });
       toast({ title: "Link removed" });
     },
     onError: () => toast({ title: "Delete failed", variant: "destructive" }),
   });
+
+  const graphKey = useMemo(
+    () =>
+      `${allEntityLinks
+        .map((l) => l.id)
+        .sort((a, b) => a - b)
+        .join("-")}-${includeDerivedGridEdges ? "g1" : "g0"}`,
+    [allEntityLinks, includeDerivedGridEdges],
+  );
 
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col min-h-0 gap-3">
@@ -250,15 +259,21 @@ export default function LinkAnalysisPage() {
               {allEntityLinks.length} stored link{allEntityLinks.length === 1 ? "" : "s"} · drag to pan, scroll to zoom
             </div>
           </div>
-          <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer touch-manipulation select-none">
-            <Checkbox
-              checked={includeDerivedGridEdges}
-              onCheckedChange={(c) => setIncludeDerivedGridEdges(c === true)}
-            />
-            Grid-derived edges
+          <label className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-[10px] text-muted-foreground cursor-pointer touch-manipulation select-none">
+            <span className="flex items-center gap-2">
+              <Checkbox
+                checked={includeDerivedGridEdges}
+                onCheckedChange={(c) => setIncludeDerivedGridEdges(c === true)}
+              />
+              Grid-derived edges
+            </span>
+            <span className="text-[9px] text-muted-foreground/70 sm:ml-2">
+              (dashed lines from intel grids — not the same as stored links)
+            </span>
           </label>
         </div>
         <EntityLinkGraph
+          key={graphKey}
           className="border-0 rounded-none"
           links={allEntityLinks}
           maps={labelMaps}

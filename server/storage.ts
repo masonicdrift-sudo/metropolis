@@ -948,6 +948,7 @@ export interface IStorage {
   createApproval(a: InsertApproval): Approval;
   approveApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
   rejectApproval(id: number, approvedBy: string, decisionNote?: string): Approval | undefined;
+  deleteApproval(id: number): void;
   // Leave of Absence (LOA)
   reconcileExpiredLoas(): void;
   createLoaRequest(e: InsertLoaRequest): LoaRequest;
@@ -1902,6 +1903,10 @@ export class Storage implements IStorage {
       .where(eq(schema.approvals.id, id))
       .returning()
       .get();
+  }
+
+  deleteApproval(id: number) {
+    db.delete(schema.approvals).where(eq(schema.approvals.id, id)).run();
   }
 
   rejectApproval(id: number, approvedBy: string, decisionNote = "") {

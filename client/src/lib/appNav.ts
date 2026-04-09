@@ -20,6 +20,7 @@ export const COMMS_SUB: SubNavItem[] = [
 
 export const PERSONNEL_SUB: SubNavItem[] = [
   { href: "/personnel", label: "OVERVIEW", short: "Home" },
+  { href: "/personnel/org-chart", label: "ORG CHART", short: "Org" },
   { href: "/personnel/perstat", label: "PERSTAT", short: "PERSTAT" },
   { href: "/personnel/roster", label: "ROSTER", short: "Roster" },
   { href: "/personnel/units", label: "UNITS", short: "Units" },
@@ -71,6 +72,7 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/intel", label: "INTELLIGENCE" },
   { path: "/comms/commo-card", label: "COMMO CARD" },
   { path: "/comms", label: "COMMS" },
+  { path: "/personnel/org-chart", label: "ORG CHART" },
   { path: "/personnel/perstat", label: "PERSTAT" },
   { path: "/personnel/roster", label: "ROSTER" },
   { path: "/personnel/units", label: "UNITS" },

@@ -1,9 +1,15 @@
 import { Link } from "wouter";
-import { ClipboardList, UserCheck, Users, Medal, Palmtree } from "lucide-react";
+import { ClipboardList, UserCheck, Users, Medal, Palmtree, Network } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { PERSONNEL_SUB } from "@/lib/appNav";
 
 const CARDS = [
+  {
+    href: "/personnel/org-chart",
+    title: "ORG CHART",
+    desc: "Blank manning board — admins build elements and assign by drag-and-drop.",
+    icon: Network,
+  },
   {
     href: "/personnel/perstat",
     title: "PERSTAT",

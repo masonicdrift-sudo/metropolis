@@ -1587,15 +1587,18 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     };
     return {
       ...data,
-      hqSections: data.hqSections.map((sec) => ({
-        ...sec,
-        slots: sec.slots.map(enrichSlot),
-        branches: (sec.branches ?? []).map((b) => ({
-          ...b,
-          slots: b.slots.map(enrichSlot),
+      chains: data.chains.map((ch) => ({
+        ...ch,
+        hqSections: ch.hqSections.map((sec) => ({
+          ...sec,
+          slots: sec.slots.map(enrichSlot),
+          branches: (sec.branches ?? []).map((b) => ({
+            ...b,
+            slots: b.slots.map(enrichSlot),
+          })),
         })),
+        columns: ch.columns.map((c) => ({ ...c, slots: c.slots.map(enrichSlot) })),
       })),
-      columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(enrichSlot) })),
     };
   }
 

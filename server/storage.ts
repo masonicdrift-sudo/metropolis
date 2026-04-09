@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc, and, asc, gte, lte, inArray, or } from "drizzle-orm";
+import { eq, desc, and, asc, gte, lte, inArray, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
 import {
@@ -1801,15 +1801,12 @@ export class Storage implements IStorage {
 
   getCalendarEvents(from?: string, to?: string): CalendarEvent[] {
     if (from && to) {
+      /** Events that overlap [from, to] as date strings: start <= to AND end >= from */
+      const effectiveEnd = sql<string>`COALESCE(NULLIF(${schema.calendarEvents.endDate}, ''), ${schema.calendarEvents.eventDate})`;
       return db
         .select()
         .from(schema.calendarEvents)
-        .where(
-          and(
-            gte(schema.calendarEvents.eventDate, from),
-            lte(schema.calendarEvents.eventDate, to),
-          ),
-        )
+        .where(and(lte(schema.calendarEvents.eventDate, to), gte(effectiveEnd, from)))
         .orderBy(asc(schema.calendarEvents.eventDate), asc(schema.calendarEvents.startTime), asc(schema.calendarEvents.id))
         .all();
     }

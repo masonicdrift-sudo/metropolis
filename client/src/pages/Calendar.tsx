@@ -14,6 +14,8 @@ import {
   endOfWeek,
   isSameMonth,
   isToday,
+  parseISO,
+  compareAsc,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,15 @@ const EVENT_COLORS: { key: string; label: string; cls: string }[] = [
 
 function ymd(d: Date): string {
   return format(d, "yyyy-MM-dd");
+}
+
+function effectiveEndDateStr(ev: CalendarEvent): string {
+  const e = (ev.endDate || "").trim();
+  return e || ev.eventDate;
+}
+
+function compareYmd(a: string, b: string): number {
+  return compareAsc(parseISO(`${a}T12:00:00`), parseISO(`${b}T12:00:00`));
 }
 
 export default function CalendarPage() {
@@ -66,17 +77,30 @@ export default function CalendarPage() {
       ),
   });
 
+  /** Each calendar day lists events that overlap that day (multi-day events appear on every day, Outlook-style). */
   const byDate = useMemo(() => {
     const m = new Map<string, CalendarEvent[]>();
     for (const e of events) {
-      const list = m.get(e.eventDate) ?? [];
-      list.push(e);
-      m.set(e.eventDate, list);
+      const startStr = e.eventDate;
+      const endStr = effectiveEndDateStr(e);
+      let a = startStr;
+      let b = endStr;
+      if (compareYmd(a, b) > 0) [a, b] = [b, a];
+      const start = parseISO(`${a}T12:00:00`);
+      const end = parseISO(`${b}T12:00:00`);
+      for (const day of eachDayOfInterval({ start, end })) {
+        const ds = ymd(day);
+        const list = m.get(ds) ?? [];
+        list.push(e);
+        m.set(ds, list);
+      }
     }
     for (const [, list] of Array.from(m.entries())) {
       list.sort((a: CalendarEvent, b: CalendarEvent) => {
         const ta = (a.startTime || "").localeCompare(b.startTime || "");
         if (ta !== 0) return ta;
+        const da = compareYmd(a.eventDate, b.eventDate);
+        if (da !== 0) return da;
         return a.id - b.id;
       });
     }
@@ -157,6 +181,14 @@ export default function CalendarPage() {
       toast({ title: "Title and date required", variant: "destructive" });
       return;
     }
+    const rawEnd = form.endDate.trim();
+    let endDateNorm = rawEnd || selectedDate;
+    if (compareYmd(endDateNorm, selectedDate) < 0) {
+      endDateNorm = selectedDate;
+      if (rawEnd) {
+        toast({ title: "End date adjusted", description: "End date cannot be before start date." });
+      }
+    }
     if (editing) {
       updateMut.mutate({
         id: editing.id,
@@ -165,7 +197,7 @@ export default function CalendarPage() {
           notes: form.notes.trim(),
           startTime: form.startTime.trim(),
           eventDate: selectedDate,
-          endDate: form.endDate.trim(),
+          endDate: endDateNorm === selectedDate ? "" : endDateNorm,
           endTime: form.endTime.trim(),
           color: form.color,
         },
@@ -173,7 +205,7 @@ export default function CalendarPage() {
     } else {
       createMut.mutate({
         eventDate: selectedDate,
-        endDate: form.endDate.trim(),
+        endDate: endDateNorm === selectedDate ? "" : endDateNorm,
         title: form.title.trim(),
         notes: form.notes.trim(),
         startTime: form.startTime.trim(),
@@ -196,7 +228,7 @@ export default function CalendarPage() {
             UNIT CALENDAR
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-wider mt-0.5">
-            Shared events — click a day to add; select an event to edit or delete.
+            Multi-day events span each day in range. Set end date after start for a block (Outlook-style).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -281,12 +313,22 @@ export default function CalendarPage() {
                   {dayEvents.slice(0, mobile ? 2 : 3).map((ev) => (
                     (() => {
                       const colorCls = (EVENT_COLORS.find((c) => c.key === (ev.color || "blue"))?.cls) || EVENT_COLORS[0].cls;
-                      const endStr = (ev.endDate && ev.endDate !== ev.eventDate) ? `→${ev.endDate}` : "";
+                      const endEff = effectiveEndDateStr(ev);
+                      const multi = compareYmd(ev.eventDate, endEff) !== 0;
+                      const isFirstDay = ds === ev.eventDate;
+                      const isLastDay = ds === endEff;
+                      const spanHint = multi
+                        ? isFirstDay
+                          ? " →"
+                          : isLastDay
+                            ? " ←"
+                            : " ·"
+                        : "";
                       const timeStr = `${ev.startTime ? `${ev.startTime}` : ""}${ev.endTime ? `-${ev.endTime}` : ""}`.trim();
-                      const meta = `${timeStr ? `${timeStr} ` : ""}${endStr}`;
+                      const meta = `${timeStr ? `${timeStr} ` : ""}${spanHint}`;
                       return (
                     <button
-                      key={ev.id}
+                      key={`${ev.id}-${ds}`}
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -346,12 +388,15 @@ export default function CalendarPage() {
           </DialogHeader>
           {selectedDate && (
             <div className="text-[10px] text-muted-foreground font-mono mb-2">
-              DATE: {selectedDate} (Z) — adjust below if needed
+              Range: {selectedDate}
+              {form.endDate.trim() && form.endDate.trim() !== selectedDate
+                ? ` → ${form.endDate.trim()}`
+                : ""}
             </div>
           )}
           <div className="grid gap-3">
             <div className="space-y-1">
-              <Label className="text-[10px]">DATE (YYYY-MM-DD)</Label>
+              <Label className="text-[10px]">START DATE (YYYY-MM-DD)</Label>
               <Input
                 className="h-9 text-xs font-mono"
                 value={selectedDate || ""}
@@ -360,7 +405,7 @@ export default function CalendarPage() {
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px]">END DATE (YYYY-MM-DD)</Label>
+              <Label className="text-[10px]">END DATE (OPTIONAL — SAME AS START FOR ONE DAY)</Label>
               <Input
                 className="h-9 text-xs font-mono"
                 value={form.endDate}

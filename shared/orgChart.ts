@@ -49,15 +49,34 @@ export const orgHqSectionSchema = z.object({
 
 export const ladderLayoutSchema = z.enum(["vertical", "horizontal"]);
 
-export const orgChartSchema = z.object({
-  version: z.literal(2),
+/** One org "chain": ladder + HQ blocks + element columns (independent from other chains). */
+export const orgChainSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().default(""),
   ladder: z.array(orgLadderStepSchema),
-  /** How chain-of-command rows are laid out within the ladder block */
   ladderLayout: ladderLayoutSchema.default("vertical"),
   hqSections: z.array(orgHqSectionSchema),
   columns: z.array(orgColumnSchema),
-  /** Vertical stack order: each entry is `ladder`, `columns`, or an hq section id */
   blockOrder: z.array(z.string().min(1)),
+});
+
+export type OrgChain = z.infer<typeof orgChainSchema>;
+
+/** Legacy v2 (single chain at root) — migrated to v3 on read */
+const orgChartSchemaV2 = z.object({
+  version: z.literal(2),
+  ladder: z.array(orgLadderStepSchema),
+  ladderLayout: ladderLayoutSchema.default("vertical"),
+  hqSections: z.array(orgHqSectionSchema),
+  columns: z.array(orgColumnSchema),
+  blockOrder: z.array(z.string().min(1)),
+});
+
+export type OrgChartDataV2 = z.infer<typeof orgChartSchemaV2>;
+
+export const orgChartSchema = z.object({
+  version: z.literal(3),
+  chains: z.array(orgChainSchema).min(1),
 });
 
 export type OrgChartData = z.infer<typeof orgChartSchema>;
@@ -82,13 +101,14 @@ export type OrgHqSectionView = Omit<OrgHqSection, "slots" | "branches"> & {
   slots: OrgSlotView[];
   branches: OrgHqBranchView[];
 };
-export type OrgChartView = {
-  version: 2;
-  ladder: OrgChartData["ladder"];
-  ladderLayout: OrgChartData["ladderLayout"];
+export type OrgChainView = Omit<OrgChain, "hqSections" | "columns"> & {
   hqSections: OrgHqSectionView[];
   columns: Array<Omit<OrgColumn, "slots"> & { slots: OrgSlotView[] }>;
-  blockOrder: string[];
+};
+
+export type OrgChartView = {
+  version: 3;
+  chains: OrgChainView[];
 };
 
 export function newOrgId(prefix: string): string {
@@ -115,10 +135,10 @@ function normalizeSlot(s: OrgSlot): OrgSlot {
   };
 }
 
-function normalizeOrgChartSlots(data: OrgChartData): OrgChartData {
+function normalizeChainSlots(chain: OrgChain): OrgChain {
   return {
-    ...data,
-    hqSections: data.hqSections.map((sec) => ({
+    ...chain,
+    hqSections: chain.hqSections.map((sec) => ({
       ...sec,
       branches: (sec.branches ?? []).map((b) => ({
         ...b,
@@ -126,29 +146,16 @@ function normalizeOrgChartSlots(data: OrgChartData): OrgChartData {
       })),
       slots: sec.slots.map(normalizeSlot),
     })),
-    columns: data.columns.map((c) => ({
+    columns: chain.columns.map((c) => ({
       ...c,
       slots: c.slots.map(normalizeSlot),
     })),
   };
 }
 
-function migrateV1ToV2(v1: OrgChartDataV1): OrgChartData {
-  const hqId = newOrgId("hqsec");
-  const slots = v1.hq.slots.map(normalizeSlot);
-  return normalizeBlockOrder({
-    version: 2,
-    ladder: v1.ladder,
-    ladderLayout: "vertical",
-    hqSections: [{ id: hqId, title: "HQ", slots, branches: [] }],
-    columns: v1.columns.map((c) => ({ ...c, slots: c.slots.map(normalizeSlot) })),
-    blockOrder: ["ladder", hqId, "columns"],
-  });
-}
-
-/** Ensure blockOrder lists ladder once, columns once, and every hq section id exactly once. */
-export function normalizeBlockOrder(data: OrgChartData): OrgChartData {
-  const normalized = normalizeOrgChartSlots(data);
+/** Ensure blockOrder lists ladder once, columns once, and every hq section id exactly once within one chain. */
+export function normalizeSingleChain(chain: OrgChain): OrgChain {
+  const normalized = normalizeChainSlots(chain);
   const ids = normalized.hqSections.map((s) => s.id);
   const idSet = new Set(ids);
   const bo = normalized.blockOrder;
@@ -172,16 +179,56 @@ export function normalizeBlockOrder(data: OrgChartData): OrgChartData {
   };
 }
 
-/** Default chart: one empty HQ block (not totally blank). */
+function normalizeOrgChartData(data: OrgChartData): OrgChartData {
+  return { ...data, chains: data.chains.map(normalizeSingleChain) };
+}
+
+function migrateV1ToV2(v1: OrgChartDataV1): OrgChartDataV2 {
+  const hqId = newOrgId("hqsec");
+  const slots = v1.hq.slots.map(normalizeSlot);
+  return {
+    version: 2,
+    ladder: v1.ladder,
+    ladderLayout: "vertical",
+    hqSections: [{ id: hqId, title: "HQ", slots, branches: [] }],
+    columns: v1.columns.map((c) => ({ ...c, slots: c.slots.map(normalizeSlot) })),
+    blockOrder: ["ladder", hqId, "columns"],
+  };
+}
+
+function migrateV2ToV3(v2: OrgChartDataV2): OrgChartData {
+  return normalizeOrgChartData({
+    version: 3,
+    chains: [
+      normalizeSingleChain({
+        id: newOrgId("chain"),
+        title: "",
+        ladder: v2.ladder,
+        ladderLayout: v2.ladderLayout ?? "vertical",
+        hqSections: v2.hqSections,
+        columns: v2.columns,
+        blockOrder: v2.blockOrder,
+      }),
+    ],
+  });
+}
+
+/** Default chart: one chain with one empty HQ block. */
 export function createBlankOrgChart(): OrgChartData {
   const hqId = newOrgId("hqsec");
-  return normalizeBlockOrder({
-    version: 2,
-    ladder: [],
-    ladderLayout: "vertical",
-    hqSections: [{ id: hqId, title: "HQ", slots: [], branches: [] }],
-    columns: [],
-    blockOrder: ["ladder", hqId, "columns"],
+  return normalizeOrgChartData({
+    version: 3,
+    chains: [
+      normalizeSingleChain({
+        id: newOrgId("chain"),
+        title: "",
+        ladder: [],
+        ladderLayout: "vertical",
+        hqSections: [{ id: hqId, title: "HQ", slots: [], branches: [] }],
+        columns: [],
+        blockOrder: ["ladder", hqId, "columns"],
+      }),
+    ],
   });
 }
 
@@ -191,10 +238,12 @@ export function createDefaultOrgChart(): OrgChartData {
 }
 
 export function parseOrgChart(raw: unknown): OrgChartData {
-  const v2 = orgChartSchema.safeParse(raw);
-  if (v2.success) return normalizeBlockOrder(normalizeOrgChartSlots(v2.data));
+  const v3 = orgChartSchema.safeParse(raw);
+  if (v3.success) return normalizeOrgChartData(v3.data);
+  const v2 = orgChartSchemaV2.safeParse(raw);
+  if (v2.success) return migrateV2ToV3(v2.data);
   const v1 = orgChartSchemaV1.safeParse(raw);
-  if (v1.success) return migrateV1ToV2(v1.data);
+  if (v1.success) return migrateV2ToV3(migrateV1ToV2(v1.data));
   return createBlankOrgChart();
 }
 
@@ -212,11 +261,21 @@ function mapHqSectionSlots(sec: OrgHqSection, fn: (s: OrgSlot) => OrgSlot): OrgH
   };
 }
 
+export function updateChain(data: OrgChartData, chainId: string, fn: (c: OrgChain) => OrgChain): OrgChartData {
+  return {
+    ...data,
+    chains: data.chains.map((c) => (c.id === chainId ? normalizeSingleChain(fn({ ...c })) : c)),
+  };
+}
+
 export function mapEverySlot(data: OrgChartData, fn: (s: OrgSlot) => OrgSlot): OrgChartData {
   return {
     ...data,
-    hqSections: data.hqSections.map((sec) => mapHqSectionSlots(sec, fn)),
-    columns: data.columns.map((c) => ({ ...c, slots: c.slots.map(fn) })),
+    chains: data.chains.map((ch) => ({
+      ...ch,
+      hqSections: ch.hqSections.map((sec) => mapHqSectionSlots(sec, fn)),
+      columns: ch.columns.map((c) => ({ ...c, slots: c.slots.map(fn) })),
+    })),
   };
 }
 
@@ -264,48 +323,55 @@ export function clearSlotAssignment(data: OrgChartData, slotId: string): OrgChar
   );
 }
 
-export function addLadderStep(data: OrgChartData, label: string, sublabel: string): OrgChartData {
-  return {
-    ...data,
-    ladder: [...data.ladder, { id: newOrgId("ladder"), label, sublabel: sublabel || "" }],
-  };
+export function addLadderStep(data: OrgChartData, chainId: string, label: string, sublabel: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    ladder: [...c.ladder, { id: newOrgId("ladder"), label, sublabel: sublabel || "" }],
+  }));
 }
 
 export function updateLadderStep(
   data: OrgChartData,
+  chainId: string,
   stepId: string,
   label: string,
   sublabel: string,
 ): OrgChartData {
-  return {
-    ...data,
-    ladder: data.ladder.map((s) =>
-      s.id === stepId ? { ...s, label, sublabel: sublabel || "" } : s,
-    ),
-  };
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    ladder: c.ladder.map((s) => (s.id === stepId ? { ...s, label, sublabel: sublabel || "" } : s)),
+  }));
 }
 
-export function removeLadderStep(data: OrgChartData, stepId: string): OrgChartData {
-  return { ...data, ladder: data.ladder.filter((s) => s.id !== stepId) };
+export function removeLadderStep(data: OrgChartData, chainId: string, stepId: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({ ...c, ladder: c.ladder.filter((s) => s.id !== stepId) }));
 }
 
 /** Move one chain row earlier (up in vertical layout, left in horizontal) or later (down / right). */
-export function moveLadderStep(data: OrgChartData, stepId: string, direction: "earlier" | "later"): OrgChartData {
-  const ix = data.ladder.findIndex((s) => s.id === stepId);
-  if (ix < 0) return data;
-  const j = direction === "earlier" ? ix - 1 : ix + 1;
-  if (j < 0 || j >= data.ladder.length) return data;
-  const ladder = [...data.ladder];
-  [ladder[ix], ladder[j]] = [ladder[j], ladder[ix]];
-  return { ...data, ladder };
+export function moveLadderStep(
+  data: OrgChartData,
+  chainId: string,
+  stepId: string,
+  direction: "earlier" | "later",
+): OrgChartData {
+  return updateChain(data, chainId, (c) => {
+    const ix = c.ladder.findIndex((s) => s.id === stepId);
+    if (ix < 0) return c;
+    const j = direction === "earlier" ? ix - 1 : ix + 1;
+    if (j < 0 || j >= c.ladder.length) return c;
+    const ladder = [...c.ladder];
+    [ladder[ix], ladder[j]] = [ladder[j], ladder[ix]];
+    return { ...c, ladder };
+  });
 }
 
-export function setLadderLayout(data: OrgChartData, ladderLayout: LadderLayout): OrgChartData {
-  return { ...data, ladderLayout };
+export function setLadderLayout(data: OrgChartData, chainId: string, ladderLayout: LadderLayout): OrgChartData {
+  return updateChain(data, chainId, (c) => ({ ...c, ladderLayout }));
 }
 
 export function addHqSlot(
   data: OrgChartData,
+  chainId: string,
   sectionId: string,
   roleTitle: string,
   positionCode: string,
@@ -317,16 +383,16 @@ export function addHqSlot(
     positionCode,
   };
   if (!branchId) {
-    return {
-      ...data,
-      hqSections: data.hqSections.map((sec) =>
+    return updateChain(data, chainId, (c) => ({
+      ...c,
+      hqSections: c.hqSections.map((sec) =>
         sec.id === sectionId ? { ...sec, slots: [...sec.slots, slot] } : sec,
       ),
-    };
+    }));
   }
-  return {
-    ...data,
-    hqSections: data.hqSections.map((sec) => {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    hqSections: c.hqSections.map((sec) => {
       if (sec.id !== sectionId) return sec;
       return {
         ...sec,
@@ -335,37 +401,43 @@ export function addHqSlot(
         ),
       };
     }),
-  };
+  }));
 }
 
-export function addHqBranch(data: OrgChartData, sectionId: string, title: string): OrgChartData {
+export function addHqBranch(data: OrgChartData, chainId: string, sectionId: string, title: string): OrgChartData {
   const bid = newOrgId("hqbr");
   const br: OrgHqBranch = {
     id: bid,
     title: title.trim() || "Branch",
     slots: [],
   };
-  return {
-    ...data,
-    hqSections: data.hqSections.map((s) =>
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    hqSections: c.hqSections.map((s) =>
       s.id === sectionId ? { ...s, branches: [...(s.branches ?? []), br] } : s,
     ),
-  };
+  }));
 }
 
-export function removeHqBranch(data: OrgChartData, sectionId: string, branchId: string): OrgChartData {
-  return {
-    ...data,
-    hqSections: data.hqSections.map((s) =>
+export function removeHqBranch(data: OrgChartData, chainId: string, sectionId: string, branchId: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    hqSections: c.hqSections.map((s) =>
       s.id === sectionId ? { ...s, branches: (s.branches ?? []).filter((b) => b.id !== branchId) } : s,
     ),
-  };
+  }));
 }
 
-export function updateHqBranchTitle(data: OrgChartData, sectionId: string, branchId: string, title: string): OrgChartData {
-  return {
-    ...data,
-    hqSections: data.hqSections.map((s) =>
+export function updateHqBranchTitle(
+  data: OrgChartData,
+  chainId: string,
+  sectionId: string,
+  branchId: string,
+  title: string,
+): OrgChartData {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    hqSections: c.hqSections.map((s) =>
       s.id !== sectionId
         ? s
         : {
@@ -375,66 +447,67 @@ export function updateHqBranchTitle(data: OrgChartData, sectionId: string, branc
             ),
           },
     ),
-  };
+  }));
 }
 
-export function addHqSection(data: OrgChartData, title: string): OrgChartData {
-  const id = newOrgId("hqsec");
-  const sec: OrgHqSection = {
-    id,
-    title: title.trim() || "HQ",
-    slots: [],
-    branches: [],
-  };
-  const bo = [...data.blockOrder];
-  const colIdx = bo.indexOf("columns");
-  if (colIdx >= 0) bo.splice(colIdx, 0, id);
-  else bo.push(id);
-  return normalizeBlockOrder({
-    ...data,
-    hqSections: [...data.hqSections, sec],
-    blockOrder: bo,
+export function addHqSection(data: OrgChartData, chainId: string, title: string): OrgChartData {
+  return updateChain(data, chainId, (c) => {
+    const id = newOrgId("hqsec");
+    const sec: OrgHqSection = {
+      id,
+      title: title.trim() || "HQ",
+      slots: [],
+      branches: [],
+    };
+    const bo = [...c.blockOrder];
+    const colIdx = bo.indexOf("columns");
+    if (colIdx >= 0) bo.splice(colIdx, 0, id);
+    else bo.push(id);
+    return { ...c, hqSections: [...c.hqSections, sec], blockOrder: bo };
   });
 }
 
-export function removeHqSection(data: OrgChartData, sectionId: string): OrgChartData {
-  if (data.hqSections.length <= 1) return data;
-  return normalizeBlockOrder({
-    ...data,
-    hqSections: data.hqSections.filter((s) => s.id !== sectionId),
-    blockOrder: data.blockOrder.filter((t) => t !== sectionId),
+export function removeHqSection(data: OrgChartData, chainId: string, sectionId: string): OrgChartData {
+  return updateChain(data, chainId, (c) => {
+    if (c.hqSections.length <= 1) return c;
+    return {
+      ...c,
+      hqSections: c.hqSections.filter((s) => s.id !== sectionId),
+      blockOrder: c.blockOrder.filter((t) => t !== sectionId),
+    };
   });
 }
 
-export function updateHqSectionTitle(data: OrgChartData, sectionId: string, title: string): OrgChartData {
-  return {
-    ...data,
-    hqSections: data.hqSections.map((s) =>
-      s.id === sectionId ? { ...s, title: title.trim() || "HQ" } : s,
-    ),
-  };
+export function updateHqSectionTitle(data: OrgChartData, chainId: string, sectionId: string, title: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    hqSections: c.hqSections.map((s) => (s.id === sectionId ? { ...s, title: title.trim() || "HQ" } : s)),
+  }));
 }
 
-/** Move a block token (`ladder`, `columns`, or an hq section id) up/down in the stack. */
+/** Move a block token (`ladder`, `columns`, or an hq section id) up/down within one org chain. */
 export function moveBlockOrderToken(
   data: OrgChartData,
+  chainId: string,
   token: string,
   direction: "up" | "down",
 ): OrgChartData {
-  const o = [...data.blockOrder];
-  const i = o.indexOf(token);
-  if (i < 0) return data;
-  const j = direction === "up" ? i - 1 : i + 1;
-  if (j < 0 || j >= o.length) return data;
-  [o[i], o[j]] = [o[j], o[i]];
-  return { ...data, blockOrder: o };
+  return updateChain(data, chainId, (c) => {
+    const o = [...c.blockOrder];
+    const i = o.indexOf(token);
+    if (i < 0) return c;
+    const j = direction === "up" ? i - 1 : i + 1;
+    if (j < 0 || j >= o.length) return c;
+    [o[i], o[j]] = [o[j], o[i]];
+    return { ...c, blockOrder: o };
+  });
 }
 
-export function addColumn(data: OrgChartData, headerTitle: string, headerSubtitle: string): OrgChartData {
-  return {
-    ...data,
+export function addColumn(data: OrgChartData, chainId: string, headerTitle: string, headerSubtitle: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({
+    ...c,
     columns: [
-      ...data.columns,
+      ...c.columns,
       {
         id: newOrgId("col"),
         headerTitle,
@@ -442,29 +515,31 @@ export function addColumn(data: OrgChartData, headerTitle: string, headerSubtitl
         slots: [],
       },
     ],
-  };
+  }));
 }
 
 export function updateColumnHeaders(
   data: OrgChartData,
+  chainId: string,
   colId: string,
   headerTitle: string,
   headerSubtitle: string,
 ): OrgChartData {
-  return {
-    ...data,
-    columns: data.columns.map((c) =>
-      c.id === colId ? { ...c, headerTitle, headerSubtitle: headerSubtitle || "" } : c,
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    columns: c.columns.map((col) =>
+      col.id === colId ? { ...col, headerTitle, headerSubtitle: headerSubtitle || "" } : col,
     ),
-  };
+  }));
 }
 
-export function removeColumn(data: OrgChartData, colId: string): OrgChartData {
-  return { ...data, columns: data.columns.filter((c) => c.id !== colId) };
+export function removeColumn(data: OrgChartData, chainId: string, colId: string): OrgChartData {
+  return updateChain(data, chainId, (c) => ({ ...c, columns: c.columns.filter((col) => col.id !== colId) }));
 }
 
 export function addSlotToColumn(
   data: OrgChartData,
+  chainId: string,
   colId: string,
   roleTitle: string,
   positionCode: string,
@@ -474,12 +549,12 @@ export function addSlotToColumn(
     roleTitle,
     positionCode,
   };
-  return {
-    ...data,
-    columns: data.columns.map((c) =>
-      c.id === colId ? { ...c, slots: [...c.slots, slot] } : c,
+  return updateChain(data, chainId, (c) => ({
+    ...c,
+    columns: c.columns.map((col) =>
+      col.id === colId ? { ...col, slots: [...col.slots, slot] } : col,
     ),
-  };
+  }));
 }
 
 export function updateSlotFields(
@@ -491,21 +566,21 @@ export function updateSlotFields(
   return mapEverySlot(data, map);
 }
 
-export function removeSlotById(data: OrgChartData, slotId: string): OrgChartData {
-  for (const sec of data.hqSections) {
+function removeSlotFromChain(ch: OrgChain, slotId: string): OrgChain {
+  for (const sec of ch.hqSections) {
     if (sec.slots.some((s) => s.id === slotId)) {
-      return {
-        ...data,
-        hqSections: data.hqSections.map((s) =>
+      return normalizeSingleChain({
+        ...ch,
+        hqSections: ch.hqSections.map((s) =>
           s.id === sec.id ? { ...s, slots: s.slots.filter((x) => x.id !== slotId) } : s,
         ),
-      };
+      });
     }
     for (const b of sec.branches ?? []) {
       if (b.slots.some((s) => s.id === slotId)) {
-        return {
-          ...data,
-          hqSections: data.hqSections.map((s) =>
+        return normalizeSingleChain({
+          ...ch,
+          hqSections: ch.hqSections.map((s) =>
             s.id === sec.id
               ? {
                   ...s,
@@ -515,32 +590,64 @@ export function removeSlotById(data: OrgChartData, slotId: string): OrgChartData
                 }
               : s,
           ),
-        };
+        });
       }
     }
   }
+  if (ch.columns.some((c) => c.slots.some((s) => s.id === slotId))) {
+    return normalizeSingleChain({
+      ...ch,
+      columns: ch.columns.map((c) => ({
+        ...c,
+        slots: c.slots.filter((s) => s.id !== slotId),
+      })),
+    });
+  }
+  return ch;
+}
+
+export function removeSlotById(data: OrgChartData, slotId: string): OrgChartData {
+  return { ...data, chains: data.chains.map((ch) => removeSlotFromChain(ch, slotId)) };
+}
+
+/** Add a new independent org chain (own ladder, HQ, elements). */
+export function addOrgChain(data: OrgChartData, title?: string): OrgChartData {
+  const hqId = newOrgId("hqsec");
+  const chain: OrgChain = normalizeSingleChain({
+    id: newOrgId("chain"),
+    title: (title ?? "").trim(),
+    ladder: [],
+    ladderLayout: "vertical",
+    hqSections: [{ id: hqId, title: "HQ", slots: [], branches: [] }],
+    columns: [],
+    blockOrder: ["ladder", hqId, "columns"],
+  });
+  return normalizeOrgChartData({ ...data, chains: [...data.chains, chain] });
+}
+
+export function removeOrgChain(data: OrgChartData, chainId: string): OrgChartData {
+  if (data.chains.length <= 1) return data;
+  return normalizeOrgChartData({ ...data, chains: data.chains.filter((c) => c.id !== chainId) });
+}
+
+export function moveOrgChainOrder(data: OrgChartData, chainId: string, direction: "up" | "down"): OrgChartData {
+  const ix = data.chains.findIndex((c) => c.id === chainId);
+  if (ix < 0) return data;
+  const j = direction === "up" ? ix - 1 : ix + 1;
+  if (j < 0 || j >= data.chains.length) return data;
+  const chains = [...data.chains];
+  [chains[ix], chains[j]] = [chains[j], chains[ix]];
+  return { ...data, chains };
+}
+
+export function updateOrgChainTitle(data: OrgChartData, chainId: string, title: string): OrgChartData {
   return {
     ...data,
-    columns: data.columns.map((c) => ({
-      ...c,
-      slots: c.slots.filter((s) => s.id !== slotId),
-    })),
+    chains: data.chains.map((c) => (c.id === chainId ? { ...c, title: title.trim() } : c)),
   };
 }
 
-export function stripOrgChartForSave(data: {
-  version: 2;
-  ladder: OrgChartData["ladder"];
-  ladderLayout?: OrgChartData["ladderLayout"];
-  hqSections: Array<{
-    id: string;
-    title: string;
-    slots: OrgSlotWithDisplay[];
-    branches?: Array<{ id: string; title: string; slots: OrgSlotWithDisplay[] }>;
-  }>;
-  columns: Array<Omit<OrgColumn, "slots"> & { slots: OrgSlotWithDisplay[] }>;
-  blockOrder: string[];
-}): OrgChartData {
+export function stripOrgChartForSave(data: OrgChartView): OrgChartData {
   const slot = (s: OrgSlotWithDisplay): OrgSlot => ({
     id: s.id,
     roleTitle: s.roleTitle,
@@ -550,25 +657,29 @@ export function stripOrgChartForSave(data: {
     personnelRosterEntryId: s.personnelRosterEntryId ?? 0,
     writtenName: s.writtenName ?? "",
   });
-  return normalizeBlockOrder({
-    version: 2,
-    ladder: data.ladder,
-    ladderLayout: data.ladderLayout ?? "vertical",
-    hqSections: data.hqSections.map((sec) => ({
-      id: sec.id,
-      title: sec.title,
-      slots: sec.slots.map(slot),
-      branches: (sec.branches ?? []).map((b) => ({
-        id: b.id,
-        title: b.title,
-        slots: b.slots.map(slot),
+  return normalizeOrgChartData({
+    version: 3,
+    chains: data.chains.map((ch) => ({
+      id: ch.id,
+      title: ch.title ?? "",
+      ladder: ch.ladder,
+      ladderLayout: ch.ladderLayout ?? "vertical",
+      hqSections: ch.hqSections.map((sec) => ({
+        id: sec.id,
+        title: sec.title,
+        slots: sec.slots.map(slot),
+        branches: (sec.branches ?? []).map((b) => ({
+          id: b.id,
+          title: b.title,
+          slots: b.slots.map(slot),
+        })),
       })),
+      columns: ch.columns.map((c) => ({
+        ...c,
+        slots: c.slots.map(slot),
+      })),
+      blockOrder: ch.blockOrder,
     })),
-    columns: data.columns.map((c) => ({
-      ...c,
-      slots: c.slots.map(slot),
-    })),
-    blockOrder: data.blockOrder,
   });
 }
 
@@ -577,6 +688,22 @@ export function hqSectionHasContent(sec: { slots: unknown[]; branches?: { slots:
   if (sec.slots.length > 0) return true;
   for (const b of sec.branches ?? []) {
     if (b.slots.length > 0) return true;
+  }
+  return false;
+}
+
+/** True if a chain has any ladder row, HQ content, or element columns with billets */
+export function orgChainHasContent(chain: {
+  ladder: unknown[];
+  hqSections: { slots: unknown[]; branches?: { slots: unknown[] }[] }[];
+  columns: { slots: unknown[] }[];
+}): boolean {
+  if (chain.ladder.length > 0) return true;
+  for (const sec of chain.hqSections) {
+    if (hqSectionHasContent(sec)) return true;
+  }
+  for (const col of chain.columns) {
+    if (col.slots.length > 0) return true;
   }
   return false;
 }

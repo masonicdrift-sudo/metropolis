@@ -18,6 +18,7 @@ import {
   addHqSection,
   addHqSlot,
   addLadderStep,
+  addOrgChain,
   addSlotToColumn,
   assignRosterEntryToSlot,
   assignUsernameToSlot,
@@ -26,9 +27,12 @@ import {
   hqSectionHasContent,
   moveBlockOrderToken,
   moveLadderStep,
+  moveOrgChainOrder,
+  orgChainHasContent,
   removeColumn,
   removeHqBranch,
   removeHqSection,
+  removeOrgChain,
   removeLadderStep,
   removeSlotById,
   setSlotWrittenName,
@@ -38,6 +42,7 @@ import {
   updateHqBranchTitle,
   updateHqSectionTitle,
   updateLadderStep,
+  updateOrgChainTitle,
   updateSlotFields,
   type OrgChartView,
   type OrgSlotView,
@@ -100,14 +105,16 @@ function slotHasAssignment(s: OrgSlotView): boolean {
 }
 
 function findSlotInChart(chart: OrgChartView, slotId: string): OrgSlotView | undefined {
-  for (const sec of chart.hqSections) {
-    for (const s of sec.slots) if (s.id === slotId) return s;
-    for (const br of sec.branches ?? []) {
-      for (const s of br.slots) if (s.id === slotId) return s;
+  for (const ch of chart.chains) {
+    for (const sec of ch.hqSections) {
+      for (const s of sec.slots) if (s.id === slotId) return s;
+      for (const br of sec.branches ?? []) {
+        for (const s of br.slots) if (s.id === slotId) return s;
+      }
     }
-  }
-  for (const col of chart.columns) {
-    for (const s of col.slots) if (s.id === slotId) return s;
+    for (const col of ch.columns) {
+      for (const s of col.slots) if (s.id === slotId) return s;
+    }
   }
   return undefined;
 }
@@ -361,43 +368,47 @@ export default function OrgChartPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
-  /** Dialog: ladder | hq-section | hq-branch | hq-slot | column | col-slot | slot-writein */
+  /** Dialog: ladder | hq-section | hq-branch | hq-slot | column | col-slot | slot-writein (chainId scopes structure to one org chain) */
   const [dlg, setDlg] = useState<
     | null
-    | { type: "ladder"; mode: "add" | "edit"; id?: string }
-    | { type: "hq-section"; mode: "add" | "edit"; sectionId?: string }
-    | { type: "hq-branch"; mode: "add" | "edit"; sectionId: string; branchId?: string }
-    | { type: "hq-slot"; mode: "add" | "edit"; sectionId: string; id?: string; branchId?: string }
-    | { type: "column"; mode: "add" | "edit"; id?: string }
-    | { type: "col-slot"; columnId: string; mode: "add" | "edit"; slotId?: string }
+    | { type: "ladder"; mode: "add" | "edit"; chainId: string; id?: string }
+    | { type: "hq-section"; mode: "add" | "edit"; chainId: string; sectionId?: string }
+    | { type: "hq-branch"; mode: "add" | "edit"; chainId: string; sectionId: string; branchId?: string }
+    | { type: "hq-slot"; mode: "add" | "edit"; chainId: string; sectionId: string; id?: string; branchId?: string }
+    | { type: "column"; mode: "add" | "edit"; chainId: string; id?: string }
+    | { type: "col-slot"; chainId: string; columnId: string; mode: "add" | "edit"; slotId?: string }
     | { type: "slot-writein"; slotId: string }
   >(null);
   const [form, setForm] = useState<FormState>(emptyForm);
 
   useEffect(() => {
     if (!chart || !dlg) return;
+    if (dlg.type === "slot-writein" && dlg.slotId) {
+      const s = findSlotInChart(chart, dlg.slotId);
+      if (s) setForm({ a: (s.writtenName || "").trim(), b: "", c: "" });
+      return;
+    }
     if (dlg.mode === "add") return;
+    const ch = chart.chains.find((c) => c.id === dlg.chainId);
+    if (!ch) return;
     if (dlg.type === "ladder" && dlg.mode === "edit" && dlg.id) {
-      const s = chart.ladder.find((x) => x.id === dlg.id);
+      const s = ch.ladder.find((x) => x.id === dlg.id);
       if (s) setForm({ a: s.label, b: s.sublabel, c: "" });
     } else if (dlg.type === "hq-section" && dlg.mode === "edit" && dlg.sectionId) {
-      const sec = chart.hqSections.find((x) => x.id === dlg.sectionId);
+      const sec = ch.hqSections.find((x) => x.id === dlg.sectionId);
       if (sec) setForm({ a: sec.title, b: "", c: "" });
     } else if (dlg.type === "hq-branch" && dlg.mode === "edit" && dlg.branchId) {
-      const sec = chart.hqSections.find((x) => x.id === dlg.sectionId);
+      const sec = ch.hqSections.find((x) => x.id === dlg.sectionId);
       const br = sec?.branches?.find((b) => b.id === dlg.branchId);
       if (br) setForm({ a: br.title, b: "", c: "" });
     } else if (dlg.type === "hq-slot" && dlg.mode === "edit" && dlg.id) {
       const s = findSlotInChart(chart, dlg.id);
       if (s) setForm({ a: s.roleTitle, b: s.positionCode, c: s.statusLetter || "" });
-    } else if (dlg.type === "slot-writein" && dlg.slotId) {
-      const s = findSlotInChart(chart, dlg.slotId);
-      if (s) setForm({ a: (s.writtenName || "").trim(), b: "", c: "" });
     } else if (dlg.type === "column" && dlg.mode === "edit" && dlg.id) {
-      const c = chart.columns.find((x) => x.id === dlg.id);
+      const c = ch.columns.find((x) => x.id === dlg.id);
       if (c) setForm({ a: c.headerTitle, b: c.headerSubtitle, c: "" });
     } else if (dlg.type === "col-slot" && dlg.mode === "edit" && dlg.slotId) {
-      const col = chart.columns.find((x) => x.id === dlg.columnId);
+      const col = ch.columns.find((x) => x.id === dlg.columnId);
       const s = col?.slots.find((x) => x.id === dlg.slotId);
       if (s) setForm({ a: s.roleTitle, b: s.positionCode, c: s.statusLetter || "" });
     } else {
@@ -508,41 +519,50 @@ export default function OrgChartPage() {
 
   const statsColumn = useMemo(() => {
     if (!chart || !statsColId) return null;
-    return chart.columns.find((c) => c.id === statsColId) ?? null;
+    const sep = statsColId.indexOf("::");
+    if (sep < 0) return null;
+    const chainId = statsColId.slice(0, sep);
+    const colId = statsColId.slice(sep + 2);
+    const ch = chart.chains.find((c) => c.id === chainId);
+    return ch?.columns.find((c) => c.id === colId) ?? null;
   }, [chart, statsColId]);
 
   const isFullyEmpty = useMemo(() => {
     if (!chart) return true;
-    const anyHq = chart.hqSections.some((s) => hqSectionHasContent(s));
-    return chart.ladder.length === 0 && !anyHq && chart.columns.length === 0;
+    return chart.chains.every((ch) => !orgChainHasContent(ch));
   }, [chart]);
 
   const submitDialog = () => {
     if (!chart || !dlg) return;
     const base = stripOrgChartForSave(chart);
     if (dlg.type === "ladder") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
-        persist(addLadderStep(base, form.a.trim() || "Unit", form.b.trim()));
+        persist(addLadderStep(base, cid, form.a.trim() || "Unit", form.b.trim()));
       } else if (dlg.id) {
-        persist(updateLadderStep(base, dlg.id, form.a.trim() || "Unit", form.b.trim()));
+        persist(updateLadderStep(base, cid, dlg.id, form.a.trim() || "Unit", form.b.trim()));
       }
     } else if (dlg.type === "hq-section") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
-        persist(addHqSection(base, form.a.trim()));
+        persist(addHqSection(base, cid, form.a.trim()));
       } else if (dlg.sectionId) {
-        persist(updateHqSectionTitle(base, dlg.sectionId, form.a.trim()));
+        persist(updateHqSectionTitle(base, cid, dlg.sectionId, form.a.trim()));
       }
     } else if (dlg.type === "hq-branch") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
-        persist(addHqBranch(base, dlg.sectionId, form.a.trim() || "Branch"));
+        persist(addHqBranch(base, cid, dlg.sectionId, form.a.trim() || "Branch"));
       } else if (dlg.branchId) {
-        persist(updateHqBranchTitle(base, dlg.sectionId, dlg.branchId, form.a.trim()));
+        persist(updateHqBranchTitle(base, cid, dlg.sectionId, dlg.branchId, form.a.trim()));
       }
     } else if (dlg.type === "hq-slot") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
         persist(
           addHqSlot(
             base,
+            cid,
             dlg.sectionId,
             form.a.trim() || "Billet",
             form.b.trim() || "BIL",
@@ -561,15 +581,17 @@ export default function OrgChartPage() {
     } else if (dlg.type === "slot-writein") {
       persist(setSlotWrittenName(base, dlg.slotId, form.a));
     } else if (dlg.type === "column") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
-        persist(addColumn(base, form.a.trim() || "Element", form.b.trim()));
+        persist(addColumn(base, cid, form.a.trim() || "Element", form.b.trim()));
       } else if (dlg.id) {
-        persist(updateColumnHeaders(base, dlg.id, form.a.trim() || "Element", form.b.trim()));
+        persist(updateColumnHeaders(base, cid, dlg.id, form.a.trim() || "Element", form.b.trim()));
       }
     } else if (dlg.type === "col-slot") {
+      const cid = dlg.chainId;
       if (dlg.mode === "add") {
         persist(
-          addSlotToColumn(base, dlg.columnId, form.a.trim() || "Billet", form.b.trim() || "BIL"),
+          addSlotToColumn(base, cid, dlg.columnId, form.a.trim() || "Billet", form.b.trim() || "BIL"),
         );
       } else if (dlg.slotId) {
         persist(
@@ -611,7 +633,7 @@ export default function OrgChartPage() {
             <Network className="h-4 w-4" /> ORG CHART
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-wider mt-1">
-            Build chain rows, multiple HQ blocks with optional branches, and element columns; assign directory users or personnel roster rows, or type a write-in name
+            Add org chains (each has its own chain-of-command, HQ, and elements). Multiple chains are independent. Assign users, roster rows, or write-ins.
           </p>
         </div>
         {canEdit ? (
@@ -689,43 +711,19 @@ export default function OrgChartPage() {
             >
               {canEdit ? (
                 <div className="flex flex-wrap gap-1.5 items-center justify-center rounded border border-dashed border-border/60 bg-zinc-950/50 px-2 py-2">
-                  <span className="text-[9px] text-muted-foreground mr-1">Structure:</span>
+                  <span className="text-[9px] text-muted-foreground mr-1">Org chart:</span>
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     className="h-7 text-[10px] gap-1"
-                    onClick={() => {
-                      setForm(emptyForm());
-                      setDlg({ type: "ladder", mode: "add" });
-                    }}
+                    onClick={() => applyStruct((d) => addOrgChain(d))}
                   >
-                    <Plus className="h-3 w-3" /> Chain row
+                    <Plus className="h-3 w-3" /> Add org chain
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 text-[10px] gap-1"
-                    onClick={() => {
-                      setForm(emptyForm());
-                      setDlg({ type: "hq-section", mode: "add" });
-                    }}
-                  >
-                    <Plus className="h-3 w-3" /> Add HQ block
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-7 text-[10px] gap-1"
-                    onClick={() => {
-                      setForm(emptyForm());
-                      setDlg({ type: "column", mode: "add" });
-                    }}
-                  >
-                    <Layers className="h-3 w-3" /> Element column
-                  </Button>
+                  <span className="text-[9px] text-muted-foreground hidden sm:inline">
+                    Each chain has its own chain-of-command, HQ, and elements.
+                  </span>
                 </div>
               ) : null}
 
@@ -735,17 +733,108 @@ export default function OrgChartPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-4 w-full">
-                {chart.blockOrder.map((token, bidx) => {
+              <div className="flex flex-col gap-6 w-full">
+                {chart.chains.map((chain) => (
+                  <div key={chain.id} className="rounded-lg border border-zinc-700/60 bg-zinc-950/30 p-3 space-y-3">
+                    {canEdit ? (
+                      <div className="flex flex-wrap items-center gap-2 border-b border-border/50 pb-2">
+                        <span className="text-[9px] uppercase tracking-wider text-blue-400/90 shrink-0">Chain</span>
+                        <Input
+                          className="h-8 max-w-[220px] text-xs"
+                          defaultValue={chain.title}
+                          key={`${chain.id}-title`}
+                          onBlur={(e) => {
+                            const v = e.target.value.trim();
+                            if (v !== (chain.title || "").trim()) {
+                              applyStruct((d) => updateOrgChainTitle(d, chain.id, v));
+                            }
+                          }}
+                          placeholder="Label (optional)"
+                        />
+                        <button
+                          type="button"
+                          className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          disabled={chart.chains.findIndex((c) => c.id === chain.id) <= 0}
+                          title="Move this chain up"
+                          onClick={() => applyStruct((d) => moveOrgChainOrder(d, chain.id, "up"))}
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                          disabled={chart.chains.findIndex((c) => c.id === chain.id) >= chart.chains.length - 1}
+                          title="Move this chain down"
+                          onClick={() => applyStruct((d) => moveOrgChainOrder(d, chain.id, "down"))}
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </button>
+                        {chart.chains.length > 1 ? (
+                          <button
+                            type="button"
+                            className="p-1 text-muted-foreground hover:text-red-400"
+                            title="Remove this org chain"
+                            onClick={() => {
+                              if (confirm("Remove this org chain and everything inside it (HQ, elements, assignments)?")) {
+                                applyStruct((d) => removeOrgChain(d, chain.id));
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        ) : null}
+                        <span className="text-[9px] text-muted-foreground hidden sm:inline">|</span>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-7 text-[10px] gap-1"
+                          onClick={() => {
+                            setForm(emptyForm());
+                            setDlg({ type: "ladder", mode: "add", chainId: chain.id });
+                          }}
+                        >
+                          <Plus className="h-3 w-3" /> Chain row
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-7 text-[10px] gap-1"
+                          onClick={() => {
+                            setForm(emptyForm());
+                            setDlg({ type: "hq-section", mode: "add", chainId: chain.id });
+                          }}
+                        >
+                          <Plus className="h-3 w-3" /> Add HQ block
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="h-7 text-[10px] gap-1"
+                          onClick={() => {
+                            setForm(emptyForm());
+                            setDlg({ type: "column", mode: "add", chainId: chain.id });
+                          }}
+                        >
+                          <Layers className="h-3 w-3" /> Element column
+                        </Button>
+                      </div>
+                    ) : chain.title ? (
+                      <div className="text-[10px] font-semibold text-blue-300/80">{chain.title}</div>
+                    ) : null}
+                    <div className="flex flex-col gap-4 w-full">
+                {chain.blockOrder.map((token, bidx) => {
                   if (token === "ladder") {
-                    if (chart.ladder.length === 0) return null;
-                    const lbi = chart.blockOrder.indexOf("ladder");
+                    if (chain.ladder.length === 0) return null;
+                    const lbi = chain.blockOrder.indexOf("ladder");
                     const ladderUp = lbi > 0;
-                    const ladderDown = lbi >= 0 && lbi < chart.blockOrder.length - 1;
-                    const ladderLayout = chart.ladderLayout ?? "vertical";
+                    const ladderDown = lbi >= 0 && lbi < chain.blockOrder.length - 1;
+                    const ladderLayout = chain.ladderLayout ?? "vertical";
                     const chainHorizontal = ladderLayout === "horizontal";
                     return (
-                      <div key={`ladder-${bidx}`} className="w-full">
+                      <div key={`ladder-${chain.id}-${bidx}`} className="w-full">
                         {canEdit ? (
                           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mb-2">
                             <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Chain</span>
@@ -754,7 +843,7 @@ export default function OrgChartPage() {
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!ladderUp}
                               title="Move chain block up in the org chart"
-                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, "ladder", "up"))}
+                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, "ladder", "up"))}
                             >
                               <ChevronUp className="h-4 w-4" />
                             </button>
@@ -763,7 +852,7 @@ export default function OrgChartPage() {
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!ladderDown}
                               title="Move chain block down in the org chart"
-                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, "ladder", "down"))}
+                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, "ladder", "down"))}
                             >
                               <ChevronDown className="h-4 w-4" />
                             </button>
@@ -778,7 +867,7 @@ export default function OrgChartPage() {
                                     : "text-muted-foreground hover:text-foreground",
                                 )}
                                 title="Stack chain rows top to bottom"
-                                onClick={() => applyStruct((d) => setLadderLayout(d, "vertical"))}
+                                onClick={() => applyStruct((d) => setLadderLayout(d, chain.id, "vertical"))}
                               >
                                 Vertical
                               </button>
@@ -791,7 +880,7 @@ export default function OrgChartPage() {
                                     : "text-muted-foreground hover:text-foreground",
                                 )}
                                 title="Arrange chain rows left to right"
-                                onClick={() => applyStruct((d) => setLadderLayout(d, "horizontal"))}
+                                onClick={() => applyStruct((d) => setLadderLayout(d, chain.id, "horizontal"))}
                               >
                                 Horizontal
                               </button>
@@ -806,7 +895,7 @@ export default function OrgChartPage() {
                               : "flex-col items-center",
                           )}
                         >
-                          {chart.ladder.map((step, i) => (
+                          {chain.ladder.map((step, i) => (
                             <div
                               key={step.id}
                               className={cn(
@@ -835,7 +924,7 @@ export default function OrgChartPage() {
                                       disabled={i === 0}
                                       title={chainHorizontal ? "Move left (earlier in chain)" : "Move up (earlier in chain)"}
                                       onClick={() =>
-                                        applyStruct((d) => moveLadderStep(d, step.id, "earlier"))
+                                        applyStruct((d) => moveLadderStep(d, chain.id, step.id, "earlier"))
                                       }
                                     >
                                       {chainHorizontal ? (
@@ -847,11 +936,11 @@ export default function OrgChartPage() {
                                     <button
                                       type="button"
                                       className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-foreground disabled:opacity-25"
-                                      disabled={i === chart.ladder.length - 1}
+                                      disabled={i === chain.ladder.length - 1}
                                       title={
                                         chainHorizontal ? "Move right (later in chain)" : "Move down (later in chain)"
                                       }
-                                      onClick={() => applyStruct((d) => moveLadderStep(d, step.id, "later"))}
+                                      onClick={() => applyStruct((d) => moveLadderStep(d, chain.id, step.id, "later"))}
                                     >
                                       {chainHorizontal ? (
                                         <ChevronRight className="h-3 w-3" />
@@ -863,7 +952,7 @@ export default function OrgChartPage() {
                                       type="button"
                                       className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-foreground"
                                       title="Edit"
-                                      onClick={() => setDlg({ type: "ladder", mode: "edit", id: step.id })}
+                                      onClick={() => setDlg({ type: "ladder", mode: "edit", chainId: chain.id, id: step.id })}
                                     >
                                       <Pencil className="h-3 w-3" />
                                     </button>
@@ -871,7 +960,7 @@ export default function OrgChartPage() {
                                       type="button"
                                       className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-red-400"
                                       title="Remove"
-                                      onClick={() => applyStruct((d) => removeLadderStep(d, step.id))}
+                                      onClick={() => applyStruct((d) => removeLadderStep(d, chain.id, step.id))}
                                     >
                                       <Trash2 className="h-3 w-3" />
                                     </button>
@@ -887,12 +976,12 @@ export default function OrgChartPage() {
                     );
                   }
                   if (token === "columns") {
-                    if (!canEdit && chart.columns.length === 0) return null;
-                    const cbi = chart.blockOrder.indexOf("columns");
+                    if (!canEdit && chain.columns.length === 0) return null;
+                    const cbi = chain.blockOrder.indexOf("columns");
                     const colUp = cbi > 0;
-                    const colDown = cbi >= 0 && cbi < chart.blockOrder.length - 1;
+                    const colDown = cbi >= 0 && cbi < chain.blockOrder.length - 1;
                     return (
-                      <div key={`columns-${bidx}`} className="w-full">
+                      <div key={`columns-${chain.id}-${bidx}`} className="w-full">
                         {canEdit ? (
                           <div className="flex items-center justify-center gap-2 mb-2">
                             <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Elements</span>
@@ -901,7 +990,7 @@ export default function OrgChartPage() {
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!colUp}
                               title="Move elements block up"
-                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, "columns", "up"))}
+                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, "columns", "up"))}
                             >
                               <ChevronUp className="h-4 w-4" />
                             </button>
@@ -910,14 +999,14 @@ export default function OrgChartPage() {
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!colDown}
                               title="Move elements block down"
-                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, "columns", "down"))}
+                              onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, "columns", "down"))}
                             >
                               <ChevronDown className="h-4 w-4" />
                             </button>
                           </div>
                         ) : null}
                         <div className="flex flex-row gap-2 items-start justify-center flex-wrap w-full">
-                        {chart.columns.map((col) => {
+                        {chain.columns.map((col) => {
                           const filled = col.slots.filter((s) => slotHasAssignment(s)).length;
                           return (
                             <div key={col.id} className="w-[148px] shrink-0 flex flex-col border border-border/70 rounded-md bg-zinc-950/60">
@@ -926,7 +1015,7 @@ export default function OrgChartPage() {
                                   <button
                                     type="button"
                                     className="text-left flex-1 min-w-0"
-                                    onClick={() => setStatsColId(col.id)}
+                                    onClick={() => setStatsColId(`${chain.id}::${col.id}`)}
                                   >
                                     <div className="text-[11px] font-bold leading-tight break-words">{col.headerTitle}</div>
                                     <div className="text-[8px] text-muted-foreground tracking-wider">{col.headerSubtitle}</div>
@@ -940,7 +1029,7 @@ export default function OrgChartPage() {
                                         type="button"
                                         className="p-0.5 text-muted-foreground hover:text-foreground"
                                         title="Edit column"
-                                        onClick={() => setDlg({ type: "column", mode: "edit", id: col.id })}
+                                        onClick={() => setDlg({ type: "column", mode: "edit", chainId: chain.id, id: col.id })}
                                       >
                                         <Pencil className="h-3 w-3" />
                                       </button>
@@ -950,7 +1039,7 @@ export default function OrgChartPage() {
                                         title="Delete column"
                                         onClick={() => {
                                           if (confirm(`Delete element “${col.headerTitle}” and all its billets?`)) {
-                                            applyStruct((d) => removeColumn(d, col.id));
+                                            applyStruct((d) => removeColumn(d, chain.id, col.id));
                                           }
                                         }}
                                       >
@@ -967,7 +1056,7 @@ export default function OrgChartPage() {
                                     className="w-full h-7 mt-1 text-[10px]"
                                     onClick={() => {
                                       setForm(emptyForm());
-                                      setDlg({ type: "col-slot", columnId: col.id, mode: "add" });
+                                      setDlg({ type: "col-slot", chainId: chain.id, columnId: col.id, mode: "add" });
                                     }}
                                   >
                                     <Plus className="h-3 w-3 mr-1" /> Billet
@@ -985,7 +1074,7 @@ export default function OrgChartPage() {
                                       editable={canEdit}
                                       onClear={() => handleClearSlot(s.id)}
                                       onEditBillet={() =>
-                                        setDlg({ type: "col-slot", columnId: col.id, mode: "edit", slotId: s.id })
+                                        setDlg({ type: "col-slot", chainId: chain.id, columnId: col.id, mode: "edit", slotId: s.id })
                                       }
                                       onRemoveBillet={() => setRemoveSlotId(s.id)}
                                       onWriteIn={
@@ -1002,13 +1091,13 @@ export default function OrgChartPage() {
                       </div>
                     );
                   }
-                  const sec = chart.hqSections.find((s) => s.id === token);
+                  const sec = chain.hqSections.find((s) => s.id === token);
                   if (!sec) return null;
                   if (!canEdit && !hqSectionHasContent(sec)) return null;
-                  const bi = chart.blockOrder.indexOf(sec.id);
+                  const bi = chain.blockOrder.indexOf(sec.id);
                   const canMoveUp = bi > 0;
-                  const canMoveDown = bi >= 0 && bi < chart.blockOrder.length - 1;
-                  const multHq = chart.hqSections.length > 1;
+                  const canMoveDown = bi >= 0 && bi < chain.blockOrder.length - 1;
+                  const multHq = chain.hqSections.length > 1;
                   const branches = sec.branches ?? [];
                   return (
                     <div key={sec.id} className="rounded border border-zinc-700 bg-zinc-950/90 p-3 w-full">
@@ -1021,7 +1110,7 @@ export default function OrgChartPage() {
                                 className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                                 disabled={!canMoveUp}
                                 title="Move block up"
-                                onClick={() => applyStruct((d) => moveBlockOrderToken(d, sec.id, "up"))}
+                                onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, sec.id, "up"))}
                               >
                                 <ChevronUp className="h-4 w-4" />
                               </button>
@@ -1030,7 +1119,7 @@ export default function OrgChartPage() {
                                 className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                                 disabled={!canMoveDown}
                                 title="Move block down"
-                                onClick={() => applyStruct((d) => moveBlockOrderToken(d, sec.id, "down"))}
+                                onClick={() => applyStruct((d) => moveBlockOrderToken(d, chain.id, sec.id, "down"))}
                               >
                                 <ChevronDown className="h-4 w-4" />
                               </button>
@@ -1047,7 +1136,7 @@ export default function OrgChartPage() {
                                 type="button"
                                 className="p-1 text-muted-foreground hover:text-foreground"
                                 title="Rename block"
-                                onClick={() => setDlg({ type: "hq-section", mode: "edit", sectionId: sec.id })}
+                                onClick={() => setDlg({ type: "hq-section", mode: "edit", chainId: chain.id, sectionId: sec.id })}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </button>
@@ -1058,7 +1147,7 @@ export default function OrgChartPage() {
                                   title="Remove HQ block"
                                   onClick={() => {
                                     if (confirm(`Remove “${sec.title}” and all of its billets?`)) {
-                                      applyStruct((d) => removeHqSection(d, sec.id));
+                                      applyStruct((d) => removeHqSection(d, chain.id, sec.id));
                                     }
                                   }}
                                 >
@@ -1072,7 +1161,7 @@ export default function OrgChartPage() {
                                 className="h-7 text-[10px] px-2"
                                 onClick={() => {
                                   setForm(emptyForm());
-                                  setDlg({ type: "hq-branch", mode: "add", sectionId: sec.id });
+                                  setDlg({ type: "hq-branch", mode: "add", chainId: chain.id, sectionId: sec.id });
                                 }}
                               >
                                 <Plus className="h-3 w-3 mr-1" /> Branch
@@ -1084,7 +1173,7 @@ export default function OrgChartPage() {
                                 className="h-7 text-[10px] px-2"
                                 onClick={() => {
                                   setForm(emptyForm());
-                                  setDlg({ type: "hq-slot", mode: "add", sectionId: sec.id });
+                                  setDlg({ type: "hq-slot", mode: "add", chainId: chain.id, sectionId: sec.id });
                                 }}
                               >
                                 <Plus className="h-3 w-3 mr-1" /> Billet
@@ -1106,7 +1195,7 @@ export default function OrgChartPage() {
                               editable={canEdit}
                               onClear={() => handleClearSlot(s.id)}
                               onEditBillet={() =>
-                                setDlg({ type: "hq-slot", mode: "edit", id: s.id, sectionId: sec.id })
+                                setDlg({ type: "hq-slot", mode: "edit", chainId: chain.id, id: s.id, sectionId: sec.id })
                               }
                               onRemoveBillet={() => setRemoveSlotId(s.id)}
                               onWriteIn={
@@ -1135,6 +1224,7 @@ export default function OrgChartPage() {
                                     setDlg({
                                       type: "hq-branch",
                                       mode: "edit",
+                                      chainId: chain.id,
                                       sectionId: sec.id,
                                       branchId: br.id,
                                     })
@@ -1148,7 +1238,7 @@ export default function OrgChartPage() {
                                   title="Remove branch and its billets"
                                   onClick={() => {
                                     if (confirm(`Remove branch “${br.title}” and all of its billets?`)) {
-                                      applyStruct((d) => removeHqBranch(d, sec.id, br.id));
+                                      applyStruct((d) => removeHqBranch(d, chain.id, sec.id, br.id));
                                     }
                                   }}
                                 >
@@ -1164,6 +1254,7 @@ export default function OrgChartPage() {
                                     setDlg({
                                       type: "hq-slot",
                                       mode: "add",
+                                      chainId: chain.id,
                                       sectionId: sec.id,
                                       branchId: br.id,
                                     });
@@ -1190,6 +1281,7 @@ export default function OrgChartPage() {
                                     setDlg({
                                       type: "hq-slot",
                                       mode: "edit",
+                                      chainId: chain.id,
                                       id: s.id,
                                       sectionId: sec.id,
                                       branchId: br.id,
@@ -1208,6 +1300,9 @@ export default function OrgChartPage() {
                     </div>
                   );
                 })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

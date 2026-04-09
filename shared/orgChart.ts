@@ -47,9 +47,13 @@ export const orgHqSectionSchema = z.object({
   branches: z.array(orgHqBranchSchema).default([]),
 });
 
+export const ladderLayoutSchema = z.enum(["vertical", "horizontal"]);
+
 export const orgChartSchema = z.object({
   version: z.literal(2),
   ladder: z.array(orgLadderStepSchema),
+  /** How chain-of-command rows are laid out within the ladder block */
+  ladderLayout: ladderLayoutSchema.default("vertical"),
   hqSections: z.array(orgHqSectionSchema),
   columns: z.array(orgColumnSchema),
   /** Vertical stack order: each entry is `ladder`, `columns`, or an hq section id */
@@ -57,6 +61,7 @@ export const orgChartSchema = z.object({
 });
 
 export type OrgChartData = z.infer<typeof orgChartSchema>;
+export type LadderLayout = z.infer<typeof ladderLayoutSchema>;
 export type OrgColumn = z.infer<typeof orgColumnSchema>;
 export type OrgHqSection = z.infer<typeof orgHqSectionSchema>;
 
@@ -80,6 +85,7 @@ export type OrgHqSectionView = Omit<OrgHqSection, "slots" | "branches"> & {
 export type OrgChartView = {
   version: 2;
   ladder: OrgChartData["ladder"];
+  ladderLayout: OrgChartData["ladderLayout"];
   hqSections: OrgHqSectionView[];
   columns: Array<Omit<OrgColumn, "slots"> & { slots: OrgSlotView[] }>;
   blockOrder: string[];
@@ -133,6 +139,7 @@ function migrateV1ToV2(v1: OrgChartDataV1): OrgChartData {
   return normalizeBlockOrder({
     version: 2,
     ladder: v1.ladder,
+    ladderLayout: "vertical",
     hqSections: [{ id: hqId, title: "HQ", slots, branches: [] }],
     columns: v1.columns.map((c) => ({ ...c, slots: c.slots.map(normalizeSlot) })),
     blockOrder: ["ladder", hqId, "columns"],
@@ -171,6 +178,7 @@ export function createBlankOrgChart(): OrgChartData {
   return normalizeBlockOrder({
     version: 2,
     ladder: [],
+    ladderLayout: "vertical",
     hqSections: [{ id: hqId, title: "HQ", slots: [], branches: [] }],
     columns: [],
     blockOrder: ["ladder", hqId, "columns"],
@@ -279,6 +287,21 @@ export function updateLadderStep(
 
 export function removeLadderStep(data: OrgChartData, stepId: string): OrgChartData {
   return { ...data, ladder: data.ladder.filter((s) => s.id !== stepId) };
+}
+
+/** Move one chain row earlier (up in vertical layout, left in horizontal) or later (down / right). */
+export function moveLadderStep(data: OrgChartData, stepId: string, direction: "earlier" | "later"): OrgChartData {
+  const ix = data.ladder.findIndex((s) => s.id === stepId);
+  if (ix < 0) return data;
+  const j = direction === "earlier" ? ix - 1 : ix + 1;
+  if (j < 0 || j >= data.ladder.length) return data;
+  const ladder = [...data.ladder];
+  [ladder[ix], ladder[j]] = [ladder[j], ladder[ix]];
+  return { ...data, ladder };
+}
+
+export function setLadderLayout(data: OrgChartData, ladderLayout: LadderLayout): OrgChartData {
+  return { ...data, ladderLayout };
 }
 
 export function addHqSlot(
@@ -508,6 +531,7 @@ export function removeSlotById(data: OrgChartData, slotId: string): OrgChartData
 export function stripOrgChartForSave(data: {
   version: 2;
   ladder: OrgChartData["ladder"];
+  ladderLayout?: OrgChartData["ladderLayout"];
   hqSections: Array<{
     id: string;
     title: string;
@@ -529,6 +553,7 @@ export function stripOrgChartForSave(data: {
   return normalizeBlockOrder({
     version: 2,
     ladder: data.ladder,
+    ladderLayout: data.ladderLayout ?? "vertical",
     hqSections: data.hqSections.map((sec) => ({
       id: sec.id,
       title: sec.title,

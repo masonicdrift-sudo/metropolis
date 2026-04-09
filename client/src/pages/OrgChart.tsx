@@ -25,12 +25,14 @@ import {
   createBlankOrgChart,
   hqSectionHasContent,
   moveBlockOrderToken,
+  moveLadderStep,
   removeColumn,
   removeHqBranch,
   removeHqSection,
   removeLadderStep,
   removeSlotById,
   setSlotWrittenName,
+  setLadderLayout,
   stripOrgChartForSave,
   updateColumnHeaders,
   updateHqBranchTitle,
@@ -69,6 +71,8 @@ import { ProfileLink } from "@/components/ProfileLink";
 import type { PersonnelRosterEntry } from "@shared/schema";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   CircleCheck,
   GripHorizontal,
@@ -738,16 +742,18 @@ export default function OrgChartPage() {
                     const lbi = chart.blockOrder.indexOf("ladder");
                     const ladderUp = lbi > 0;
                     const ladderDown = lbi >= 0 && lbi < chart.blockOrder.length - 1;
+                    const ladderLayout = chart.ladderLayout ?? "vertical";
+                    const chainHorizontal = ladderLayout === "horizontal";
                     return (
                       <div key={`ladder-${bidx}`} className="w-full">
                         {canEdit ? (
-                          <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mb-2">
                             <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Chain</span>
                             <button
                               type="button"
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!ladderUp}
-                              title="Move chain block up"
+                              title="Move chain block up in the org chart"
                               onClick={() => applyStruct((d) => moveBlockOrderToken(d, "ladder", "up"))}
                             >
                               <ChevronUp className="h-4 w-4" />
@@ -756,20 +762,103 @@ export default function OrgChartPage() {
                               type="button"
                               className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
                               disabled={!ladderDown}
-                              title="Move chain block down"
+                              title="Move chain block down in the org chart"
                               onClick={() => applyStruct((d) => moveBlockOrderToken(d, "ladder", "down"))}
                             >
                               <ChevronDown className="h-4 w-4" />
                             </button>
+                            <span className="text-[9px] text-muted-foreground/70 hidden sm:inline">·</span>
+                            <div className="flex items-center gap-1 rounded border border-border/60 bg-zinc-950/80 p-0.5">
+                              <button
+                                type="button"
+                                className={cn(
+                                  "text-[9px] px-2 py-0.5 rounded",
+                                  !chainHorizontal
+                                    ? "bg-zinc-700 text-foreground"
+                                    : "text-muted-foreground hover:text-foreground",
+                                )}
+                                title="Stack chain rows top to bottom"
+                                onClick={() => applyStruct((d) => setLadderLayout(d, "vertical"))}
+                              >
+                                Vertical
+                              </button>
+                              <button
+                                type="button"
+                                className={cn(
+                                  "text-[9px] px-2 py-0.5 rounded",
+                                  chainHorizontal
+                                    ? "bg-zinc-700 text-foreground"
+                                    : "text-muted-foreground hover:text-foreground",
+                                )}
+                                title="Arrange chain rows left to right"
+                                onClick={() => applyStruct((d) => setLadderLayout(d, "horizontal"))}
+                              >
+                                Horizontal
+                              </button>
+                            </div>
                           </div>
                         ) : null}
-                        <div className="flex flex-col items-center">
+                        <div
+                          className={cn(
+                            "flex w-full justify-center",
+                            chainHorizontal
+                              ? "flex-row flex-wrap items-stretch gap-x-0 gap-y-3"
+                              : "flex-col items-center",
+                          )}
+                        >
                           {chart.ladder.map((step, i) => (
-                            <div key={step.id} className="flex flex-col items-center w-full">
-                              {i > 0 ? <div className="w-px h-4 bg-border shrink-0" /> : null}
-                              <div className="relative rounded border border-border bg-zinc-900/90 px-4 py-2 text-center min-w-[140px] max-w-[280px] w-full">
+                            <div
+                              key={step.id}
+                              className={cn(
+                                "flex items-center",
+                                chainHorizontal ? "flex-row flex-nowrap" : "flex-col w-full max-w-[280px]",
+                              )}
+                            >
+                              {i > 0 ? (
+                                chainHorizontal ? (
+                                  <div className="h-px w-3 sm:w-5 bg-border shrink-0 self-center mx-0.5" />
+                                ) : (
+                                  <div className="w-px h-4 bg-border shrink-0" />
+                                )
+                              ) : null}
+                              <div
+                                className={cn(
+                                  "relative rounded border border-border bg-zinc-900/90 px-4 py-2 text-center",
+                                  chainHorizontal ? "min-w-[120px] max-w-[220px] w-[min(100%,220px)]" : "min-w-[140px] max-w-[280px] w-full",
+                                )}
+                              >
                                 {canEdit ? (
-                                  <div className="absolute -right-1 -top-1 flex gap-0.5">
+                                  <div className="absolute -right-1 -top-1 flex flex-wrap justify-end gap-0.5 max-w-[min(100%,11rem)]">
+                                    <button
+                                      type="button"
+                                      className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-foreground disabled:opacity-25"
+                                      disabled={i === 0}
+                                      title={chainHorizontal ? "Move left (earlier in chain)" : "Move up (earlier in chain)"}
+                                      onClick={() =>
+                                        applyStruct((d) => moveLadderStep(d, step.id, "earlier"))
+                                      }
+                                    >
+                                      {chainHorizontal ? (
+                                        <ChevronLeft className="h-3 w-3" />
+                                      ) : (
+                                        <ChevronUp className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-foreground disabled:opacity-25"
+                                      disabled={i === chart.ladder.length - 1}
+                                      title={
+                                        chainHorizontal ? "Move right (later in chain)" : "Move down (later in chain)"
+                                      }
+                                      onClick={() => applyStruct((d) => moveLadderStep(d, step.id, "later"))}
+                                    >
+                                      {chainHorizontal ? (
+                                        <ChevronRight className="h-3 w-3" />
+                                      ) : (
+                                        <ChevronDown className="h-3 w-3" />
+                                      )}
+                                    </button>
                                     <button
                                       type="button"
                                       className="rounded bg-zinc-800 p-1 text-muted-foreground hover:text-foreground"
@@ -1127,7 +1216,7 @@ export default function OrgChartPage() {
             <GripHorizontal className="h-3.5 w-3.5 opacity-60" />
             Drag to pan · Scroll to zoom · Click element header for stats
             {canEdit
-              ? " · Drag directory or personnel roster onto billets · Structure buttons add HQ blocks and branches"
+              ? " · Chain: vertical/horizontal layout and arrows on each row to reorder · Drag assignments from the left panel"
               : ""}
           </div>
         </div>

@@ -1,10 +1,11 @@
 import { useMemo } from "react";
+import { AwardRibbonImage } from "@/components/AwardRibbonImage";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText } from "lucide-react";
+import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/ProfileLink";
 import { InstructorField } from "@/pages/Training";
@@ -15,6 +16,10 @@ type AwardRow = {
   username: string;
   awardName: string;
   awardType: string;
+  awardCatalogId?: string;
+  catalogBranch?: string;
+  catalogPrecedence?: number;
+  imageUrl?: string | null;
   reason: string;
   awardedBy: string;
   awardedAt: string;
@@ -39,6 +44,12 @@ type ProfilePayload = {
   mos: string;
   createdAt?: string;
   lastLogin?: string;
+  /** Approved LOA window (YYYY-MM-DD). */
+  loaStart?: string;
+  loaEnd?: string;
+  loaApprover?: string;
+  /** Server: none | scheduled (before start) | active (in window). */
+  loaPhase?: "none" | "scheduled" | "active";
   awards: AwardRow[];
   citations: AwardRow[];
   signInSheets: SignInRow[];
@@ -62,6 +73,16 @@ function fmtDate(s: string) {
   }
 }
 
+function fmtLoaDate(s: string) {
+  if (!s) return "—";
+  try {
+    const d = new Date(s.length <= 10 ? `${s}T12:00:00` : s);
+    return d.toLocaleDateString(undefined, { dateStyle: "medium" });
+  } catch {
+    return s;
+  }
+}
+
 export default function UserProfilePage() {
   const { user } = useAuth();
   const params = useParams<{ username?: string }>();
@@ -69,7 +90,7 @@ export default function UserProfilePage() {
 
   const canView = !!user && !!username;
 
-  const { data: profile, isLoading, isError, error } = useQuery<ProfilePayload>({
+  const { data: profile, isLoading, isFetching, isError, error } = useQuery<ProfilePayload>({
     queryKey: ["/api/profile", username],
     queryFn: () => apiRequest("GET", `/api/profile/${encodeURIComponent(username)}`),
     enabled: canView,
@@ -166,6 +187,52 @@ export default function UserProfilePage() {
         </div>
       </div>
 
+      <div className="bg-card border border-border rounded p-4">
+        <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
+          <Activity className="h-3.5 w-3.5 text-cyan-300" /> STATUS
+        </div>
+        {(isLoading || isFetching) && !profile ? (
+          <div className="text-xs text-muted-foreground">Loading…</div>
+        ) : profile?.loaPhase === "active" || profile?.loaPhase === "scheduled" ? (
+          <div
+            className={cn(
+              "rounded-md border px-3 py-2.5 text-[11px]",
+              profile.loaPhase === "active"
+                ? "border-cyan-800/60 bg-cyan-950/25 text-cyan-100"
+                : "border-amber-900/50 bg-amber-950/20 text-amber-100",
+            )}
+          >
+            <div className="font-bold tracking-wider uppercase mb-1">
+              {profile.loaPhase === "active" ? "On leave (approved LOA)" : "Scheduled leave (approved LOA)"}
+            </div>
+            <div className="text-[10px] space-y-1 text-cyan-50/90">
+              <div>
+                <span className="text-muted-foreground/90">Dates: </span>
+                {fmtLoaDate(profile.loaStart || "")} → {fmtLoaDate(profile.loaEnd || "")}
+              </div>
+              {profile.loaApprover ? (
+                <div>
+                  <span className="text-muted-foreground/90">Approved by: </span>
+                  <ProfileLink username={profile.loaApprover} className="font-mono text-cyan-300 hover:text-cyan-200">
+                    {profile.loaApprover}
+                  </ProfileLink>
+                </div>
+              ) : (
+                <div className="text-muted-foreground/80">Approved by: —</div>
+              )}
+            </div>
+            <p className="text-[9px] text-muted-foreground/70 mt-2 leading-snug">
+              Personnel roster lines linked to this operator are set to <span className="font-mono text-foreground/80">Leave</span>{" "}
+              while LOA is active.
+            </p>
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground">
+            No active or scheduled approved leave of absence.
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <div className="bg-card border border-border rounded p-3">
           <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
@@ -175,22 +242,27 @@ export default function UserProfilePage() {
           {awards.length === 0 ? (
             <div className="text-xs text-muted-foreground">No awards on record.</div>
           ) : (
-            <div className="space-y-1.5">
-              {awards.slice(0, 8).map((a) => (
-                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
-                  <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
-                  <div className="text-[9px] text-muted-foreground">
-                    {fmtDate(a.awardedAt)} · BY{" "}
-                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
-                      {a.awardedBy}
-                    </ProfileLink>
-                    {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+              {awards.map((a) => (
+                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40 flex gap-2 items-start">
+                  <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-7 w-[96px] shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-mono font-bold leading-tight">
+                      {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                        <span className="text-muted-foreground font-normal mr-1">[{a.catalogBranch}]</span>
+                      ) : null}
+                      {a.awardName}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5">
+                      {fmtDate(a.awardedAt)} · BY{" "}
+                      <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                        {a.awardedBy}
+                      </ProfileLink>
+                      {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+                    </div>
                   </div>
                 </div>
               ))}
-              {awards.length > 8 ? (
-                <div className="text-[9px] text-muted-foreground/70">Showing first 8…</div>
-              ) : null}
             </div>
           )}
         </div>
@@ -203,16 +275,24 @@ export default function UserProfilePage() {
           {citations.length === 0 ? (
             <div className="text-xs text-muted-foreground">No citations on record.</div>
           ) : (
-            <div className="space-y-1.5">
-              {citations.slice(0, 8).map((a) => (
-                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40">
-                  <div className="text-[10px] font-mono font-bold">{a.awardName}</div>
-                  <div className="text-[9px] text-muted-foreground">
-                    {fmtDate(a.awardedAt)} · BY{" "}
-                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
-                      {a.awardedBy}
-                    </ProfileLink>
-                    {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+              {citations.map((a) => (
+                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40 flex gap-2 items-start">
+                  <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-7 w-[96px] shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-mono font-bold leading-tight">
+                      {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                        <span className="text-muted-foreground font-normal mr-1">[{a.catalogBranch}]</span>
+                      ) : null}
+                      {a.awardName}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5">
+                      {fmtDate(a.awardedAt)} · BY{" "}
+                      <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                        {a.awardedBy}
+                      </ProfileLink>
+                      {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+                    </div>
                   </div>
                 </div>
               ))}

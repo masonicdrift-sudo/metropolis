@@ -232,6 +232,7 @@ try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN phone`); } c
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries DROP COLUMN blood_type`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN attached_isofac_doc_id INTEGER NOT NULL DEFAULT 0`); } catch {}
 try { sqlite.exec(`ALTER TABLE training_records ADD COLUMN operation_id INTEGER NOT NULL DEFAULT 0`); } catch {}
+try { sqlite.exec(`ALTER TABLE awards ADD COLUMN award_catalog_id TEXT NOT NULL DEFAULT ''`); } catch {}
 
 sqlite.exec(`
   CREATE TABLE IF NOT EXISTS loa_requests (
@@ -332,6 +333,7 @@ sqlite.exec(`
     username TEXT NOT NULL,
     award_name TEXT NOT NULL,
     award_type TEXT NOT NULL DEFAULT 'commendation',
+    award_catalog_id TEXT NOT NULL DEFAULT '',
     reason TEXT NOT NULL DEFAULT '',
     awarded_by TEXT NOT NULL,
     awarded_at TEXT NOT NULL,
@@ -1986,11 +1988,13 @@ export class Storage implements IStorage {
 
   syncPersonnelRosterStatusForLinkedUser(username: string, status: string) {
     const now = new Date().toISOString();
+    const key = username.trim().toLowerCase();
+    if (!key) return;
     const rows = db
       .select()
       .from(schema.personnelRosterEntries)
-      .where(eq(schema.personnelRosterEntries.linkedUsername, username))
-      .all();
+      .all()
+      .filter((r) => (r.linkedUsername || "").trim().toLowerCase() === key);
     for (const r of rows) {
       db.update(schema.personnelRosterEntries)
         .set({ status, updatedAt: now })

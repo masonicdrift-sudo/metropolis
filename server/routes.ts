@@ -21,6 +21,8 @@ import { permissionForApiPath } from "@shared/tacticalPermissions";
 import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
 import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
+import { MILITARY_AWARDS_CATALOG, getMilitaryAwardById } from "@shared/militaryAwardsCatalog";
+import { enrichAndSortAwards } from "./awardHelpers";
 
 const TERRAIN_DIR = path.resolve(process.cwd(), "TDL_TerrainExport", "TDL_TerrainExport");
 
@@ -537,11 +539,14 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   app.get("/api/profile/:username", requireAuth, (req, res) => {
     const username = String(req.params.username || "").trim();
     if (!username) return res.status(400).json({ error: "username required" });
+    storage.reconcileExpiredLoas();
     const u = storage.getUserByUsername(username);
     if (!u) return res.status(404).json({ error: "Not found" });
     const awards = storage.getAwards(username);
     const citations = awards.filter((a) => a.awardType === "citation");
     const awardsOther = awards.filter((a) => a.awardType !== "citation");
+    const awardsSorted = enrichAndSortAwards(awardsOther);
+    const citationsSorted = enrichAndSortAwards(citations);
     const signInSheets = storage.getTrainingRecords(username).map((r) => {
       let attachedTitle: string | null = null;
       let attachedType: string | null = null;
@@ -559,6 +564,17 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       }
       return { ...r, attachedDocTitle: attachedTitle, attachedDocType: attachedType, operationName };
     });
+    const loaStart = (u.loaStart || "").trim();
+    const loaEnd = (u.loaEnd || "").trim();
+    const loaApprover = (u.loaApprover || "").trim();
+    const today = new Date().toISOString().slice(0, 10);
+    let loaPhase: "none" | "scheduled" | "active" = "none";
+    if (loaStart && loaEnd) {
+      if (today > loaEnd) loaPhase = "none";
+      else if (today < loaStart) loaPhase = "scheduled";
+      else loaPhase = "active";
+    }
+
     res.json({
       username: u.username,
       accessLevel: u.accessLevel,
@@ -570,8 +586,12 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       mos: u.mos || "",
       createdAt: u.createdAt,
       lastLogin: u.lastLogin,
-      awards: awardsOther,
-      citations,
+      loaStart,
+      loaEnd,
+      loaApprover,
+      loaPhase,
+      awards: awardsSorted,
+      citations: citationsSorted,
       signInSheets,
     });
   });
@@ -629,7 +649,8 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     res.status(201).json(fresh ? sessionUserJson(fresh) : sessionUserJson(created));
   });
-  // Admin+ edit users (admins: only standard users; owners: any account)
+  // Admin+ edit users. Owner: full edit. Admin: full edit for standard users; for admin/owner targets only
+  // duty role, rank, unit, team, MIL ID, MOS (not username, access level, password, or tactical perm roles).
   app.patch("/api/users/:id", requireAdmin, (req, res) => {
     const id = Number(req.params.id);
     const { username, accessLevel, role, password } = req.body;
@@ -637,18 +658,31 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!target) return res.status(404).json({ error: "User not found" });
     const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
     const targetRank = ACCESS_RANK[target.accessLevel] ?? 0;
-    if (callerRank < ACCESS_RANK.owner && targetRank >= ACCESS_RANK.admin) {
-      return res.status(403).json({ error: "Only the owner can edit admin or owner accounts" });
+    const canEditSensitive =
+      callerRank >= ACCESS_RANK.owner || targetRank < ACCESS_RANK.admin;
+    if (!canEditSensitive) {
+      if (username != null && String(username).trim() && String(username).trim() !== target.username) {
+        return res.status(403).json({ error: "Only the owner can change username for admin or owner accounts" });
+      }
+      if (accessLevel != null && String(accessLevel) !== target.accessLevel) {
+        return res.status(403).json({ error: "Only the owner can change access level for admin or owner accounts" });
+      }
+      if (password) {
+        return res.status(403).json({ error: "Only the owner can reset password for admin or owner accounts" });
+      }
+      if (Array.isArray(req.body.tacticalRoleIds)) {
+        return res.status(403).json({ error: "Only the owner can change tactical permission roles for admin or owner accounts" });
+      }
     }
     const beforeSafe = { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" };
     // Build update payload
     const updates: Record<string, any> = {};
-    if (username && username !== target.username) {
+    if (canEditSensitive && username && username !== target.username) {
       const exists = storage.getUserByUsername(username);
       if (exists) return res.status(409).json({ error: "Username already taken" });
       updates.username = username;
     }
-    if (accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
+    if (canEditSensitive && accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
       const nextRank = ACCESS_RANK[accessLevel] ?? 0;
       if (callerRank < ACCESS_RANK.owner && nextRank > callerRank) {
         return res.status(403).json({ error: "Cannot grant a role higher than your own" });
@@ -678,13 +712,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       updates.teamAssignment =
         typeof req.body.teamAssignment === "string" ? req.body.teamAssignment.trim().slice(0, 128) : "";
     }
-    if (password) {
+    if (canEditSensitive && password) {
       if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
       const bcrypt = require("bcryptjs");
       updates.passwordHash = bcrypt.hashSync(password, 10);
     }
     let roleAssign = false;
-    if (Array.isArray(req.body.tacticalRoleIds)) {
+    if (canEditSensitive && Array.isArray(req.body.tacticalRoleIds)) {
       const nums = req.body.tacticalRoleIds.map((x: unknown) => Number(x)).filter((n: number) => Number.isFinite(n));
       const setr = storage.setUserTacticalPermissionRoleIds(id, nums);
       if (!setr.ok) return res.status(400).json({ error: setr.error });
@@ -1662,13 +1696,41 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── Awards ────────────────────────────────────────────────────────────────────
+  app.get("/api/awards/catalog", requireAuth, (_req, res) => {
+    res.json({ awards: MILITARY_AWARDS_CATALOG });
+  });
   app.get("/api/awards", requireAuth, (req, res) => {
     const username = req.query.username as string | undefined;
-    res.json(storage.getAwards(username));
+    res.json(enrichAndSortAwards(storage.getAwards(username)));
   });
   app.post("/api/awards", requireAdmin, (req, res) => {
-    const award = storage.createAward({ ...req.body, awardedBy: req.session.username!, awardedAt: new Date().toISOString() }); wsPush("AWARD");
-    res.status(201).json(award);
+    const body = req.body || {};
+    const catalogId = String(body.awardCatalogId ?? body.award_catalog_id ?? "").trim();
+    let awardName = String(body.awardName ?? "").trim();
+    let awardType = String(body.awardType ?? "commendation");
+    const username = String(body.username ?? "").trim();
+    if (!username) return res.status(400).json({ error: "username required" });
+    if (catalogId) {
+      const def = getMilitaryAwardById(catalogId);
+      if (!def) return res.status(400).json({ error: "Unknown military award id" });
+      if (!awardName) awardName = def.name;
+      awardType = def.awardType;
+    } else if (!awardName) {
+      return res.status(400).json({ error: "awardName or awardCatalogId required" });
+    }
+    const award = storage.createAward({
+      username,
+      awardName,
+      awardType,
+      awardCatalogId: catalogId,
+      reason: String(body.reason ?? ""),
+      relatedOpId: Number(body.relatedOpId) || 0,
+      relatedOpName: String(body.relatedOpName ?? ""),
+      awardedBy: req.session.username!,
+      awardedAt: new Date().toISOString(),
+    });
+    wsPush("AWARD");
+    res.status(201).json(enrichAndSortAwards([award])[0]);
   });
   app.delete("/api/awards/:id", requireAdmin, (req, res) => {
     storage.deleteAward(Number(req.params.id)); wsPush("AWARD");

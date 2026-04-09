@@ -40,7 +40,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   // AAR
   AAR:              [["/api/aar"]],
   // Awards
-  AWARD:            [["/api/awards"]],
+  AWARD:            [["/api/awards"], ["/api/profile"]],
   // Training
   TRAINING:         [["/api/training"]],
   // Broadcasts

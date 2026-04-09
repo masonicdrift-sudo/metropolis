@@ -432,6 +432,8 @@ export const awards = sqliteTable("awards", {
   username: text("username").notNull(),
   awardName: text("award_name").notNull(),
   awardType: text("award_type").notNull().default("commendation"), // commendation | medal | citation | achievement
+  /** When set, links to shared/militaryAwardsCatalog (image + precedence). */
+  awardCatalogId: text("award_catalog_id").notNull().default(""),
   reason: text("reason").notNull().default(""),
   awardedBy: text("awarded_by").notNull(),
   awardedAt: text("awarded_at").notNull(),

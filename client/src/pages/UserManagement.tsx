@@ -256,17 +256,20 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
   );
 }
 
-// ── Edit User form (Owner: any account; Admin: standard users only — enforced server-side) ──
+// ── Edit User form (Owner: full; Admin: full for users; Admin: profile fields only for admin/owner accounts) ──
 function EditUserForm({
   user: target,
   onClose,
   units,
   callerAccess,
+  profileFieldsOnly,
 }: {
   user: AppUser;
   onClose: () => void;
   units: Unit[];
   callerAccess: string;
+  /** Admin editing another admin or owner — duty role, rank, unit, team, MIL ID, MOS only. */
+  profileFieldsOnly: boolean;
 }) {
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -326,6 +329,24 @@ function EditUserForm({
 
   return (
     <div className="space-y-3">
+      {profileFieldsOnly ? (
+        <div className="rounded border border-border bg-secondary/30 px-3 py-2 space-y-1">
+          <div className="text-[9px] text-muted-foreground tracking-wider">USERNAME</div>
+          <div className="text-xs font-mono font-bold tracking-wider">{target.username}</div>
+          <div className="text-[9px] text-muted-foreground tracking-wider pt-1">ACCESS</div>
+          <div
+            className={`text-[10px] font-bold tracking-widest ${
+              target.accessLevel === "owner" ? "text-orange-400" : target.accessLevel === "admin" ? "text-yellow-400" : "text-blue-400"
+            }`}
+          >
+            {target.accessLevel === "owner" ? "OWNER" : target.accessLevel === "admin" ? "ADMIN" : "USER"}
+          </div>
+          <p className="text-[9px] text-muted-foreground/80 pt-1 leading-snug">
+            Admins may update duty role, rank, unit, team, MIL ID, and MOS only for this account.
+          </p>
+        </div>
+      ) : (
+        <>
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">USERNAME</label>
         <input type="text" value={form.username} onChange={e => set("username")(e.target.value)}
@@ -373,6 +394,32 @@ function EditUserForm({
           )}
         </div>
       </div>
+        </>
+      )}
+      {profileFieldsOnly ? (
+        <div>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">DUTY ROLE (OPTIONAL)</label>
+          <select
+            value={form.rolePreset}
+            onChange={(e) => set("rolePreset")(e.target.value)}
+            className="w-full bg-secondary border border-border rounded px-2 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 font-bold tracking-wider touch-manipulation min-h-[44px]"
+          >
+            <option value="">— Select —</option>
+            {TACTICAL_ROLE_PRESETS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          {(form.rolePreset === "OTHER" || (!form.rolePreset && !!form.role)) && (
+            <input
+              type="text"
+              value={form.role}
+              onChange={(e) => set("role")(e.target.value)}
+              placeholder="Custom role…"
+              className="w-full mt-2 bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700 uppercase tracking-wider touch-manipulation min-h-[44px]"
+            />
+          )}
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">RANK</label>
@@ -432,7 +479,7 @@ function EditUserForm({
           </select>
         </div>
       </div>
-      {permRoles.length > 0 && (
+      {!profileFieldsOnly && permRoles.length > 0 ? (
         <div className="border border-border rounded-md p-3 space-y-2 max-h-44 overflow-y-auto">
           <div className="text-[9px] text-muted-foreground tracking-wider">PERMISSION ROLES</div>
           <div className="grid grid-cols-1 gap-1.5">
@@ -452,8 +499,8 @@ function EditUserForm({
             ))}
           </div>
         </div>
-      )}
-      {/* Access level + duty role are set above */}
+      ) : null}
+      {!profileFieldsOnly ? (
       <div className="border-t border-border pt-3">
         <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep)</div>
         <div className="space-y-2">
@@ -463,6 +510,7 @@ function EditUserForm({
             placeholder="Confirm..." className="w-full bg-secondary border border-border rounded px-3 py-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-blue-700" />
         </div>
       </div>
+      ) : null}
       <div className="flex gap-2 justify-end pt-1">
         <Button variant="outline" size="sm" onClick={onClose} className="text-xs">CANCEL</Button>
         <Button size="sm" onClick={submit} disabled={update.isPending} className="text-xs bg-blue-800 hover:bg-blue-700">SAVE CHANGES</Button>
@@ -656,7 +704,7 @@ export default function UserManagement() {
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="LAST LOGIN">{formatDate(u.lastLogin || "")}</td>
                 <td className="px-4 py-3" data-label="ACTIONS">
                   <div className="flex items-center gap-1">
-                    {(me?.accessLevel === "owner" || (me?.accessLevel === "admin" && u.accessLevel === "user")) && (
+                    {(me?.accessLevel === "owner" || me?.accessLevel === "admin") && (
                       <button onClick={() => setEditUser(u)} className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Edit">
                         <Edit size={11} />
                       </button>
@@ -686,7 +734,11 @@ export default function UserManagement() {
           <DialogContent className="max-w-sm">
             <DialogHeader>
               <DialogTitle className="text-sm tracking-widest flex items-center gap-2">
-                EDIT — <span className="font-mono text-blue-400">{editUser.username}</span>
+                {me?.accessLevel === "admin" &&
+                (editUser.accessLevel === "admin" || editUser.accessLevel === "owner")
+                  ? "EDIT PROFILE — "
+                  : "EDIT — "}
+                <span className="font-mono text-blue-400">{editUser.username}</span>
               </DialogTitle>
             </DialogHeader>
             <EditUserForm
@@ -695,6 +747,10 @@ export default function UserManagement() {
               onClose={() => setEditUser(null)}
               units={units}
               callerAccess={me?.accessLevel || "user"}
+              profileFieldsOnly={
+                me?.accessLevel === "admin" &&
+                (editUser.accessLevel === "admin" || editUser.accessLevel === "owner")
+              }
             />
           </DialogContent>
         </Dialog>

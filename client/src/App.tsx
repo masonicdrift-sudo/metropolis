@@ -36,6 +36,7 @@ import MedicalCasualtyPage from "./pages/MedicalCasualty";
 import ApprovalsPage from "./pages/Approvals";
 import UserProfilePage from "./pages/UserProfile";
 import PersonnelHub from "./pages/PersonnelHub";
+import PromotionPacketsPage from "./pages/PromotionPackets";
 import TacticalHub from "./pages/TacticalHub";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import { MetropolisLogo } from "@/components/MetropolisLogo";
@@ -57,7 +58,7 @@ import {
   KeyRound, Crown, MessageSquare, BookOpen,
   Settings, Menu, X, ChevronRight,   UserCheck, FileText,
   Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, ScrollText,
-  ClipboardList
+  ClipboardList, Medal
 } from "lucide-react";
 
 type NavLeaf = { path: string; label: string; icon: LucideIcon; short: string };
@@ -146,6 +147,7 @@ const NAV_BLOCKS: NavBlock[] = [
       { path: "/personnel/perstat", label: "PERSTAT", icon: UserCheck, short: "PERSTAT" },
       { path: "/personnel/roster", label: "ROSTER", icon: ClipboardList, short: "Roster" },
       { path: "/personnel/units", label: "UNITS", icon: Users, short: "Units" },
+      { path: "/personnel/promotions", label: "PROMOTIONS", icon: Medal, short: "Promo" },
     ],
   },
   {
@@ -571,6 +573,7 @@ function AppRoutes() {
         <Route path="/personnel/perstat" component={gateRoute("/personnel/perstat", PerstatPage)} />
         <Route path="/personnel/roster" component={gateRoute("/personnel/roster", PersonnelRosterPage)} />
         <Route path="/personnel/units" component={gateRoute("/personnel/units", Units)} />
+        <Route path="/personnel/promotions" component={gateRoute("/personnel/promotions", PromotionPacketsPage)} />
         <Route path="/personnel" component={gateRoute("/personnel", PersonnelHub)} />
 
         <Route path="/tactical/map" component={gateRoute("/tactical/map", TacticalTerrainMap)} />

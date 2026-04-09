@@ -256,8 +256,18 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
   );
 }
 
-// ── Edit User form (Owner only) ───────────────────────────────────────────────
-function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose: () => void; units: Unit[] }) {
+// ── Edit User form (Owner: any account; Admin: standard users only — enforced server-side) ──
+function EditUserForm({
+  user: target,
+  onClose,
+  units,
+  callerAccess,
+}: {
+  user: AppUser;
+  onClose: () => void;
+  units: Unit[];
+  callerAccess: string;
+}) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { data: permRoles = [] } = useQuery<TacticalPermRoleRow[]>({
@@ -332,8 +342,12 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
             } touch-manipulation min-h-[44px]`}
           >
             <option value="user">USER</option>
-            <option value="admin">ADMIN</option>
-            <option value="owner">OWNER</option>
+            {(callerAccess === "admin" || callerAccess === "owner") && (
+              <option value="admin">ADMIN</option>
+            )}
+            {callerAccess === "owner" && (
+              <option value="owner">OWNER</option>
+            )}
           </select>
         </div>
         <div>
@@ -642,7 +656,7 @@ export default function UserManagement() {
                 <td className="px-4 py-3 text-[10px] text-muted-foreground font-mono" data-label="LAST LOGIN">{formatDate(u.lastLogin || "")}</td>
                 <td className="px-4 py-3" data-label="ACTIONS">
                   <div className="flex items-center gap-1">
-                    {me?.accessLevel === "owner" && (
+                    {(me?.accessLevel === "owner" || (me?.accessLevel === "admin" && u.accessLevel === "user")) && (
                       <button onClick={() => setEditUser(u)} className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Edit">
                         <Edit size={11} />
                       </button>
@@ -675,7 +689,13 @@ export default function UserManagement() {
                 EDIT — <span className="font-mono text-blue-400">{editUser.username}</span>
               </DialogTitle>
             </DialogHeader>
-            <EditUserForm key={editUser.id} user={editUser} onClose={() => setEditUser(null)} units={units} />
+            <EditUserForm
+              key={editUser.id}
+              user={editUser}
+              onClose={() => setEditUser(null)}
+              units={units}
+              callerAccess={me?.accessLevel || "user"}
+            />
           </DialogContent>
         </Dialog>
       )}

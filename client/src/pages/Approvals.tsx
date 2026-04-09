@@ -10,6 +10,19 @@ import { ShieldCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileLink } from "@/components/ProfileLink";
 
+function promotionPayloadSummary(payloadJson: string): string | null {
+  try {
+    const j = JSON.parse(payloadJson) as { promotions?: { username?: string; newRank?: string; effectiveDate?: string }[] };
+    const list = j.promotions;
+    if (!Array.isArray(list) || list.length === 0) return null;
+    return list
+      .map((p) => `${p.username ?? "?"} → ${p.newRank ?? "?"} (${p.effectiveDate ?? "?"})`)
+      .join(" · ");
+  } catch {
+    return null;
+  }
+}
+
 export default function ApprovalsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -103,7 +116,15 @@ export default function ApprovalsPage() {
                   · {a.status.toUpperCase()}
                 </div>
                 <div className="text-xs font-mono">
-                  {a.action} {a.entityType} #{a.entityId}
+                  {a.entityType === "promotion_packet" ? (
+                    <span className="text-amber-300/90">
+                      PROMOTION PACKET — {promotionPayloadSummary(a.payloadJson) ?? "—"}
+                    </span>
+                  ) : (
+                    <>
+                      {a.action} {a.entityType} #{a.entityId}
+                    </>
+                  )}
                 </div>
               </div>
             ))
@@ -118,8 +139,18 @@ export default function ApprovalsPage() {
           </DialogHeader>
           {selected && (
             <div className="space-y-3">
-              <div className="text-xs font-mono">
-                {selected.action} {selected.entityType} #{selected.entityId}
+              <div className="text-xs font-mono space-y-1">
+                <div>
+                  {selected.action} {selected.entityType} #{selected.entityId}
+                </div>
+                {selected.entityType === "promotion_packet" && (
+                  <div className="text-[10px] text-amber-200/90 whitespace-pre-wrap border border-amber-900/40 rounded p-2 bg-amber-950/20">
+                    {promotionPayloadSummary(selected.payloadJson) ?? selected.payloadJson}
+                  </div>
+                )}
+                {selected.requestedNote?.trim() ? (
+                  <div className="text-[10px] text-muted-foreground">Request note: {selected.requestedNote}</div>
+                ) : null}
               </div>
               <Textarea className="text-xs font-mono min-h-[6rem]" placeholder="Decision note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
             </div>

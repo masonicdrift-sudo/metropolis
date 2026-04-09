@@ -11,8 +11,11 @@ import {
   insertUnitSchema, insertOperationSchema, insertIntelReportSchema,
   insertCommsLogSchema, insertAssetSchema,
   ACCESS_RANK,
+  ARMY_RANKS,
   SIGN_IN_ISO_FAC_TYPES,
 } from "@shared/schema";
+import { buildPromotionOrdersMessage } from "@shared/promotionOrders";
+import type { PromotionOrdersLine } from "@shared/promotionOrders";
 import type { User } from "@shared/schema";
 import { permissionForApiPath } from "@shared/tacticalPermissions";
 import type { TacticalMapRangeRing } from "@shared/schema";
@@ -218,6 +221,22 @@ const approvalPostSchema = z.object({
 const approvalDecisionSchema = z.object({
   decisionNote: z.string().max(2000).optional().default(""),
 });
+
+const promotionLineRequestSchema = z.object({
+  username: z.string().min(1).max(48),
+  newRank: z.string().min(1).max(32),
+  effectiveDate: z.string().min(1).max(64),
+});
+const promotionPacketRequestSchema = z.object({
+  promotions: z.array(promotionLineRequestSchema).min(1).max(48),
+  requestedNote: z.string().max(2000).optional().default(""),
+});
+
+function armyRankIndex(abbr: string): number {
+  const t = abbr.trim();
+  if (!t) return -1;
+  return ARMY_RANKS.findIndex((r) => r.abbr === t);
+}
 
 // Rate limiter: max 10 login attempts per 15 minutes per IP
 const loginLimiter = rateLimit({
@@ -598,12 +617,17 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     res.status(201).json(fresh ? sessionUserJson(fresh) : sessionUserJson(created));
   });
-  // Owner-only: edit any user's username, role, or reset password
-  app.patch("/api/users/:id", requireOwner, (req, res) => {
+  // Admin+ edit users (admins: only standard users; owners: any account)
+  app.patch("/api/users/:id", requireAdmin, (req, res) => {
     const id = Number(req.params.id);
     const { username, accessLevel, role, password } = req.body;
     const target = storage.getUserById(id);
     if (!target) return res.status(404).json({ error: "User not found" });
+    const callerRank = ACCESS_RANK[req.session.accessLevel || ""] ?? 0;
+    const targetRank = ACCESS_RANK[target.accessLevel] ?? 0;
+    if (callerRank < ACCESS_RANK.owner && targetRank >= ACCESS_RANK.admin) {
+      return res.status(403).json({ error: "Only the owner can edit admin or owner accounts" });
+    }
     const beforeSafe = { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" };
     // Build update payload
     const updates: Record<string, any> = {};
@@ -613,6 +637,10 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       updates.username = username;
     }
     if (accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
+      const nextRank = ACCESS_RANK[accessLevel] ?? 0;
+      if (callerRank < ACCESS_RANK.owner && nextRank > callerRank) {
+        return res.status(403).json({ error: "Cannot grant a role higher than your own" });
+      }
       updates.accessLevel = accessLevel;
     }
     if (typeof role === "string") {
@@ -1455,6 +1483,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     billet: z.string().max(120).optional().default(""),
     unit: z.string().max(120).optional().default(""),
     teamAssignment: z.string().max(128).optional().default(""),
+    cellTags: z.string().max(256).optional().default(""),
     linkedUsername: z.string().max(64).optional().default(""),
     status: z.string().max(32).optional().default("present"),
     notes: z.string().max(2000).optional().default(""),
@@ -1488,6 +1517,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       billet: parsed.data.billet,
       unit: parsed.data.unit,
       teamAssignment: parsed.data.teamAssignment,
+      cellTags: parsed.data.cellTags,
       linkedUsername: lu || "",
       status: parsed.data.status,
       notes: parsed.data.notes,
@@ -2113,6 +2143,71 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(204).send();
   });
 
+  // ── Promotion packets (request → approvals queue → admin approves → rank + FLASH) ──
+  app.post("/api/promotion-packets/request", requireAuth, (req, res) => {
+    const parsed = promotionPacketRequestSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const seen = new Set<string>();
+    const frozen: Array<{
+      username: string;
+      userId: number;
+      previousRank: string;
+      newRank: string;
+      pmos: string;
+      effectiveDate: string;
+    }> = [];
+    for (const line of parsed.data.promotions) {
+      const uname = line.username.trim();
+      const u = storage.getUserByUsername(uname);
+      if (!u) return res.status(400).json({ error: `Unknown user: ${uname}` });
+      const key = u.username.toLowerCase();
+      if (seen.has(key)) return res.status(400).json({ error: `Duplicate in packet: ${u.username}` });
+      seen.add(key);
+      const nr = line.newRank.trim();
+      if (!ARMY_RANKS.some((r) => r.abbr === nr)) {
+        return res.status(400).json({ error: `Invalid new rank: ${nr}` });
+      }
+      const prev = (u.rank || "").trim();
+      const ni = armyRankIndex(nr);
+      const pi = armyRankIndex(prev);
+      if (prev && ni >= 0 && pi >= 0 && ni <= pi) {
+        return res.status(400).json({ error: `New rank must be above current rank for ${u.username}` });
+      }
+      frozen.push({
+        username: u.username,
+        userId: u.id,
+        previousRank: prev,
+        newRank: nr,
+        pmos: (u.mos || "").trim(),
+        effectiveDate: line.effectiveDate.trim(),
+      });
+    }
+    const now = new Date().toISOString();
+    const entityId = `promo-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const approval = storage.createApproval({
+      entityType: "promotion_packet",
+      entityId,
+      action: "PROMOTE",
+      status: "pending",
+      requestedBy: req.session.username!,
+      requestedAt: now,
+      requestedNote: (parsed.data.requestedNote || "").trim(),
+      approvedBy: "",
+      approvedAt: "",
+      decisionNote: "",
+      payloadJson: JSON.stringify({ promotions: frozen }),
+    });
+    wsPush("APPROVALS");
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "approval",
+      entityId: approval.id,
+      summary: `Promotion packet requested (${frozen.length} soldier(s))`,
+      after: approval,
+    });
+    res.status(202).json({ ok: true, approvalId: approval.id });
+  });
+
   // ── Approvals (admin/owner) ────────────────────────────────────────────────
   app.get("/api/approvals", requireAdmin, (req, res) => {
     const raw = req.query.status;
@@ -2214,6 +2309,55 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         appendActivity(req, { action: "CREATE", entityType: "support_request", entityId: sr.id, summary: `Created support request from intel action approval`, after: sr });
       } catch {}
     }
+    if (row.entityType === "promotion_packet" && row.action === "PROMOTE") {
+      try {
+        const payload = row.payloadJson ? JSON.parse(row.payloadJson) : {};
+        const list = Array.isArray(payload.promotions) ? payload.promotions : [];
+        const ordersLines: PromotionOrdersLine[] = [];
+        for (const p of list) {
+          const uid = Number(p.userId);
+          const newRank = String(p.newRank || "").trim();
+          if (!Number.isFinite(uid) || !newRank) continue;
+          const u = storage.getUserById(uid);
+          if (!u || u.username !== String(p.username || "").trim()) continue;
+          storage.updateUserById(uid, { rank: newRank });
+          ordersLines.push({
+            username: u.username,
+            previousRank: String(p.previousRank || "").trim(),
+            newRank,
+            pmos: String(p.pmos || "").trim(),
+            effectiveDate: String(p.effectiveDate || "").trim(),
+          });
+        }
+        wsPush("USER");
+        const body = buildPromotionOrdersMessage(ordersLines);
+        const nowIso = new Date().toISOString();
+        const from = row.approvedBy || "COMMAND";
+        const ws = (global as any).__wsBroadcast as ((msg: object, to?: string[]) => void) | undefined;
+        for (const line of ordersLines) {
+          const b = storage.createBroadcast({
+            title: "PROMOTION ORDERS",
+            message: body,
+            priority: "immediate",
+            sentBy: from,
+            sentAt: nowIso,
+            expiresAt: "",
+            active: true,
+            recipientUsername: line.username,
+          });
+          if (ws) ws({ type: "BROADCAST", broadcast: b }, [line.username]);
+        }
+        appendActivity(req, {
+          action: "UPDATE",
+          entityType: "promotion_packet",
+          entityId: row.entityId,
+          summary: `Approved promotion packet (${ordersLines.length} promotion(s))`,
+          after: { count: ordersLines.length },
+        });
+      } catch (e) {
+        console.error("promotion_packet approve:", e);
+      }
+    }
     wsPush("APPROVALS");
     appendActivity(req, { action: "UPDATE", entityType: "approval", entityId: row.id, summary: `Approved: ${row.entityType} ${row.entityId}`, after: row });
     res.json(row);
@@ -2232,7 +2376,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── Broadcasts (FLASH) ────────────────────────────────────────────────────────
-  app.get("/api/broadcasts", requireAuth, (_, res) => res.json(storage.getActiveBroadcasts()));
+  app.get("/api/broadcasts", requireAuth, (req, res) =>
+    res.json(storage.getActiveBroadcasts(req.session.username!)),
+  );
   app.get("/api/broadcasts/all", requireAdmin, (_, res) => res.json(storage.getBroadcasts()));
   app.post("/api/broadcasts", requireAdmin, (req, res) => {
     const b = storage.createBroadcast({ ...req.body, sentBy: req.session.username!, sentAt: new Date().toISOString() });
@@ -2534,7 +2680,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   // ── Notifications (aggregate unread counts) ───────────────────────────────────
   app.get("/api/notifications", requireAuth, (req, res) => {
     const me = req.session.username!;
-    const broadcasts = storage.getActiveBroadcasts().length;
+    const broadcasts = storage.getActiveBroadcasts(me).length;
     const dms = storage.getUnreadDMCount(me);
     const general = storage.getUnreadGeneralCount(me);
     res.json({ broadcasts, dms, general, total: broadcasts + dms + general });

@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ClipboardList, UserCheck, Users } from "lucide-react";
+import { ClipboardList, UserCheck, Users, Medal } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { PERSONNEL_SUB } from "@/lib/appNav";
 
@@ -22,6 +22,12 @@ const CARDS = [
     desc: "Friendly unit records, grids, and status.",
     icon: Users,
   },
+  {
+    href: "/personnel/promotions",
+    title: "PROMOTIONS",
+    desc: "Submit promotion packets; approved soldiers get orders FLASH + auto rank.",
+    icon: Medal,
+  },
 ] as const;
 
 export default function PersonnelHub() {
@@ -36,7 +42,7 @@ export default function PersonnelHub() {
         </p>
       </div>
       <SubPageNav items={PERSONNEL_SUB} />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {CARDS.map(({ href, title, desc, icon: Icon }) => (
           <Link
             key={href}

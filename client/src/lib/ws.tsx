@@ -44,7 +44,7 @@ const EVENT_KEY_MAP: Record<string, string[][]> = {
   // Training
   TRAINING:         [["/api/training"]],
   // Broadcasts
-  BROADCAST:        [["/api/broadcasts"], ["/api/broadcasts/all"]],
+  BROADCAST:        [["/api/broadcasts"], ["/api/broadcasts/all"], ["/api/notifications"]],
   // ISOFAC / File Vault
   ISOFAC:           [["/api/isofac"]],
   // Shared calendar

@@ -82,6 +82,7 @@ export const NAV_PATH_PERMISSION: Record<string, string> = {
   "/personnel/perstat": "view:personnel",
   "/personnel/roster": "view:personnel",
   "/personnel/units": "view:personnel",
+  "/personnel/promotions": "view:personnel",
   "/tactical": "view:tactical",
   "/tactical/map": "view:tactical",
   "/tactical/grid": "view:tactical",
@@ -102,6 +103,7 @@ export const NAV_PATH_PERMISSION: Record<string, string> = {
 export const API_PREFIX_PERMISSION: { prefix: string; permission: string }[] = [
   { prefix: "/api/calendar-events", permission: "view:calendar" },
   { prefix: "/api/personnel-roster", permission: "view:personnel" },
+  { prefix: "/api/promotion-packets", permission: "view:personnel" },
   { prefix: "/api/tactical-markers", permission: "view:tactical" },
   { prefix: "/api/tactical-lines", permission: "view:tactical" },
   { prefix: "/api/tactical-range-rings", permission: "view:tactical" },

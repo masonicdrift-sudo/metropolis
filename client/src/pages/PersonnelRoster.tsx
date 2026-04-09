@@ -55,6 +55,7 @@ function emptyForm(): Record<string, string> {
     billet: "",
     unit: "",
     teamAssignment: "",
+    cellTags: "",
     linkedUsername: "",
     status: "present",
     notes: "",
@@ -71,6 +72,7 @@ function entryToForm(e: PersonnelRosterEntry): Record<string, string> {
     billet: e.billet,
     unit: e.unit,
     teamAssignment: e.teamAssignment,
+    cellTags: e.cellTags ?? "",
     linkedUsername: e.linkedUsername,
     status: e.status,
     notes: e.notes,
@@ -119,6 +121,16 @@ function RosterForm({
       <div className="grid grid-cols-2 gap-2">
         {field("unit", "UNIT / TEAM")}
         {field("teamAssignment", "TEAM ASSIGNMENT (WRITE-IN)")}
+      </div>
+      <div className="space-y-1">
+        <Label className="text-[10px] tracking-wider">CELL TAGS</Label>
+        <Input
+          className="text-xs"
+          value={form.cellTags}
+          onChange={(ev) => setForm({ ...form, cellTags: ev.target.value })}
+          placeholder="Cell / sub-unit tags"
+        />
+        <p className="text-[9px] text-muted-foreground">Comma-separated is ok (e.g. A1, BLUE).</p>
       </div>
       <div className="space-y-1">
         <Label className="text-[10px] tracking-wider">LINK TO PROFILE (USERNAME)</Label>
@@ -199,6 +211,7 @@ export default function PersonnelRosterPage() {
         billet: body.billet,
         unit: body.unit,
         teamAssignment: body.teamAssignment,
+        cellTags: body.cellTags,
         linkedUsername: body.linkedUsername,
         status: body.status,
         notes: body.notes,
@@ -223,6 +236,7 @@ export default function PersonnelRosterPage() {
         billet: body.billet,
         unit: body.unit,
         teamAssignment: body.teamAssignment,
+        cellTags: body.cellTags,
         linkedUsername: body.linkedUsername,
         status: body.status,
         notes: body.notes,
@@ -334,6 +348,7 @@ export default function PersonnelRosterPage() {
                 <th className="text-left p-2 font-medium">Billet</th>
                 <th className="text-left p-2 font-medium">Unit</th>
                 <th className="text-left p-2 font-medium">Team asgmt</th>
+                <th className="text-left p-2 font-medium">Cell tags</th>
                 <th className="text-left p-2 font-medium">Linked</th>
                 <th className="text-left p-2 font-medium">Status</th>
                 <th className="text-left p-2 font-medium w-28">Actions</th>
@@ -356,6 +371,15 @@ export default function PersonnelRosterPage() {
                   <td className="p-2">{e.billet || "—"}</td>
                   <td className="p-2">{e.unit || "—"}</td>
                   <td className="p-2">{e.teamAssignment || "—"}</td>
+                  <td className="p-2 max-w-[140px]">
+                    {e.cellTags?.trim() ? (
+                      <span className="text-[10px] font-mono text-cyan-200/90 tracking-tight line-clamp-2" title={e.cellTags}>
+                        {e.cellTags}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="p-2">
                     {e.linkedUsername ? (
                       <Link
@@ -465,6 +489,7 @@ export default function PersonnelRosterPage() {
             <div className="text-[10px] text-muted-foreground space-y-0.5">
               <div>Unit: {e.unit || "—"}</div>
               <div>Team assignment: {e.teamAssignment || "—"}</div>
+              <div>Cell tags: {e.cellTags?.trim() || "—"}</div>
               {e.linkedUsername ? (
                 <div>
                   Profile:{" "}

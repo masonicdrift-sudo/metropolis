@@ -216,6 +216,8 @@ try { sqlite.exec(`ALTER TABLE users ADD COLUMN mos TEXT NOT NULL DEFAULT ''`); 
 try { sqlite.exec(`ALTER TABLE users ADD COLUMN team_assignment TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN team_assignment TEXT NOT NULL DEFAULT ''`); } catch {}
 try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN linked_username TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE personnel_roster_entries ADD COLUMN cell_tags TEXT NOT NULL DEFAULT ''`); } catch {}
+try { sqlite.exec(`ALTER TABLE broadcasts ADD COLUMN recipient_username TEXT NOT NULL DEFAULT ''`); } catch {}
 try {
   sqlite.exec(
     `UPDATE personnel_roster_entries SET team_assignment = phone WHERE (team_assignment = '' OR team_assignment IS NULL) AND COALESCE(phone,'') != ''`,
@@ -454,6 +456,7 @@ sqlite.exec(`
     billet TEXT NOT NULL DEFAULT '',
     unit TEXT NOT NULL DEFAULT '',
     team_assignment TEXT NOT NULL DEFAULT '',
+    cell_tags TEXT NOT NULL DEFAULT '',
     linked_username TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'present',
     notes TEXT NOT NULL DEFAULT '',
@@ -944,7 +947,7 @@ export interface IStorage {
   ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
   // Broadcasts
   getBroadcasts(): Broadcast[];
-  getActiveBroadcasts(): Broadcast[];
+  getActiveBroadcasts(forUsername?: string): Broadcast[];
   createBroadcast(b: InsertBroadcast): Broadcast;
   dismissBroadcast(id: number): void;
   deleteBroadcast(id: number): void;
@@ -1966,10 +1969,14 @@ export class Storage implements IStorage {
 
   // Broadcasts
   getBroadcasts() { return db.select().from(schema.broadcasts).orderBy(desc(schema.broadcasts.id)).all(); }
-  getActiveBroadcasts() {
-    return db.select().from(schema.broadcasts).all().filter(b => {
+  getActiveBroadcasts(forUsername?: string) {
+    return db.select().from(schema.broadcasts).all().filter((b) => {
       if (!b.active) return false;
       if (b.expiresAt && new Date(b.expiresAt) < new Date()) return false;
+      const target = (b.recipientUsername || "").trim();
+      if (target) {
+        if (!forUsername || target !== forUsername) return false;
+      }
       return true;
     });
   }

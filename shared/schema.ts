@@ -349,6 +349,8 @@ export const personnelRosterEntries = sqliteTable("personnel_roster_entries", {
   unit: text("unit").notNull().default(""),
   /** Team assignment (write-in). */
   teamAssignment: text("team_assignment").notNull().default(""),
+  /** Cell / sub-unit tags (write-in, comma-separated ok). */
+  cellTags: text("cell_tags").notNull().default(""),
   /** Linked operator account (username) for profile cross-link. */
   linkedUsername: text("linked_username").notNull().default(""),
   status: text("status").notNull().default("present"),
@@ -530,7 +532,7 @@ export type SupportRequest = typeof supportRequests.$inferSelect;
 // ─── Change Approvals (2-person integrity) ────────────────────────────────────
 export const approvals = sqliteTable("approvals", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  entityType: text("entity_type").notNull(), // e.g. "isofac_release", "intel_release"
+  entityType: text("entity_type").notNull(), // e.g. "isofac_release", "intel_release", "promotion_packet"
   entityId: text("entity_id").notNull(),
   action: text("action").notNull(), // RELEASE / PUBLISH / etc.
   status: text("status").notNull().default("pending"), // pending | approved | rejected | cancelled
@@ -606,6 +608,8 @@ export const broadcasts = sqliteTable("broadcasts", {
   sentAt: text("sent_at").notNull(),
   expiresAt: text("expires_at").default(""),
   active: integer("active", { mode: "boolean" }).default(true),
+  /** If set, only this username sees the broadcast (FLASH overlay). Empty = all users. */
+  recipientUsername: text("recipient_username").notNull().default(""),
 });
 export const insertBroadcastSchema = createInsertSchema(broadcasts).omit({ id: true });
 export type InsertBroadcast = z.infer<typeof insertBroadcastSchema>;

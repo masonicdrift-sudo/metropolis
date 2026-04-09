@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, primaryKey } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -93,6 +93,35 @@ export const TACTICAL_ROLE_PRESETS = [
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+/** Discord-style permission roles (name + color + which areas of the app are visible). */
+export const tacticalPermissionRoles = sqliteTable("tactical_permission_roles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#5865F2"),
+  /** JSON string array of permission keys (see shared/tacticalPermissions.ts); use ["*"] for full app. */
+  permissionsJson: text("permissions_json").notNull().default("[]"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+});
+
+export const userTacticalPermissionRoles = sqliteTable(
+  "user_tactical_roles",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    roleId: integer("role_id")
+      .notNull()
+      .references(() => tacticalPermissionRoles.id, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.roleId] }),
+  }),
+);
+
+export type TacticalPermissionRole = typeof tacticalPermissionRoles.$inferSelect;
+export type InsertTacticalPermissionRole = typeof tacticalPermissionRoles.$inferInsert;
 
 // Access hierarchy: owner > admin > user
 export const ACCESS_RANK: Record<string, number> = { owner: 3, admin: 2, user: 1 };

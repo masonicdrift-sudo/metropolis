@@ -85,6 +85,7 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/assets", label: "ASSETS" },
   { path: "/messages", label: "MESSAGES" },
   { path: "/activity", label: "ACTIVITY LOG" },
+  { path: "/users/roles", label: "PERM ROLES" },
   { path: "/users", label: "USER MGMT" },
   { path: "/access-codes", label: "ACCESS CODES" },
   { path: "/broadcasts", label: "BROADCASTS" },

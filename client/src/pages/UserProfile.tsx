@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BadgeCheck, Crown, ShieldCheck, User as UserIcon, ArrowLeft, Award, GraduationCap, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/ProfileLink";
+import { InstructorField } from "@/pages/Training";
 import type { TrainingRecord } from "@shared/schema";
 
 type AwardRow = {
@@ -235,6 +236,11 @@ export default function UserProfilePage() {
                   {fmtDate(r.date)} · {r.category.toUpperCase()} · {r.result.toUpperCase()}
                   {r.operationName ? ` · OP: ${r.operationName}` : ""}
                 </div>
+                {r.instructor ? (
+                  <div className="text-[9px] text-muted-foreground mt-0.5">
+                    INSTR: <InstructorField text={r.instructor} className="inline" />
+                  </div>
+                ) : null}
                 {r.attachedIsofacDocId > 0 && (r.attachedDocTitle || r.attachedDocType) ? (
                   <div className="text-blue-300/90 mt-0.5">
                     Attached: {r.attachedDocType ? `[${r.attachedDocType}] ` : ""}{r.attachedDocTitle || `#${r.attachedIsofacDocId}`}

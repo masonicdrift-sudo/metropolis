@@ -2,7 +2,8 @@ import { Switch, Route, Router, Link, useLocation, Redirect } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { AuthProvider, useAuth } from "./lib/auth";
+import { AuthProvider, useAuth, type AuthUser } from "./lib/auth";
+import { canAccessAppRoute } from "./lib/tacticalNav";
 import { WSProvider } from "./lib/ws";
 import { Toaster } from "@/components/ui/toaster";
 import Dashboard from "./pages/Dashboard";
@@ -42,9 +43,10 @@ import { ClassificationBanner } from "@/components/ClassificationBanner";
 import { ProfileLink } from "@/components/ProfileLink";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
+import TacticalRolesPage from "./pages/TacticalRolesPage";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "./lib/queryClient";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { LucideIcon } from "lucide-react";
@@ -70,6 +72,40 @@ function flattenNav(blocks: NavBlock[]): NavLeaf[] {
     else out.push(...b.items);
   }
   return out;
+}
+
+function filterNavBlocks(blocks: NavBlock[], user: AuthUser | null): NavBlock[] {
+  if (!user) return [];
+  const out: NavBlock[] = [];
+  for (const b of blocks) {
+    if (b.type === "single") {
+      if (canAccessAppRoute(user, b.path)) out.push(b);
+    } else {
+      const items = b.items.filter((it) => canAccessAppRoute(user, it.path));
+      if (items.length) out.push({ type: "group", title: b.title, items });
+    }
+  }
+  return out;
+}
+
+function gateRoute(path: string, C: ComponentType) {
+  return function GatedRoute() {
+    const { user } = useAuth();
+    if (!user) return null;
+    if (!canAccessAppRoute(user, path)) {
+      return (
+        <div className="flex flex-1 items-center justify-center p-8 min-h-[40vh]">
+          <div className="text-center space-y-2 max-w-sm">
+            <div className="text-xs text-muted-foreground tracking-[0.2em]">ACCESS RESTRICTED</div>
+            <div className="text-[10px] text-muted-foreground/80">
+              Your tactical permission roles do not include this area. Contact an administrator.
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return <C />;
+  };
 }
 
 /** Grouped sidebar: sections fold related tools under one heading */
@@ -177,7 +213,7 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
       </div>
 
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
-        {NAV_BLOCKS.map((block) => {
+        {filterNavBlocks(NAV_BLOCKS, user).map((block) => {
           const row = (path: string, label: string, Icon: LucideIcon) => {
             const active = path === "/" ? location === "/" : location === path;
             const isMsg = path === "/messages";
@@ -215,6 +251,13 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
             location === "/users" ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
             <ShieldCheck size={13} /> USER MGMT
+          </Link>
+        )}
+        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
+          <Link href="/users/roles" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
+            location === "/users/roles" ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          }`}>
+            <ShieldCheck size={13} /> PERM ROLES
           </Link>
         )}
         {user?.accessLevel === "owner" && (
@@ -321,8 +364,9 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   if (!open) return null;
 
   const allNav: NavLeaf[] = [
-    ...flattenNav(NAV_BLOCKS),
+    ...flattenNav(filterNavBlocks(NAV_BLOCKS, user)),
     ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
+    ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users/roles", label: "PERM ROLES", icon: ShieldCheck, short: "Roles" }] : []),
     ...(user?.accessLevel === "owner" ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
     ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
     { path: "/settings", label: "SETTINGS", icon: Settings, short: "Settings" },
@@ -406,7 +450,7 @@ function BottomTabBar({ onOpenMore, mobileShell }: { onOpenMore: () => void; mob
         mobileShell ? "flex" : "hidden",
       )}
     >
-      {MOBILE_TAB_ITEMS.map(({ path, label, icon: Icon }) => {
+      {MOBILE_TAB_ITEMS.filter((item) => user && canAccessAppRoute(user, item.path)).map(({ path, label, icon: Icon }) => {
         const active = location === path || (path !== "/" && location.startsWith(path));
         const showBadge = path === "/messages" && totalUnread > 0 && !active;
         return (
@@ -507,43 +551,44 @@ function AppRoutes() {
     <Layout>
       <BroadcastOverlay />
       <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/calendar" component={CalendarPage} />
+        <Route path="/" component={gateRoute("/", Dashboard)} />
+        <Route path="/calendar" component={gateRoute("/calendar", CalendarPage)} />
 
-        <Route path="/support/medical" component={MedicalCasualtyPage} />
-        <Route path="/support" component={SupportRequestsPage} />
+        <Route path="/support/medical" component={gateRoute("/support/medical", MedicalCasualtyPage)} />
+        <Route path="/support" component={gateRoute("/support", SupportRequestsPage)} />
 
-        <Route path="/operations/tasks" component={OpTaskBoard} />
-        <Route path="/operations/aar" component={AfterActionPage} />
-        <Route path="/operations" component={Operations} />
+        <Route path="/operations/tasks" component={gateRoute("/operations/tasks", OpTaskBoard)} />
+        <Route path="/operations/aar" component={gateRoute("/operations/aar", AfterActionPage)} />
+        <Route path="/operations" component={gateRoute("/operations", Operations)} />
 
-        <Route path="/intel/links" component={LinkAnalysisPage} />
-        <Route path="/intel/vault" component={FileVault} />
-        <Route path="/intel" component={Intel} />
+        <Route path="/intel/links" component={gateRoute("/intel/links", LinkAnalysisPage)} />
+        <Route path="/intel/vault" component={gateRoute("/intel/vault", FileVault)} />
+        <Route path="/intel" component={gateRoute("/intel", Intel)} />
 
-        <Route path="/comms/commo-card" component={CommoCardPage} />
-        <Route path="/comms" component={Communications} />
+        <Route path="/comms/commo-card" component={gateRoute("/comms/commo-card", CommoCardPage)} />
+        <Route path="/comms" component={gateRoute("/comms", Communications)} />
 
-        <Route path="/personnel/perstat" component={PerstatPage} />
-        <Route path="/personnel/roster" component={PersonnelRosterPage} />
-        <Route path="/personnel/units" component={Units} />
-        <Route path="/personnel" component={PersonnelHub} />
+        <Route path="/personnel/perstat" component={gateRoute("/personnel/perstat", PerstatPage)} />
+        <Route path="/personnel/roster" component={gateRoute("/personnel/roster", PersonnelRosterPage)} />
+        <Route path="/personnel/units" component={gateRoute("/personnel/units", Units)} />
+        <Route path="/personnel" component={gateRoute("/personnel", PersonnelHub)} />
 
-        <Route path="/tactical/map" component={TacticalTerrainMap} />
-        <Route path="/tactical/grid" component={GridTool} />
-        <Route path="/tactical" component={TacticalHub} />
+        <Route path="/tactical/map" component={gateRoute("/tactical/map", TacticalTerrainMap)} />
+        <Route path="/tactical/grid" component={gateRoute("/tactical/grid", GridTool)} />
+        <Route path="/tactical" component={gateRoute("/tactical", TacticalHub)} />
 
-        <Route path="/training/awards" component={AwardsPage} />
-        <Route path="/training" component={TrainingPage} />
+        <Route path="/training/awards" component={gateRoute("/training/awards", AwardsPage)} />
+        <Route path="/training" component={gateRoute("/training", TrainingPage)} />
 
-        <Route path="/assets" component={Assets} />
-        <Route path="/messages" component={Messaging} />
-        <Route path="/isofac" component={IsofacPage} />
-        <Route path="/settings" component={ChangePassword} />
-        <Route path="/approvals" component={ApprovalsPage} />
-        <Route path="/activity" component={ActivityLogPage} />
+        <Route path="/assets" component={gateRoute("/assets", Assets)} />
+        <Route path="/messages" component={gateRoute("/messages", Messaging)} />
+        <Route path="/isofac" component={gateRoute("/isofac", IsofacPage)} />
+        <Route path="/settings" component={gateRoute("/settings", ChangePassword)} />
+        <Route path="/approvals" component={gateRoute("/approvals", ApprovalsPage)} />
+        <Route path="/activity" component={gateRoute("/activity", ActivityLogPage)} />
 
         <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
+        <Route path="/users/roles" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? TacticalRolesPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/access-codes" component={user.accessLevel === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
         <Route path="/profile" component={ProfileIndexRedirect} />

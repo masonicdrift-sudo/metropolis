@@ -13,6 +13,8 @@ import {
   ACCESS_RANK,
   SIGN_IN_ISO_FAC_TYPES,
 } from "@shared/schema";
+import type { User } from "@shared/schema";
+import { permissionForApiPath } from "@shared/tacticalPermissions";
 import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
 import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
@@ -338,7 +340,48 @@ function requireOwner(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+/** Public session fields for /api/auth/me and login (no password hash). */
+function sessionUserJson(user: User) {
+  const tacticalRoles = storage.getTacticalRolesDisplayForUser(user.id);
+  const permissions = storage.getMergedTacticalPermissionKeys(user.id);
+  return {
+    id: user.id,
+    username: user.username,
+    accessLevel: user.accessLevel,
+    role: user.role || "",
+    rank: user.rank || "",
+    assignedUnit: user.assignedUnit || "",
+    teamAssignment: user.teamAssignment || "",
+    milIdNumber: user.milIdNumber || "",
+    mos: user.mos || "",
+    tacticalRoles,
+    permissions,
+  };
+}
+
+function shouldSkipTacticalApiGate(path: string): boolean {
+  if (path.startsWith("/api/auth/")) return true;
+  if (path === "/api/users/directory") return true;
+  if (path.startsWith("/api/profile/")) return true;
+  if (path === "/api/upload") return true;
+  if (path.startsWith("/api/tactical-roles")) return true;
+  if (path === "/api/users" || /^\/api\/users\/\d+\/tactical-roles$/.test(path)) return true;
+  return false;
+}
+
 export function registerRoutes(httpServer: ReturnType<typeof createServer>, app: Express) {
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const path = req.path || "";
+    if (!path.startsWith("/api/")) return next();
+    if (shouldSkipTacticalApiGate(path)) return next();
+    if (!req.session?.userId) return next();
+    const al = req.session.accessLevel || "user";
+    if (al === "owner" || al === "admin") return next();
+    const need = permissionForApiPath(path);
+    if (!need) return next();
+    if (storage.userHasTacticalPermission(req.session.userId, need)) return next();
+    return res.status(403).json({ error: "Insufficient tactical permissions" });
+  });
   // TDL terrain GeoJSON (Workbench exporter — see AG0_TDLTerrainExporterPlugin.c at repo root)
   if (fs.existsSync(TERRAIN_DIR)) {
     app.use("/terrain-data", express.static(TERRAIN_DIR, { index: false, maxAge: "2h" }));
@@ -366,18 +409,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     req.session.accessLevel = user.accessLevel;
     req.session.tacticalRole = user.role || "";
     appendActivity(req, { action: "LOGIN", entityType: "user_session", entityId: user.id, summary: `Login: ${user.username}`, after: { username: user.username, accessLevel: user.accessLevel } });
-    // Only return safe fields — never the hash
-    res.json({
-      id: user.id,
-      username: user.username,
-      accessLevel: user.accessLevel,
-      role: user.role || "",
-      rank: user.rank || "",
-      assignedUnit: user.assignedUnit || "",
-      teamAssignment: user.teamAssignment || "",
-      milIdNumber: user.milIdNumber || "",
-      mos: user.mos || "",
-    });
+    res.json(sessionUserJson(user));
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -425,17 +457,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     if (!req.session?.userId) return res.status(401).json({ error: "Not logged in" });
     const user = storage.getUserById(req.session.userId);
     if (!user) return res.status(401).json({ error: "Not logged in" });
-    res.json({
-      id: user.id,
-      username: user.username,
-      accessLevel: user.accessLevel,
-      role: user.role || "",
-      rank: user.rank || "",
-      assignedUnit: user.assignedUnit || "",
-      teamAssignment: user.teamAssignment || "",
-      milIdNumber: user.milIdNumber || "",
-      mos: user.mos || "",
-    });
+    res.json(sessionUserJson(user));
   });
 
   // ── Public registration with access code ─────────────────────────────────
@@ -455,7 +477,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     req.session.username = user.username;
     req.session.accessLevel = user.accessLevel;
     req.session.tacticalRole = user.role || "";
-    res.status(201).json(safeUser(user));
+    res.status(201).json(sessionUserJson(user));
   });
 
   // ── Access codes (Owner only) ────────────────────────────────────────────
@@ -470,7 +492,16 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── User management (admin+ can list/create, only owner can delete admins) ───
-  app.get("/api/users", requireAdmin, (_, res) => res.json(storage.getUsers()));
+  app.get("/api/users", requireAdmin, (_, res) => {
+    const users = storage.getUsers();
+    const map = storage.getAllUserTacticalPermissionRoleIdsMap();
+    res.json(
+      users.map((u) => ({
+        ...u,
+        tacticalRoleIds: map.get(u.id) ?? [],
+      })),
+    );
+  });
   // ── User profiles (any logged-in user can view) ─────────────────────────────
   app.get("/api/profile/:username", requireAuth, (req, res) => {
     const username = String(req.params.username || "").trim();
@@ -547,17 +578,25 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
         typeof milIdNumber === "string" ? milIdNumber.trim().slice(0, 64) : "",
       mos: typeof mos === "string" ? mos.trim().slice(0, 32) : "",
     });
+    let created = user;
     if (typeof role === "string") {
-      storage.updateUserById(user.id, { role: role.trim().slice(0, 64) });
+      const u2 = storage.updateUserById(user.id, { role: role.trim().slice(0, 64) });
+      if (u2) created = u2;
     }
+    if (Array.isArray(req.body.tacticalRoleIds) && req.body.tacticalRoleIds.length > 0) {
+      const nums = req.body.tacticalRoleIds.map((x: unknown) => Number(x)).filter((n: number) => Number.isFinite(n));
+      const setr = storage.setUserTacticalPermissionRoleIds(created.id, nums);
+      if (!setr.ok) return res.status(400).json({ error: setr.error });
+    }
+    const fresh = storage.getUserById(created.id);
     appendActivity(req, {
       action: "CREATE",
       entityType: "user",
-      entityId: user.id,
-      summary: `Created user: ${user.username} (${user.accessLevel})`,
-      after: { id: user.id, username: user.username, accessLevel: user.accessLevel, role: user.role || "" },
+      entityId: created.id,
+      summary: `Created user: ${created.username} (${created.accessLevel})`,
+      after: { id: created.id, username: created.username, accessLevel: created.accessLevel, role: created.role || "" },
     });
-    res.status(201).json(safeUser(user));
+    res.status(201).json(fresh ? sessionUserJson(fresh) : sessionUserJson(created));
   });
   // Owner-only: edit any user's username, role, or reset password
   app.patch("/api/users/:id", requireOwner, (req, res) => {
@@ -604,18 +643,154 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       const bcrypt = require("bcryptjs");
       updates.passwordHash = bcrypt.hashSync(password, 10);
     }
-    if (Object.keys(updates).length === 0) return res.status(400).json({ error: "Nothing to update" });
-    const updated = storage.updateUserById(id, updates); wsPush("USER");
-    const { passwordHash, ...safe } = updated as any;
+    let roleAssign = false;
+    if (Array.isArray(req.body.tacticalRoleIds)) {
+      const nums = req.body.tacticalRoleIds.map((x: unknown) => Number(x)).filter((n: number) => Number.isFinite(n));
+      const setr = storage.setUserTacticalPermissionRoleIds(id, nums);
+      if (!setr.ok) return res.status(400).json({ error: setr.error });
+      roleAssign = true;
+    }
+    if (Object.keys(updates).length === 0 && !roleAssign) return res.status(400).json({ error: "Nothing to update" });
+    if (Object.keys(updates).length > 0) {
+      storage.updateUserById(id, updates);
+      wsPush("USER");
+    }
+    const fresh = storage.getUserById(id);
+    if (!fresh) return res.status(404).json({ error: "User not found" });
     appendActivity(req, {
       action: "UPDATE",
       entityType: "user",
       entityId: id,
-      summary: `Updated user: ${beforeSafe.username} → ${(safe as any).username || beforeSafe.username}`,
+      summary: `Updated user: ${beforeSafe.username} → ${fresh.username}`,
       before: beforeSafe,
-      after: { id: (safe as any).id, username: (safe as any).username, accessLevel: (safe as any).accessLevel, role: (safe as any).role || "" },
+      after: { id: fresh.id, username: fresh.username, accessLevel: fresh.accessLevel, role: fresh.role || "" },
     });
-    res.json(safe);
+    res.json(sessionUserJson(fresh));
+  });
+
+  app.patch("/api/users/:id/tactical-roles", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: "Invalid id" });
+    const target = storage.getUserById(id);
+    if (!target) return res.status(404).json({ error: "User not found" });
+    const roleIds = Array.isArray(req.body.roleIds)
+      ? req.body.roleIds.map((x: unknown) => Number(x)).filter((n: number) => Number.isFinite(n))
+      : [];
+    const setr = storage.setUserTacticalPermissionRoleIds(id, roleIds);
+    if (!setr.ok) return res.status(400).json({ error: setr.error });
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "user_tactical_roles",
+      entityId: id,
+      summary: `Tactical permission roles for ${target.username}`,
+      after: { userId: id, roleIds },
+    });
+    res.json({ ok: true, tacticalRoleIds: storage.getUserTacticalPermissionRoleIds(id) });
+  });
+
+  app.get("/api/tactical-roles", requireAdmin, (_, res) => {
+    const rows = storage.listTacticalPermissionRoles();
+    res.json(
+      rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        color: r.color,
+        permissions: (() => {
+          try {
+            const p = JSON.parse(r.permissionsJson || "[]") as unknown;
+            return Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+          } catch {
+            return [];
+          }
+        })(),
+        sortOrder: r.sortOrder,
+        createdAt: r.createdAt,
+      })),
+    );
+  });
+
+  app.post("/api/tactical-roles", requireAdmin, (req, res) => {
+    const { name, color, permissions, sortOrder } = req.body;
+    if (!name || typeof name !== "string") return res.status(400).json({ error: "name required" });
+    const perms = Array.isArray(permissions) ? permissions.filter((x: unknown): x is string => typeof x === "string") : [];
+    const row = storage.createTacticalPermissionRole({
+      name,
+      color: typeof color === "string" ? color : undefined,
+      permissions: perms,
+      sortOrder: sortOrder !== undefined && sortOrder !== null ? Number(sortOrder) : undefined,
+    });
+    appendActivity(req, {
+      action: "CREATE",
+      entityType: "tactical_permission_role",
+      entityId: row.id,
+      summary: `Created tactical permission role: ${row.name}`,
+      after: { id: row.id, name: row.name },
+    });
+    let permArr: string[] = [];
+    try {
+      const p = JSON.parse(row.permissionsJson || "[]") as unknown;
+      permArr = Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      permArr = [];
+    }
+    res.status(201).json({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      permissions: permArr,
+      sortOrder: row.sortOrder,
+      createdAt: row.createdAt,
+    });
+  });
+
+  app.patch("/api/tactical-roles/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const { name, color, permissions, sortOrder } = req.body;
+    const patch: Record<string, unknown> = {};
+    if (name !== undefined) patch.name = name;
+    if (color !== undefined) patch.color = color;
+    if (permissions !== undefined) patch.permissions = permissions;
+    if (sortOrder !== undefined) patch.sortOrder = Number(sortOrder);
+    const row = storage.updateTacticalPermissionRole(id, patch as any);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    appendActivity(req, {
+      action: "UPDATE",
+      entityType: "tactical_permission_role",
+      entityId: id,
+      summary: `Updated tactical permission role: ${row.name}`,
+      after: { id: row.id, name: row.name },
+    });
+    let permArr: string[] = [];
+    try {
+      const p = JSON.parse(row.permissionsJson || "[]") as unknown;
+      permArr = Array.isArray(p) ? p.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      permArr = [];
+    }
+    res.json({
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      permissions: permArr,
+      sortOrder: row.sortOrder,
+      createdAt: row.createdAt,
+    });
+  });
+
+  app.delete("/api/tactical-roles/:id", requireAdmin, (req, res) => {
+    const id = Number(req.params.id);
+    const del = storage.deleteTacticalPermissionRole(id);
+    if (!del.ok) {
+      if (del.reason === "not_found") return res.status(404).json({ error: "Not found" });
+      return res.status(400).json({ error: "Cannot delete this role" });
+    }
+    appendActivity(req, {
+      action: "DELETE",
+      entityType: "tactical_permission_role",
+      entityId: id,
+      summary: `Deleted tactical permission role id ${id}`,
+    });
+    res.status(204).send();
   });
 
   app.delete("/api/users/:id", requireAdmin, (req, res) => {
@@ -1505,23 +1680,32 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     }
     res.json(enrichTrainingRows(storage.getTrainingRecords(qUser)));
   });
-  app.post("/api/training", requireAdmin, (req, res) => {
-    const parsed = trainingPostSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    const p = parsed.data;
+  function validateTrainingPayload(p: {
+    attachedIsofacDocId: number;
+    operationId: number;
+  }) {
     if (p.attachedIsofacDocId) {
       const doc = storage.getIsofacDoc(p.attachedIsofacDocId);
-      if (!doc) return res.status(400).json({ error: "Attached ISOFAC document not found" });
+      if (!doc) return { error: "Attached ISOFAC document not found" as const };
       if (!(SIGN_IN_ISO_FAC_TYPES as readonly string[]).includes(doc.type)) {
-        return res.status(400).json({
-          error: "Choose an order/plan document (e.g. OPORD, CONOP, FRAGORD) to attach",
-        });
+        return {
+          error: "Choose an order/plan document (e.g. OPORD, CONOP, FRAGORD) to attach" as const,
+        };
       }
     }
     if (p.operationId) {
       const op = storage.getOperation(p.operationId);
-      if (!op) return res.status(400).json({ error: "Operation not found" });
+      if (!op) return { error: "Operation not found" as const };
     }
+    return null;
+  }
+
+  app.post("/api/training", requireAdmin, (req, res) => {
+    const parsed = trainingPostSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const p = parsed.data;
+    const bad = validateTrainingPayload(p);
+    if (bad) return res.status(400).json({ error: bad.error });
     const rec = storage.createTrainingRecord({
       username: p.username,
       eventName: p.eventName,
@@ -1537,6 +1721,43 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     });
     wsPush("TRAINING");
     res.status(201).json(rec);
+  });
+
+  const trainingBatchSchema = trainingPostSchema.omit({ username: true }).extend({
+    usernames: z.array(z.string().min(1)).min(1),
+  });
+
+  app.post("/api/training/batch", requireAdmin, (req, res) => {
+    const parsed = trainingBatchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const p = parsed.data;
+    const bad = validateTrainingPayload({ attachedIsofacDocId: p.attachedIsofacDocId, operationId: p.operationId });
+    if (bad) return res.status(400).json({ error: bad.error });
+    const seen = new Set<string>();
+    const unique = p.usernames.map((u) => u.trim()).filter((u) => {
+      if (!u || seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
+    if (unique.length === 0) return res.status(400).json({ error: "No valid usernames" });
+    const now = new Date().toISOString();
+    const records = unique.map((username) =>
+      storage.createTrainingRecord({
+        username,
+        eventName: p.eventName,
+        category: p.category,
+        date: p.date,
+        result: p.result,
+        instructor: p.instructor,
+        expiresAt: p.expiresAt,
+        notes: p.notes,
+        attachedIsofacDocId: p.attachedIsofacDocId,
+        operationId: p.operationId,
+        createdAt: now,
+      }),
+    );
+    wsPush("TRAINING");
+    res.status(201).json({ count: records.length, records });
   });
   app.patch("/api/training/:id", requireAdmin, (req, res) => {
     const rec = storage.updateTrainingRecord(Number(req.params.id), req.body);

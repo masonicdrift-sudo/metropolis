@@ -26,6 +26,24 @@ const CAT_COLOR: Record<string, string> = {
   comms: "text-blue-400", leadership: "text-yellow-400", special: "text-orange-400",
 };
 
+/** Comma-separated roster names → profile links (handles legacy free-text as one token). */
+export function InstructorField({ text, className }: { text: string; className?: string }) {
+  const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return null;
+  return (
+    <span className={className}>
+      {parts.map((p, i) => (
+        <span key={`${p}-${i}`}>
+          {i > 0 ? ", " : ""}
+          <ProfileLink username={p} className="text-foreground/90 hover:text-blue-400 font-mono">
+            {p}
+          </ProfileLink>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 type TrainingRow = TrainingRecord & {
   attachedDocTitle?: string | null;
   attachedDocType?: string | null;
@@ -35,18 +53,31 @@ type TrainingRow = TrainingRecord & {
 function SignInForm({ onClose, users }: { onClose: () => void; users: { username: string }[] }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const [operators, setOperators] = useState<string[]>([]);
+  const [instructors, setInstructors] = useState<string[]>([]);
   const [form, setForm] = useState({
-    username: "",
     eventName: "",
     category: "general",
     date: new Date().toISOString().split("T")[0],
     result: "pass",
-    instructor: "",
     expiresAt: "",
     notes: "",
     attachedIsofacDocId: "0",
     operationId: "0",
   });
+
+  const sortedUsers = useMemo(
+    () => [...users].sort((a, b) => a.username.localeCompare(b.username)),
+    [users],
+  );
+  const addableOperators = useMemo(
+    () => sortedUsers.filter((u) => !operators.includes(u.username)),
+    [sortedUsers, operators],
+  );
+  const addableInstructors = useMemo(
+    () => sortedUsers.filter((u) => !instructors.includes(u.username)),
+    [sortedUsers, instructors],
+  );
 
   const { data: operations = [] } = useQuery<Operation[]>({
     queryKey: ["/api/operations"],
@@ -64,11 +95,12 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
   );
 
   const create = useMutation({
-    mutationFn: (d: Record<string, unknown>) => apiRequest("POST", "/api/training", d),
-    onSuccess: () => {
+    mutationFn: (d: Record<string, unknown>) => apiRequest("POST", "/api/training/batch", d),
+    onSuccess: (data: { count?: number }) => {
       qc.invalidateQueries({ queryKey: ["/api/training"] });
       qc.invalidateQueries({ queryKey: ["/api/operations"] });
-      toast({ title: "Sign-in recorded" });
+      const n = typeof data?.count === "number" ? data.count : 1;
+      toast({ title: n === 1 ? "1 sign-in recorded" : `${n} sign-ins recorded` });
       onClose();
     },
     onError: (err: Error) => toast({ title: err.message || "Save failed", variant: "destructive" }),
@@ -79,25 +111,111 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
   return (
     <div className="space-y-3">
       <div className="space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <Label className="text-[10px] tracking-wider">OPERATOR *</Label>
-            <Select value={form.username} onValueChange={set("username")}>
-              <SelectTrigger className="text-xs"><SelectValue placeholder="Select operator" /></SelectTrigger>
-              <SelectContent>{users.map((u) => <SelectItem key={u.username} value={u.username}>{u.username}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-[10px] tracking-wider">CATEGORY</Label>
-            <Select value={form.category} onValueChange={set("category")}>
-              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["general", "weapons", "medical", "comms", "leadership", "special"].map((c) => (
-                  <SelectItem key={c} value={c}>{c.toUpperCase()}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="rounded border border-border/60 bg-secondary/10 p-2 space-y-2">
+          <Label className="text-[10px] tracking-wider text-muted-foreground">OPERATORS * (ONE SIGN-IN ROW EACH)</Label>
+          <Select
+            key={operators.join(",")}
+            onValueChange={(v) => {
+              if (v && !operators.includes(v)) setOperators((o) => [...o, v].sort((a, b) => a.localeCompare(b)));
+            }}
+          >
+            <SelectTrigger className="text-xs h-8">
+              <SelectValue placeholder="Add operator…" />
+            </SelectTrigger>
+            <SelectContent>
+              {addableOperators.length === 0 ? (
+                <div className="px-2 py-1.5 text-[10px] text-muted-foreground">Everyone selected</div>
+              ) : (
+                addableOperators.map((u) => (
+                  <SelectItem key={u.username} value={u.username} className="text-xs font-mono">
+                    {u.username}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {operators.length === 0 ? (
+            <div className="text-[9px] text-muted-foreground/80">Select at least one operator.</div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {operators.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded border border-border bg-background/80"
+                >
+                  <ProfileLink username={name} className="text-blue-300 hover:text-blue-200">{name}</ProfileLink>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-red-400 px-0.5"
+                    title="Remove"
+                    onClick={() => setOperators((o) => o.filter((x) => x !== name))}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded border border-border/60 bg-secondary/10 p-2 space-y-2">
+          <Label className="text-[10px] tracking-wider text-muted-foreground">INSTRUCTOR(S)</Label>
+          <p className="text-[9px] text-muted-foreground/80 -mt-1">Optional. Same roster multi-select; stored as comma-separated names.</p>
+          <Select
+            key={instructors.join(",")}
+            onValueChange={(v) => {
+              if (v && !instructors.includes(v)) setInstructors((o) => [...o, v].sort((a, b) => a.localeCompare(b)));
+            }}
+          >
+            <SelectTrigger className="text-xs h-8">
+              <SelectValue placeholder="Add instructor…" />
+            </SelectTrigger>
+            <SelectContent>
+              {addableInstructors.length === 0 ? (
+                <div className="px-2 py-1.5 text-[10px] text-muted-foreground">Everyone selected</div>
+              ) : (
+                addableInstructors.map((u) => (
+                  <SelectItem key={u.username} value={u.username} className="text-xs font-mono">
+                    {u.username}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {instructors.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {instructors.map((name) => (
+                <span
+                  key={name}
+                  className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded border border-border bg-background/80"
+                >
+                  <ProfileLink username={name} className="text-amber-200/90 hover:text-amber-100">{name}</ProfileLink>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-red-400 px-0.5"
+                    title="Remove"
+                    onClick={() => setInstructors((o) => o.filter((x) => x !== name))}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[9px] text-muted-foreground/60">No instructors listed.</div>
+          )}
+        </div>
+
+        <div>
+          <Label className="text-[10px] tracking-wider">CATEGORY</Label>
+          <Select value={form.category} onValueChange={set("category")}>
+            <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["general", "weapons", "medical", "comms", "leadership", "special"].map((c) => (
+                <SelectItem key={c} value={c}>{c.toUpperCase()}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-[10px] tracking-wider">EVENT / ENTRY NAME *</Label>
@@ -120,7 +238,7 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
             </SelectContent>
           </Select>
           <p className="text-[9px] text-muted-foreground mt-1">
-            Counts this operator toward that operation&apos;s attendance on the Operations page (sign-in rows linked to this op).
+            Counts each selected operator toward that operation&apos;s attendance on the Operations page.
           </p>
         </div>
         <div>
@@ -153,10 +271,6 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
             </Select>
           </div>
           <div>
-            <Label className="text-[10px] tracking-wider">INSTRUCTOR</Label>
-            <Input value={form.instructor} onChange={(e) => set("instructor")(e.target.value)} placeholder="Username / callsign" className="text-xs" />
-          </div>
-          <div>
             <Label className="text-[10px] tracking-wider">EXPIRES (OPTIONAL)</Label>
             <Input type="date" value={form.expiresAt} onChange={(e) => set("expiresAt")(e.target.value)} className="text-xs" />
           </div>
@@ -172,19 +286,20 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
           size="sm"
           className="text-xs bg-blue-800 hover:bg-blue-700"
           onClick={() => {
-            if (!form.username || !form.eventName) {
-              toast({ title: "Operator and event name required", variant: "destructive" });
+            if (operators.length === 0 || !form.eventName.trim()) {
+              toast({ title: "Select at least one operator and enter an event name", variant: "destructive" });
               return;
             }
             const attachedIsofacDocId = Number(form.attachedIsofacDocId) || 0;
             const operationId = Number(form.operationId) || 0;
+            const instructorJoined = instructors.join(", ");
             create.mutate({
-              username: form.username,
-              eventName: form.eventName,
+              usernames: operators,
+              eventName: form.eventName.trim(),
               category: form.category,
               date: form.date,
               result: form.result,
-              instructor: form.instructor,
+              instructor: instructorJoined,
               expiresAt: form.expiresAt,
               notes: form.notes,
               attachedIsofacDocId,
@@ -193,7 +308,7 @@ function SignInForm({ onClose, users }: { onClose: () => void; users: { username
           }}
           disabled={create.isPending}
         >
-          ADD SIGN-IN
+          RECORD SIGN-INS
         </Button>
       </div>
     </div>
@@ -403,6 +518,11 @@ export default function TrainingPage() {
                           </span>
                         ) : null}
                       </div>
+                      {r.instructor ? (
+                        <div className="text-[9px] text-muted-foreground mt-0.5">
+                          INSTR: <InstructorField text={r.instructor} className="inline" />
+                        </div>
+                      ) : null}
                       {r.notes ? <div className="text-[9px] text-muted-foreground/80 mt-0.5 line-clamp-2">{r.notes}</div> : null}
                     </div>
                     {canAdmin && (
@@ -449,7 +569,11 @@ export default function TrainingPage() {
                       </ProfileLink>
                     </span>
                     <span>▪ {fmt(r.date)}</span>
-                    {r.instructor && <span>▪ INSTR: {r.instructor}</span>}
+                    {r.instructor ? (
+                      <span className="inline-flex flex-wrap items-center gap-x-1">
+                        <span>▪ INSTR:</span> <InstructorField text={r.instructor} />
+                      </span>
+                    ) : null}
                     {r.expiresAt && (
                       <span className={isExpiringSoon ? "text-orange-400" : ""}>
                         ▪ EXP: {fmt(r.expiresAt)}

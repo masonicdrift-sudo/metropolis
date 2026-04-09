@@ -1,9 +1,12 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import * as schema from "@shared/schema";
-import { eq, desc, and, asc, gte, lte } from "drizzle-orm";
+import { eq, desc, and, asc, gte, lte, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { encrypt, decrypt } from "./crypto";
+import {
+  expandEffectivePermissionKeys,
+} from "@shared/tacticalPermissions";
 import type {
   Unit, InsertUnit,
   Operation, InsertOperation,
@@ -34,6 +37,7 @@ import type {
   TacticalMapMarker,
   TacticalMapRangeRing,
   TacticalMapBuildingLabel,
+  TacticalPermissionRole,
 } from "@shared/schema";
 import type { TacticalMapLine, TacticalMapLineRow } from "@shared/schema";
 
@@ -566,6 +570,63 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS idx_cas_treatments_casualty ON casualty_treatments(casualty_id, ts);
 `);
 
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS tactical_permission_roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '#5865F2',
+    permissions_json TEXT NOT NULL DEFAULT '[]',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS user_tactical_roles (
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, role_id)
+  );
+`);
+
+function ensureTacticalPermissionRolesSeed() {
+  const now = new Date().toISOString();
+  const anyRole = db.select().from(schema.tacticalPermissionRoles).limit(1).get();
+  if (!anyRole) {
+    const row = db
+      .insert(schema.tacticalPermissionRoles)
+      .values({
+        name: "Base node access",
+        color: "#5865F2",
+        permissionsJson: JSON.stringify(["*"]),
+        sortOrder: 0,
+        createdAt: now,
+      })
+      .returning()
+      .get()!;
+    const baseId = row.id;
+    for (const u of db.select({ id: schema.users.id }).from(schema.users).all()) {
+      db.insert(schema.userTacticalPermissionRoles).values({ userId: u.id, roleId: baseId }).run();
+    }
+    return;
+  }
+  const base = db
+    .select()
+    .from(schema.tacticalPermissionRoles)
+    .where(eq(schema.tacticalPermissionRoles.name, "Base node access"))
+    .get();
+  if (!base) return;
+  const linked = new Set(
+    db
+      .select({ userId: schema.userTacticalPermissionRoles.userId })
+      .from(schema.userTacticalPermissionRoles)
+      .all()
+      .map((r) => r.userId),
+  );
+  for (const u of db.select({ id: schema.users.id }).from(schema.users).all()) {
+    if (!linked.has(u.id)) {
+      db.insert(schema.userTacticalPermissionRoles).values({ userId: u.id, roleId: base.id }).run();
+    }
+  }
+}
+
 // Seed 24FEB2026 Commo Card
 const commoCardExists = db.select().from(schema.commoCards).get();
 if (!commoCardExists) {
@@ -666,6 +727,8 @@ if (!adminExists) {
   }).run();
 }
 
+ensureTacticalPermissionRolesSeed();
+
 // No demo data seeded — start clean
 
 export interface IStorage {
@@ -721,6 +784,30 @@ export interface IStorage {
   updateUserById(id: number, updates: Partial<User>): User | undefined;
   /** Updates username on user row and all username references across the DB (transaction). */
   changeUsername(userId: number, oldUsername: string, newUsername: string): User | undefined;
+  // Tactical permission roles (Discord-style)
+  listTacticalPermissionRoles(): TacticalPermissionRole[];
+  createTacticalPermissionRole(input: {
+    name: string;
+    color?: string;
+    permissions: string[];
+    sortOrder?: number;
+  }): TacticalPermissionRole;
+  updateTacticalPermissionRole(
+    id: number,
+    patch: Partial<{ name: string; color: string; permissions: string[]; sortOrder: number }>,
+  ): TacticalPermissionRole | undefined;
+  deleteTacticalPermissionRole(id: number): { ok: true } | { ok: false; reason: string };
+  getUserTacticalPermissionRoleIds(userId: number): number[];
+  getAllUserTacticalPermissionRoleIdsMap(): Map<number, number[]>;
+  setUserTacticalPermissionRoleIds(
+    userId: number,
+    roleIds: number[],
+  ): { ok: true } | { ok: false; error: string };
+  assignDefaultTacticalRolesToUser(userId: number): void;
+  getTacticalRolesDisplayForUser(userId: number): { id: number; name: string; color: string }[];
+  getMergedTacticalPermissionKeys(userId: number): string[];
+  userHasTacticalPermission(userId: number, permission: string): boolean;
+  getDefaultTacticalPermissionRoleId(): number | null;
   // Units
   getUnits(): Unit[];
   getUnit(id: number): Unit | undefined;
@@ -1135,7 +1222,7 @@ export class Storage implements IStorage {
     profile?: Partial<Pick<User, "rank" | "assignedUnit" | "teamAssignment" | "milIdNumber" | "mos">>,
   ) {
     const hash = bcrypt.hashSync(password, 10);
-    return db.insert(schema.users).values({
+    const created = db.insert(schema.users).values({
       username,
       passwordHash: hash,
       accessLevel,
@@ -1147,9 +1234,12 @@ export class Storage implements IStorage {
       mos: profile?.mos ?? "",
       createdAt: new Date().toISOString(),
       lastLogin: "",
-    }).returning().get();
+    }).returning().get()!;
+    this.assignDefaultTacticalRolesToUser(created.id);
+    return created;
   }
   deleteUser(id: number) {
+    sqlite.prepare(`DELETE FROM user_tactical_roles WHERE user_id = ?`).run(id);
     db.delete(schema.users).where(eq(schema.users.id, id)).run();
   }
   updateLastLogin(id: number) {
@@ -1200,6 +1290,172 @@ export class Storage implements IStorage {
       return db.update(schema.users).set({ username: newUsername }).where(eq(schema.users.id, userId)).returning().get();
     });
     return run();
+  }
+
+  listTacticalPermissionRoles() {
+    return db
+      .select()
+      .from(schema.tacticalPermissionRoles)
+      .orderBy(asc(schema.tacticalPermissionRoles.sortOrder), asc(schema.tacticalPermissionRoles.id))
+      .all();
+  }
+
+  createTacticalPermissionRole(input: {
+    name: string;
+    color?: string;
+    permissions: string[];
+    sortOrder?: number;
+  }) {
+    const now = new Date().toISOString();
+    return db
+      .insert(schema.tacticalPermissionRoles)
+      .values({
+        name: input.name.trim().slice(0, 64),
+        color: (input.color || "#5865F2").slice(0, 32),
+        permissionsJson: JSON.stringify(input.permissions),
+        sortOrder: input.sortOrder ?? 0,
+        createdAt: now,
+      })
+      .returning()
+      .get()!;
+  }
+
+  updateTacticalPermissionRole(
+    id: number,
+    patch: Partial<{ name: string; color: string; permissions: string[]; sortOrder: number }>,
+  ) {
+    const row = db.select().from(schema.tacticalPermissionRoles).where(eq(schema.tacticalPermissionRoles.id, id)).get();
+    if (!row) return undefined;
+    const updates: Record<string, unknown> = {};
+    if (patch.name !== undefined) updates.name = patch.name.trim().slice(0, 64);
+    if (patch.color !== undefined) updates.color = patch.color.slice(0, 32);
+    if (patch.permissions !== undefined) updates.permissionsJson = JSON.stringify(patch.permissions);
+    if (patch.sortOrder !== undefined) updates.sortOrder = patch.sortOrder;
+    if (Object.keys(updates).length === 0) return row;
+    return db
+      .update(schema.tacticalPermissionRoles)
+      .set(updates as Record<string, never>)
+      .where(eq(schema.tacticalPermissionRoles.id, id))
+      .returning()
+      .get();
+  }
+
+  deleteTacticalPermissionRole(id: number): { ok: true } | { ok: false; reason: string } {
+    const row = db.select().from(schema.tacticalPermissionRoles).where(eq(schema.tacticalPermissionRoles.id, id)).get();
+    if (!row) return { ok: false, reason: "not_found" };
+    if (row.name === "Base node access") return { ok: false, reason: "protected" };
+    sqlite.prepare(`DELETE FROM user_tactical_roles WHERE role_id = ?`).run(id);
+    db.delete(schema.tacticalPermissionRoles).where(eq(schema.tacticalPermissionRoles.id, id)).run();
+    return { ok: true };
+  }
+
+  getUserTacticalPermissionRoleIds(userId: number): number[] {
+    return db
+      .select({ roleId: schema.userTacticalPermissionRoles.roleId })
+      .from(schema.userTacticalPermissionRoles)
+      .where(eq(schema.userTacticalPermissionRoles.userId, userId))
+      .all()
+      .map((r) => r.roleId);
+  }
+
+  getAllUserTacticalPermissionRoleIdsMap(): Map<number, number[]> {
+    const m = new Map<number, number[]>();
+    for (const r of db.select().from(schema.userTacticalPermissionRoles).all()) {
+      const arr = m.get(r.userId) ?? [];
+      arr.push(r.roleId);
+      m.set(r.userId, arr);
+    }
+    return m;
+  }
+
+  setUserTacticalPermissionRoleIds(
+    userId: number,
+    roleIds: number[],
+  ): { ok: true } | { ok: false; error: string } {
+    const uniq = Array.from(new Set(roleIds.filter((n) => Number.isFinite(n) && n > 0))) as number[];
+    if (uniq.length === 0) return { ok: false, error: "At least one permission role is required" };
+    const found = db
+      .select({ id: schema.tacticalPermissionRoles.id })
+      .from(schema.tacticalPermissionRoles)
+      .where(inArray(schema.tacticalPermissionRoles.id, uniq))
+      .all();
+    if (found.length !== uniq.length) return { ok: false, error: "Invalid role id" };
+    const run = sqlite.transaction(() => {
+      db.delete(schema.userTacticalPermissionRoles).where(eq(schema.userTacticalPermissionRoles.userId, userId)).run();
+      for (const rid of uniq) {
+        db.insert(schema.userTacticalPermissionRoles).values({ userId, roleId: rid }).run();
+      }
+    });
+    run();
+    return { ok: true };
+  }
+
+  getDefaultTacticalPermissionRoleId(): number | null {
+    const byName = db
+      .select()
+      .from(schema.tacticalPermissionRoles)
+      .where(eq(schema.tacticalPermissionRoles.name, "Base node access"))
+      .get();
+    if (byName) return byName.id;
+    const first = db
+      .select()
+      .from(schema.tacticalPermissionRoles)
+      .orderBy(asc(schema.tacticalPermissionRoles.sortOrder), asc(schema.tacticalPermissionRoles.id))
+      .limit(1)
+      .get();
+    return first?.id ?? null;
+  }
+
+  assignDefaultTacticalRolesToUser(userId: number): void {
+    const baseId = this.getDefaultTacticalPermissionRoleId();
+    if (!baseId) return;
+    const existing = this.getUserTacticalPermissionRoleIds(userId);
+    if (existing.length > 0) return;
+    db.insert(schema.userTacticalPermissionRoles).values({ userId, roleId: baseId }).run();
+  }
+
+  private collectPermissionKeysFromRoleRows(rows: TacticalPermissionRole[]): string[] {
+    const keys: string[] = [];
+    for (const row of rows) {
+      try {
+        const parsed = JSON.parse(row.permissionsJson || "[]") as unknown;
+        if (Array.isArray(parsed)) {
+          for (const x of parsed) {
+            if (typeof x === "string" && x.trim()) keys.push(x.trim());
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    return keys;
+  }
+
+  getMergedTacticalPermissionKeys(userId: number): string[] {
+    const ids = this.getUserTacticalPermissionRoleIds(userId);
+    if (ids.length === 0) return [];
+    const rows = db
+      .select()
+      .from(schema.tacticalPermissionRoles)
+      .where(inArray(schema.tacticalPermissionRoles.id, ids))
+      .all();
+    const raw = this.collectPermissionKeysFromRoleRows(rows);
+    const expanded = expandEffectivePermissionKeys(raw);
+    return Array.from(expanded).sort();
+  }
+
+  getTacticalRolesDisplayForUser(userId: number): { id: number; name: string; color: string }[] {
+    const ids = this.getUserTacticalPermissionRoleIds(userId);
+    if (!ids.length) return [];
+    const rows = db
+      .select()
+      .from(schema.tacticalPermissionRoles)
+      .where(inArray(schema.tacticalPermissionRoles.id, ids))
+      .orderBy(asc(schema.tacticalPermissionRoles.sortOrder), asc(schema.tacticalPermissionRoles.id))
+      .all();
+    return rows.map((r) => ({ id: r.id, name: r.name, color: r.color || "#5865F2" }));
+  }
+
+  userHasTacticalPermission(userId: number, permission: string): boolean {
+    return new Set(this.getMergedTacticalPermissionKeys(userId)).has(permission);
   }
 
   // Units

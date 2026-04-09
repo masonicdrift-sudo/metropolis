@@ -1,7 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { apiRequest } from "./queryClient";
 
-interface AuthUser {
+export interface TacticalRoleBadge {
+  id: number;
+  name: string;
+  color: string;
+}
+
+export interface AuthUser {
   id: number;
   username: string;
   /** Access level used for permissions (owner/admin/user). */
@@ -14,6 +20,10 @@ interface AuthUser {
   teamAssignment: string;
   milIdNumber: string;
   mos: string;
+  /** Discord-style permission roles (merged capabilities below). */
+  tacticalRoles?: TacticalRoleBadge[];
+  /** Effective permission keys (expanded from roles; includes all areas if `*` was granted). */
+  permissions?: string[];
 }
 
 interface AuthContextType {
@@ -33,14 +43,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     apiRequest("GET", "/api/auth/me")
-      .then((u: AuthUser) => setUser(u))
+      .then((u: AuthUser) =>
+        setUser({
+          ...u,
+          tacticalRoles: u.tacticalRoles ?? [],
+          permissions: u.permissions ?? [],
+        }),
+      )
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (username: string, password: string) => {
     const u = await apiRequest("POST", "/api/auth/login", { username, password });
-    setUser(u);
+    setUser({
+      ...u,
+      tacticalRoles: u.tacticalRoles ?? [],
+      permissions: u.permissions ?? [],
+    });
   };
 
   const logout = async () => {
@@ -51,7 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const u = await apiRequest("GET", "/api/auth/me");
-      setUser(u);
+      setUser({
+        ...u,
+        tacticalRoles: u.tacticalRoles ?? [],
+        permissions: u.permissions ?? [],
+      });
     } catch {
       setUser(null);
     }
@@ -68,4 +92,11 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+/** Route or API area visibility from tactical permission roles (admins bypass). */
+export function userCanViewPath(user: AuthUser | null | undefined, permission: string): boolean {
+  if (!user) return false;
+  if (user.accessLevel === "owner" || user.accessLevel === "admin") return true;
+  return (user.permissions || []).includes(permission);
 }

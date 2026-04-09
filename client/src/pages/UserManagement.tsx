@@ -15,7 +15,7 @@ interface AppUser {
   id: number;
   username: string;
   accessLevel: string;
-  role: string; // tactical role
+  role: string; // duty position / billet label
   rank: string;
   assignedUnit: string;
   teamAssignment: string;
@@ -23,6 +23,15 @@ interface AppUser {
   mos: string;
   createdAt: string;
   lastLogin: string;
+  /** Assigned tactical permission role ids (Discord-style). */
+  tacticalRoleIds?: number[];
+}
+
+interface TacticalPermRoleRow {
+  id: number;
+  name: string;
+  color: string;
+  permissions: string[];
 }
 
 const MOS_SORTED = [...US_ARMY_MOS_OPTIONS].sort((a, b) =>
@@ -46,6 +55,11 @@ function rankColor(abbr: string) {
 function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void; units: Unit[]; callerAccess: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { data: permRoles = [] } = useQuery<TacticalPermRoleRow[]>({
+    queryKey: ["/api/tactical-roles"],
+    queryFn: () => apiRequest("GET", "/api/tactical-roles"),
+  });
+  const [permRoleIds, setPermRoleIds] = useState<number[]>([]);
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -80,7 +94,12 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
       teamAssignment: form.teamAssignment.trim(),
       milIdNumber: form.milIdNumber.trim(),
       mos: form.mos,
+      ...(permRoleIds.length > 0 ? { tacticalRoleIds: permRoleIds } : {}),
     });
+  };
+
+  const togglePermRole = (id: number) => {
+    setPermRoleIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const set = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -128,7 +147,7 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
-          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TACTICAL ROLE (OPTIONAL)</label>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">DUTY ROLE (OPTIONAL)</label>
           <select
             value={form.rolePreset}
             onChange={(e) => set("rolePreset")(e.target.value)}
@@ -197,7 +216,28 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
           </select>
         </div>
       </div>
-      {/* Access level + tactical role are set above */}
+      {permRoles.length > 0 && (
+        <div className="border border-border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+          <div className="text-[9px] text-muted-foreground tracking-wider">PERMISSION ROLES (optional — default is Base node access)</div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {permRoles.map((r) => (
+              <label key={r.id} className="flex items-center gap-2 cursor-pointer text-[10px]">
+                <input
+                  type="checkbox"
+                  checked={permRoleIds.includes(r.id)}
+                  onChange={() => togglePermRole(r.id)}
+                />
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: r.color || "#5865F2" }}
+                />
+                <span className="font-mono tracking-wider">{r.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Access level + duty role are set above */}
       <div>
         <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">PASSWORD</label>
         <input type="password" value={form.password} onChange={e => set("password")(e.target.value)}
@@ -220,6 +260,11 @@ function CreateUserForm({ onClose, units, callerAccess }: { onClose: () => void;
 function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose: () => void; units: Unit[] }) {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { data: permRoles = [] } = useQuery<TacticalPermRoleRow[]>({
+    queryKey: ["/api/tactical-roles"],
+    queryFn: () => apiRequest("GET", "/api/tactical-roles"),
+  });
+  const [permRoleIds, setPermRoleIds] = useState<number[]>(() => [...(target.tacticalRoleIds ?? [])]);
   const roleInPresets = (TACTICAL_ROLE_PRESETS as readonly string[]).includes(target.role);
   const [form, setForm] = useState({
     username: target.username,
@@ -256,11 +301,18 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
       if (form.password !== form.confirm) { toast({ title: "Passwords do not match", variant: "destructive" }); return; }
       payload.password = form.password;
     }
+    const prevPerm = (target.tacticalRoleIds ?? []).slice().sort((a, b) => a - b).join(",");
+    const nextPerm = permRoleIds.slice().sort((a, b) => a - b).join(",");
+    if (prevPerm !== nextPerm) payload.tacticalRoleIds = permRoleIds;
     if (Object.keys(payload).length === 0) { toast({ title: "No changes made" }); return; }
     update.mutate(payload);
   };
 
   const set = (k: string) => (v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const togglePermRole = (id: number) => {
+    setPermRoleIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   return (
     <div className="space-y-3">
@@ -285,7 +337,7 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           </select>
         </div>
         <div>
-          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">TACTICAL ROLE (OPTIONAL)</label>
+          <label className="text-[9px] text-muted-foreground tracking-[0.15em] block mb-1.5">DUTY ROLE (OPTIONAL)</label>
           <select
             value={form.rolePreset}
             onChange={(e) => set("rolePreset")(e.target.value)}
@@ -366,7 +418,28 @@ function EditUserForm({ user: target, onClose, units }: { user: AppUser; onClose
           </select>
         </div>
       </div>
-      {/* Access level + tactical role are set above */}
+      {permRoles.length > 0 && (
+        <div className="border border-border rounded-md p-3 space-y-2 max-h-44 overflow-y-auto">
+          <div className="text-[9px] text-muted-foreground tracking-wider">PERMISSION ROLES</div>
+          <div className="grid grid-cols-1 gap-1.5">
+            {permRoles.map((r) => (
+              <label key={r.id} className="flex items-center gap-2 cursor-pointer text-[10px]">
+                <input
+                  type="checkbox"
+                  checked={permRoleIds.includes(r.id)}
+                  onChange={() => togglePermRole(r.id)}
+                />
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: r.color || "#5865F2" }}
+                />
+                <span className="font-mono tracking-wider">{r.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Access level + duty role are set above */}
       <div className="border-t border-border pt-3">
         <div className="text-[9px] text-muted-foreground tracking-wider mb-2">RESET PASSWORD (leave blank to keep)</div>
         <div className="space-y-2">
@@ -395,6 +468,10 @@ export default function UserManagement() {
 
   const { data: users = [] } = useQuery<AppUser[]>({ queryKey: ["/api/users"], queryFn: () => apiRequest("GET", "/api/users") });
   const { data: units = [] } = useQuery<Unit[]>({ queryKey: ["/api/units"], queryFn: () => apiRequest("GET", "/api/units") });
+  const { data: permRoles = [] } = useQuery<TacticalPermRoleRow[]>({
+    queryKey: ["/api/tactical-roles"],
+    queryFn: () => apiRequest("GET", "/api/tactical-roles"),
+  });
 
   const del = useMutation({
     mutationFn: (id: number) => apiRequest("DELETE", `/api/users/${id}`),
@@ -474,7 +551,8 @@ export default function UserManagement() {
               <th className="text-left px-4 py-2">RANK</th>
               <th className="text-left px-4 py-2">UNIT</th>
               <th className="text-left px-4 py-2">TEAM</th>
-              <th className="text-left px-4 py-2">TACTICAL ROLE</th>
+              <th className="text-left px-4 py-2">DUTY ROLE</th>
+              <th className="text-left px-4 py-2">PERM ROLES</th>
               <th className="text-left px-4 py-2">ACCESS</th>
               <th className="text-left px-4 py-2">LAST LOGIN</th>
               <th className="text-left px-4 py-2">ACTIONS</th>
@@ -527,10 +605,33 @@ export default function UserManagement() {
                     ? <span className="text-[10px] font-mono text-cyan-200/80 tracking-wider line-clamp-2">{u.teamAssignment}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">—</span>}
                 </td>
-                <td className="px-4 py-3" data-label="TACTICAL ROLE">
+                <td className="px-4 py-3" data-label="DUTY ROLE">
                   {u.role?.trim()
                     ? <span className="text-[10px] font-mono font-bold text-cyan-300/90 tracking-wider">{u.role}</span>
                     : <span className="text-muted-foreground/40 text-[10px]">—</span>}
+                </td>
+                <td className="px-4 py-3 max-w-[200px]" data-label="PERM ROLES">
+                  {(u.tacticalRoleIds ?? []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {(u.tacticalRoleIds ?? []).map((rid) => {
+                        const pr = permRoles.find((r) => r.id === rid);
+                        return (
+                          <span
+                            key={rid}
+                            className="text-[8px] px-1.5 py-0.5 rounded border font-mono tracking-tight"
+                            style={{
+                              borderColor: `${pr?.color || "#5865F2"}55`,
+                              color: pr?.color || "#93c5fd",
+                            }}
+                          >
+                            {pr?.name ?? rid}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-[10px]">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3" data-label="ACCESS">
                   <span className={`text-[9px] px-2 py-0.5 rounded font-bold tracking-wider uppercase ${
@@ -559,7 +660,7 @@ export default function UserManagement() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
+              <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">NO USERS IN THIS UNIT</td></tr>
             )}
           </tbody>
         </table>

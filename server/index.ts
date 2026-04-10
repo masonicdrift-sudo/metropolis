@@ -165,6 +165,12 @@ app.use((req, res, next) => {
   // Map of username -> Set of WebSocket connections (same user can have multiple tabs)
   const clients = new Map<string, Set<WebSocket>>();
 
+  function isUserOnline(username: string): boolean {
+    if (!username) return false;
+    const set = clients.get(username);
+    return !!set && set.size > 0;
+  }
+
   function broadcast(message: object, toUsernames?: string[]) {
     const data = JSON.stringify(message);
     if (toUsernames) {
@@ -183,6 +189,7 @@ app.use((req, res, next) => {
 
   // Export broadcast so routes can use it
   (global as any).__wsBroadcast = broadcast;
+  (global as any).__wsIsUserOnline = isUserOnline;
 
   wss.on("connection", (ws, req) => {
     let connUsername: string | null = null;

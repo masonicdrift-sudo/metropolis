@@ -429,6 +429,7 @@ function shouldSkipTacticalApiGate(path: string): boolean {
   if (path.startsWith("/api/auth/")) return true;
   if (path === "/api/users/directory") return true;
   if (path.startsWith("/api/profile/")) return true;
+  if (path.startsWith("/api/presence/")) return true;
   if (path === "/api/upload") return true;
   if (path.startsWith("/api/tactical-roles")) return true;
   if (path === "/api/users" || /^\/api\/users\/\d+\/tactical-roles$/.test(path)) return true;
@@ -646,6 +647,18 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       qualifications,
     });
   });
+
+  /** Live session presence: user has at least one open /ws connection (app open in a tab). */
+  app.get("/api/presence/:username", requireAuth, (req, res) => {
+    const username = String(req.params.username || "").trim();
+    if (!username) return res.status(400).json({ error: "username required" });
+    const u = storage.getUserByUsername(username);
+    if (!u) return res.status(404).json({ error: "Not found" });
+    const fn = (global as any).__wsIsUserOnline as ((name: string) => boolean) | undefined;
+    const online = typeof fn === "function" ? fn(u.username) : false;
+    res.json({ online });
+  });
+
   /** Roster for any logged-in user — DMs, @mentions (no admin required). */
   app.get("/api/users/directory", requireAuth, (_, res) => {
     res.json(

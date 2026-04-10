@@ -124,6 +124,13 @@ export default function UserProfilePage() {
     retry: false,
   });
 
+  const { data: presence, isLoading: presenceLoading } = useQuery<{ online: boolean }>({
+    queryKey: ["/api/presence", username],
+    queryFn: () => apiRequest("GET", `/api/presence/${encodeURIComponent(username)}`),
+    enabled: canView && !!profile,
+    refetchInterval: 12_000,
+  });
+
   const isSelf = useMemo(() => profile?.username && profile.username === user?.username, [profile?.username, user?.username]);
 
   if (!user) {
@@ -200,6 +207,31 @@ export default function UserProfilePage() {
                   ROLE: {profile.tacticalRole}
                 </span>
               ) : null}
+              {profile ? (
+                <span
+                  className={cn(
+                    "text-[9px] px-2 py-0.5 rounded border font-bold tracking-widest inline-flex items-center gap-1.5",
+                    presenceLoading
+                      ? "border-border text-muted-foreground bg-secondary/40"
+                      : presence?.online
+                        ? "border-emerald-800/55 text-emerald-400 bg-emerald-950/25"
+                        : "border-zinc-700/80 text-zinc-500 bg-zinc-950/35",
+                  )}
+                  title="Based on an active app session (WebSocket). Idle tabs with the site open count as online."
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full shrink-0",
+                      presenceLoading
+                        ? "bg-muted-foreground/50 animate-pulse"
+                        : presence?.online
+                          ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)]"
+                          : "bg-zinc-600",
+                    )}
+                  />
+                  {presenceLoading ? "LINK…" : presence?.online ? "ONLINE" : "OFFLINE"}
+                </span>
+              ) : null}
             </div>
 
             <div className="text-[10px] text-muted-foreground mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
@@ -250,6 +282,26 @@ export default function UserProfilePage() {
         <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-cyan-300" /> STATUS
         </div>
+        {profile ? (
+          <div className="text-[10px] text-muted-foreground mb-3 pb-3 border-b border-border/60 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              <span className="text-muted-foreground/80 tracking-wider">COMMS SESSION: </span>
+              {presenceLoading ? (
+                <span className="text-foreground/70 font-mono">checking…</span>
+              ) : presence?.online ? (
+                <span className="text-emerald-400 font-mono font-bold tracking-wide">ACTIVE (ONLINE)</span>
+              ) : (
+                <span className="text-zinc-500 font-mono font-bold tracking-wide">NOT CONNECTED (OFFLINE)</span>
+              )}
+            </span>
+            {profile.lastLogin ? (
+              <span>
+                <span className="text-muted-foreground/80 tracking-wider">LAST LOGIN: </span>
+                <span className="text-foreground/80 font-mono">{fmtDate(profile.lastLogin)}</span>
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         {(isLoading || isFetching) && !profile ? (
           <div className="text-xs text-muted-foreground">Loading…</div>
         ) : profile?.loaPhase === "active" || profile?.loaPhase === "scheduled" ? (

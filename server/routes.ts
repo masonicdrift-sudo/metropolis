@@ -347,8 +347,15 @@ function pushMentionPings(
     | ((msg: object, toUsernames?: string[]) => void)
     | undefined;
   if (!broadcast || !content.trim()) return;
-  const allow = new Set(allowedUsernames.filter((u) => u !== fromUsername));
-  const mentioned = extractMentionUsernames(content).filter((u) => allow.has(u));
+  const fromLower = fromUsername.toLowerCase();
+  const canonicalByLower = new Map<string, string>();
+  for (const u of allowedUsernames) {
+    if (u.toLowerCase() === fromLower) continue;
+    canonicalByLower.set(u.toLowerCase(), u);
+  }
+  const mentioned = extractMentionUsernames(content)
+    .map((tok) => canonicalByLower.get(tok.toLowerCase()))
+    .filter((u): u is string => u != null);
   const uniq = Array.from(new Set(mentioned));
   const snippet = content.trim().slice(0, 160);
   for (const target of uniq) {
@@ -724,10 +731,18 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const beforeSafe = { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" };
     // Build update payload
     const updates: Record<string, any> = {};
-    if (canEditSensitive && username && username !== target.username) {
-      const exists = storage.getUserByUsername(username);
-      if (exists) return res.status(409).json({ error: "Username already taken" });
-      updates.username = username;
+    let renamedViaAdmin = false;
+    if (canEditSensitive && username != null && String(username).trim() !== target.username) {
+      const trimmed = String(username).trim();
+      if (trimmed.length < 2 || trimmed.length > 48) {
+        return res.status(400).json({ error: "Username must be 2–48 characters" });
+      }
+      if (storage.getUserByUsername(trimmed)) return res.status(409).json({ error: "Username already taken" });
+      const renamed = storage.changeUsername(id, target.username, trimmed);
+      if (!renamed) return res.status(500).json({ error: "Failed to update username" });
+      renamedViaAdmin = true;
+      wsPush("USER");
+      if (req.session.userId === id) req.session.username = trimmed;
     }
     if (canEditSensitive && accessLevel && ACCESS_RANK[accessLevel] !== undefined) {
       const nextLevel = String(accessLevel);
@@ -791,7 +806,9 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       if (!setr.ok) return res.status(400).json({ error: setr.error });
       roleAssign = true;
     }
-    if (Object.keys(updates).length === 0 && !roleAssign) return res.status(400).json({ error: "Nothing to update" });
+    if (Object.keys(updates).length === 0 && !roleAssign && !renamedViaAdmin) {
+      return res.status(400).json({ error: "Nothing to update" });
+    }
     if (Object.keys(updates).length > 0) {
       storage.updateUserById(id, updates);
       wsPush("USER");
@@ -1683,7 +1700,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(storage.getPersonnelRosterEntries());
   });
 
-  app.post("/api/personnel-roster", requireAuth, (req, res) => {
+  app.post("/api/personnel-roster", requireAuth, requireAdmin, (req, res) => {
     const parsed = personnelRosterPostSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const lu = parsed.data.linkedUsername?.trim();

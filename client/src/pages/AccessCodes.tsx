@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus, Trash2, Copy, Check, KeyRound, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { ADMIN_SUB } from "@/lib/appNav";
 
 interface Code {
   id: number;
@@ -69,6 +71,7 @@ export default function AccessCodes() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={ADMIN_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>ACCESS CODE MANAGER</h1>

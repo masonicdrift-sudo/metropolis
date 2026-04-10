@@ -9,6 +9,9 @@ export function canAccessAppRoute(user: AuthUser | null | undefined, pathname: s
   if (pathname === "/personnel/promotions" || pathname.startsWith("/personnel/promotions/")) {
     return user.accessLevel === "owner" || user.accessLevel === "admin";
   }
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    return user.accessLevel === "owner" || user.accessLevel === "admin";
+  }
   if (user.accessLevel === "owner" || user.accessLevel === "admin") return true;
   const need = permissionForClientPath(pathname);
   if (!need) return true;

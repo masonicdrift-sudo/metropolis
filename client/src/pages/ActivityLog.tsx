@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollText, Search } from "lucide-react";
+import { SubPageNav } from "@/components/SubPageNav";
+import { ADMIN_SUB } from "@/lib/appNav";
 
 function safeJsonPreview(s: string): string {
   if (!s) return "";
@@ -67,6 +69,7 @@ export default function ActivityLogPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col min-h-0 gap-3">
+      <SubPageNav items={ADMIN_SUB} />
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">

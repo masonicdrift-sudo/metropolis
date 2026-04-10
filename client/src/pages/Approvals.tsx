@@ -10,6 +10,8 @@ import { ShieldCheck, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProfileLink } from "@/components/ProfileLink";
 import { useToast } from "@/hooks/use-toast";
+import { SubPageNav } from "@/components/SubPageNav";
+import { ADMIN_SUB } from "@/lib/appNav";
 
 function promotionPayloadSummary(payloadJson: string): string | null {
   try {
@@ -105,6 +107,7 @@ export default function ApprovalsPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page flex flex-col gap-3">
+      <SubPageNav items={ADMIN_SUB} />
       <div className="flex items-center gap-2">
         <ShieldCheck className="h-4 w-4 text-blue-400" />
         <h1 className="text-sm font-bold tracking-[0.15em] text-blue-400" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>

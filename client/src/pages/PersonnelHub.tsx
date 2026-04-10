@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useMemo } from "react";
-import { ClipboardList, UserCheck, Users, Medal, Palmtree, Network } from "lucide-react";
+import { ClipboardList, Users, Medal, Palmtree, Network } from "lucide-react";
 import { SubPageNav } from "@/components/SubPageNav";
 import { personnelSubNavForAccess } from "@/lib/appNav";
 import { useAuth } from "@/lib/auth";
@@ -11,13 +11,6 @@ const CARDS = [
     title: "ORG CHART",
     desc: "Blank manning board — admins build elements and assign by drag-and-drop.",
     icon: Network,
-    adminOnly: false,
-  },
-  {
-    href: "/personnel/perstat",
-    title: "PERSTAT",
-    desc: "Personnel status tracking and readiness.",
-    icon: UserCheck,
     adminOnly: false,
   },
   {
@@ -44,7 +37,7 @@ const CARDS = [
   {
     href: "/personnel/loa",
     title: "LOA",
-    desc: "Request leave of absence; approval updates PERSTAT and linked roster lines.",
+    desc: "Request leave of absence; approval updates your account and linked roster lines.",
     icon: Palmtree,
     adminOnly: false,
   },
@@ -63,7 +56,7 @@ export default function PersonnelHub() {
           PERSONNEL
         </h1>
         <p className="text-[10px] text-muted-foreground tracking-wider mt-1">
-          PERSTAT, roster, and units — pick a workspace below.
+          Org chart, roster, units, and LOA — pick a workspace below.
         </p>
       </div>
       <SubPageNav items={personnelNav} />

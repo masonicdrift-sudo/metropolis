@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/ProfileLink";
+import { SubPageNav } from "@/components/SubPageNav";
+import { INTEL_SUB } from "@/lib/appNav";
 
 // ── Document type definitions ────────────────────────────────────────────────
 const DOC_TYPES = [
@@ -1694,15 +1696,18 @@ export default function IsofacPage() {
             : "min-h-[min(100dvh,calc(100vh-3rem))]",
         )}
       >
-        <DocEditor
-          doc={editDoc}
-          initialType={editDoc ? undefined : createInitialType}
-          onClose={() => {
-            setEditing(false);
-            setEditDoc(undefined);
-            setCreateInitialType(undefined);
-          }}
-        />
+        <SubPageNav items={INTEL_SUB} />
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <DocEditor
+            doc={editDoc}
+            initialType={editDoc ? undefined : createInitialType}
+            onClose={() => {
+              setEditing(false);
+              setEditDoc(undefined);
+              setCreateInitialType(undefined);
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -1710,12 +1715,19 @@ export default function IsofacPage() {
   return (
     <div
       className={cn(
-        "tac-page flex min-h-0 w-full",
+        "tac-page flex flex-col min-h-0 w-full",
         isMobile
-          ? "flex-col min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
-          : "flex-row min-h-[min(100dvh,calc(100vh-3rem))]",
+          ? "min-h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
+          : "min-h-[min(100dvh,calc(100vh-3rem))]",
       )}
     >
+      <SubPageNav items={INTEL_SUB} />
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 w-full overflow-hidden",
+          isMobile ? "flex-col" : "flex-row",
+        )}
+      >
 
       {/* ── Sidebar (stacked on phone) ───────────────────────────── */}
       <div
@@ -1840,6 +1852,7 @@ export default function IsofacPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

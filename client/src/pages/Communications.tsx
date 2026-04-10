@@ -797,7 +797,7 @@ export default function Communications() {
     },
     onSuccess: () => {
       toast({ title: "Exported to ISOFAC", description: "Created a RADIO LOG BOOK from the Message Log." });
-      navigate("/isofac");
+      navigate("/intel/isofac");
     },
     onError: () => toast({ title: "Export failed", variant: "destructive" }),
   });
@@ -824,7 +824,7 @@ export default function Communications() {
           </div>
           <div className="text-[9px] text-muted-foreground/80 mt-1.5">
             <Link
-              href="/isofac"
+              href="/intel/isofac"
               className="text-cyan-400/90 hover:text-cyan-300 underline-offset-2 hover:underline font-mono tracking-wide"
             >
               RADIO LOG BOOK (ISOFAC)

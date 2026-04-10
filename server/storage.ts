@@ -740,32 +740,33 @@ if (!commoCardExists) {
   }).run();
 }
 
-// Seed ZR1 as admin (only Overlord may be owner; see ensureSingleOwnerOverlord)
-const zr1Exists = db.select().from(schema.users).where(eq(schema.users.username, "ZR1")).get();
-if (!zr1Exists) {
+// Bootstrap default accounts only on a brand-new database (no users yet).
+// If we only checked username === "ZR1" / "Overlord", renaming those accounts would recreate
+// duplicate admins on every deploy.
+const anyUserYet = db.select({ id: schema.users.id }).from(schema.users).limit(1).get();
+if (!anyUserYet) {
   const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
-  db.insert(schema.users).values({
-    username: "ZR1",
-    passwordHash: hash,
-    accessLevel: "admin",
-    role: "",
-    createdAt: new Date().toISOString(),
-    lastLogin: "",
-  }).run();
-}
-
-// Seed Overlord owner account (only account that may have access_level owner; see ensureSingleOwnerOverlord)
-const adminExists = db.select().from(schema.users).where(eq(schema.users.username, "Overlord")).get();
-if (!adminExists) {
-  const hash = bcrypt.hashSync("OSGSoftware1@!", 10);
-  db.insert(schema.users).values({
-    username: "Overlord",
-    passwordHash: hash,
-    accessLevel: "owner",
-    role: "",
-    createdAt: new Date().toISOString(),
-    lastLogin: "",
-  }).run();
+  const now = new Date().toISOString();
+  db.insert(schema.users)
+    .values({
+      username: "ZR1",
+      passwordHash: hash,
+      accessLevel: "admin",
+      role: "",
+      createdAt: now,
+      lastLogin: "",
+    })
+    .run();
+  db.insert(schema.users)
+    .values({
+      username: "Overlord",
+      passwordHash: hash,
+      accessLevel: "owner",
+      role: "",
+      createdAt: now,
+      lastLogin: "",
+    })
+    .run();
 }
 
 /** Exactly one owner: Overlord. Everyone else with owner becomes admin. */
@@ -1060,6 +1061,14 @@ export interface IStorage {
     username: string,
     role: string,
   ): { ok: true; mapKey: string } | { ok: false; reason: "not_found" | "forbidden" };
+}
+
+/** Rewrite @mention tokens when a user renames (aligned with client/server /@username parsing). */
+function rewriteAtMentionsInMessageContent(content: string, oldUsername: string, newUsername: string): string {
+  if (!content || oldUsername === newUsername) return content;
+  const esc = oldUsername.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`@${esc}(?![A-Za-z0-9_-])`, "g");
+  return content.replace(re, `@${newUsername}`);
 }
 
 export class Storage implements IStorage {
@@ -1364,6 +1373,17 @@ export class Storage implements IStorage {
     const run = sqlite.transaction(() => {
       db.update(schema.messages).set({ fromUsername: newUsername }).where(eq(schema.messages.fromUsername, oldUsername)).run();
       db.update(schema.messages).set({ toUsername: newUsername }).where(eq(schema.messages.toUsername, oldUsername)).run();
+      const atOld = `@${oldUsername}`;
+      for (const m of db
+        .select({ id: schema.messages.id, content: schema.messages.content })
+        .from(schema.messages)
+        .all()) {
+        if (!m.content?.includes(atOld)) continue;
+        const next = rewriteAtMentionsInMessageContent(m.content, oldUsername, newUsername);
+        if (next !== m.content) {
+          db.update(schema.messages).set({ content: next }).where(eq(schema.messages.id, m.id)).run();
+        }
+      }
       for (const m of db.select().from(schema.messages).all()) {
         try {
           const rb: Record<string, boolean> = JSON.parse(m.readBy || "{}");

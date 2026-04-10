@@ -258,6 +258,8 @@ const RAW: Row[] = [
   ["army-badge-parachutist-senior", "Parachutist Badge (Senior)", "Army", 5301, "badge", ""],
   ["army-badge-parachutist-master", "Parachutist Badge (Master)", "Army", 5302, "badge", ""],
   ["army-badge-parachute-rigger", "Parachute Rigger Badge", "Army", 5303, "badge", ""],
+  // Static-line jumpmaster (personnel airdrop) — separate from Basic/Senior/Master Parachutist and from MFF jumpmaster below
+  ["army-badge-jumpmaster-static-line", "Jumpmaster Badge (Army — static line / personnel airdrop qualification)", "Army", 5294, "badge", ""],
   // Air assault, pathfinder, MFF (special operations parachuting)
   ["army-badge-air-assault", "Air Assault Badge", "Army", 5310, "badge", ""],
   ["army-badge-pathfinder", "Pathfinder Badge", "Army", 5320, "badge", ""],
@@ -321,12 +323,14 @@ const RAW: Row[] = [
   ["navy-badge-expeditionary-warfare", "Expeditionary Warfare Specialist", "Navy", 6048, "badge", ""],
   ["navy-badge-parachutist", "Navy / Marine Corps Parachutist Insignia", "Navy", 6050, "badge", ""],
   ["mc-badge-parachutist", "Parachutist Insignia (Marine Corps)", "Marine Corps", 6051, "badge", ""],
-  ["navy-badge-scuba", "Navy Scuba Diver Insignia", "Navy", 6052, "badge", ""],
-  ["mc-badge-combat-aircrew", "Combat Aircrew Insignia (Marine Corps — legacy / flight suit)", "Marine Corps", 6053, "badge", ""],
-  ["mc-badge-aircrew", "Aircrew Insignia (Marine Corps)", "Marine Corps", 6054, "badge", ""],
-  ["mc-badge-diver", "Diver Insignia (Marine Corps)", "Marine Corps", 6055, "badge", ""],
-  ["mc-badge-drill-instructor", "Drill Instructor Badge (Marine Corps)", "Marine Corps", 6056, "badge", ""],
-  ["mc-badge-security-forces", "Military Police / Security Forces Badge (Marine Corps)", "Marine Corps", 6057, "badge", ""],
+  ["navy-badge-jumpmaster", "Jumpmaster Badge (Navy — static line personnel parachute operations)", "Navy", 6052, "badge", ""],
+  ["mc-badge-jumpmaster", "Jumpmaster Badge (Marine Corps — static line parachute operations)", "Marine Corps", 6053, "badge", ""],
+  ["navy-badge-scuba", "Navy Scuba Diver Insignia", "Navy", 6054, "badge", ""],
+  ["mc-badge-combat-aircrew", "Combat Aircrew Insignia (Marine Corps — legacy / flight suit)", "Marine Corps", 6055, "badge", ""],
+  ["mc-badge-aircrew", "Aircrew Insignia (Marine Corps)", "Marine Corps", 6056, "badge", ""],
+  ["mc-badge-diver", "Diver Insignia (Marine Corps)", "Marine Corps", 6057, "badge", ""],
+  ["mc-badge-drill-instructor", "Drill Instructor Badge (Marine Corps)", "Marine Corps", 6058, "badge", ""],
+  ["mc-badge-security-forces", "Military Police / Security Forces Badge (Marine Corps)", "Marine Corps", 6059, "badge", ""],
 
   // ── Air Force & Space Force occupational / warfare badges (AFI 36-2903; USSF guidance) ──
   ["af-badge-command-pilot", "USAF Pilot / Command Pilot Badges (wings)", "Air Force", 6100, "badge", ""],
@@ -347,7 +351,7 @@ const RAW: Row[] = [
   ["af-badge-space-operations-master", "Space Operations Badge (Master — Air Force)", "Air Force", 6127, "badge", ""],
   ["af-badge-aircrew-enlisted", "Enlisted Aircrew / Flight Engineer Badges", "Air Force", 6130, "badge", ""],
   ["af-badge-parachutist-basic", "Basic Parachutist Badge (Air Force)", "Air Force", 6135, "badge", ""],
-  ["af-badge-parachutist-jumpmaster", "Jumpmaster Badge (Air Force)", "Air Force", 6136, "badge", ""],
+  ["af-badge-parachutist-jumpmaster", "Jumpmaster Badge (Air Force — parachutist jumpmaster qualification)", "Air Force", 6136, "badge", ""],
   ["af-badge-dive", "Dive Badge (Air Force combat / pararescue / special tactics)", "Air Force", 6138, "badge", ""],
   ["af-badge-explosive-ordnance-disposal", "Explosive Ordnance Disposal Badge (Air Force)", "Air Force", 6140, "badge", ""],
   ["af-badge-security-forces", "Security Forces Badge / Defender", "Air Force", 6142, "badge", ""],
@@ -365,10 +369,13 @@ const RAW: Row[] = [
   ["sf-badge-command-and-control", "Space Command & Control identifier (functional area)", "Space Force", 6228, "badge", ""],
   ["sf-badge-missile-warning", "Missile Warning identifier (functional area)", "Space Force", 6229, "badge", ""],
   ["sf-badge-guardian-astronaut", "Guardian Astronaut Badge (when authorized)", "Space Force", 6235, "badge", ""],
+  ["sf-badge-parachutist-basic", "Basic Parachutist Badge (Space Force — when awarded under AF/USSF specialty rules)", "Space Force", 6236, "badge", ""],
+  ["sf-badge-jumpmaster", "Jumpmaster Badge (Space Force — parachutist jumpmaster when assigned & qualified)", "Space Force", 6237, "badge", ""],
 
   // ── Coast Guard qualification / warfare badges ──
   ["cg-badge-aviator", "Coast Guard Aviator / Aircrew Wings", "Coast Guard", 6300, "badge", ""],
   ["cg-badge-aircrew", "Coast Guard Advanced Boat Force / aircrew qualification badge", "Coast Guard", 6301, "badge", ""],
+  ["cg-badge-jumpmaster", "Jumpmaster Badge (Coast Guard — joint airborne / JM course when authorized)", "Coast Guard", 6302, "badge", ""],
   ["cg-badge-coxswain", "Coxswain Insignia", "Coast Guard", 6310, "badge", ""],
   ["cg-badge-surfman", "Surfman Badge (heavy weather boat)", "Coast Guard", 6311, "badge", ""],
   ["cg-badge-tactical-law-enforcement", "Tactical Law Enforcement (TACLET) Badge", "Coast Guard", 6315, "badge", ""],

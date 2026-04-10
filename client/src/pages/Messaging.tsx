@@ -7,6 +7,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { ProfileLink } from "@/components/ProfileLink";
+import { SubPageNav } from "@/components/SubPageNav";
+import { COMMS_SUB } from "@/lib/appNav";
 import type { Message, GroupChat } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,8 +28,8 @@ function roleColor(role?: string) {
   return "text-blue-400";
 }
 
-/** Highlight @username for known roster members (matches server ping parsing). */
-function formatMessageContent(raw: string, knownUsers: Set<string>): ReactNode {
+/** Highlight @username for known roster members (matches server ping parsing; case-insensitive → canonical profile link). */
+function formatMessageContent(raw: string, knownByLower: Map<string, string>): ReactNode {
   if (!raw || raw === "[message deleted]") return raw;
   const re = /@([A-Za-z0-9_-]{2,48})/g;
   const parts: ReactNode[] = [];
@@ -36,12 +38,13 @@ function formatMessageContent(raw: string, knownUsers: Set<string>): ReactNode {
   while ((m = re.exec(raw)) !== null) {
     if (m.index > last) parts.push(raw.slice(last, m.index));
     const name = m[1];
-    const known = knownUsers.has(name);
+    const canonical = knownByLower.get(name.toLowerCase());
+    const known = canonical !== undefined;
     parts.push(
       known ? (
         <Link
           key={`${m.index}-${name}`}
-          href={`/profile/${encodeURIComponent(name)}`}
+          href={`/profile/${encodeURIComponent(canonical)}`}
           className="font-semibold text-amber-400/95 bg-amber-500/15 rounded px-0.5 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
@@ -83,10 +86,10 @@ function DeleteConfirmBtn({ onConfirm, isOwnMessage }: { onConfirm: () => void; 
   );
 }
 
-function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
+function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownByLower }: {
   msg: Message; isMe: boolean; onDelete: (id: number) => void;
   canDelete: boolean; userMap: Record<string, string>;
-  knownUsers: Set<string>;
+  knownByLower: Map<string, string>;
 }) {
   const [hovered, setHovered] = useState(false);
   const deleted = msg.content === "[message deleted]";
@@ -125,7 +128,7 @@ function MsgBubble({ msg, isMe, onDelete, canDelete, userMap, knownUsers }: {
           isMe ? "bg-blue-900/40 border border-blue-800/30 text-foreground" :
           "bg-secondary border border-border text-foreground"
         }`}>
-          {deleted ? msg.content : formatMessageContent(msg.content, knownUsers)}
+          {deleted ? msg.content : formatMessageContent(msg.content, knownByLower)}
             {/* Attachment */}
           {msg.attachment && (() => {
             try {
@@ -451,10 +454,11 @@ export default function Messaging() {
   // Add self
   if (user) userMap[user.username] = user.accessLevel;
 
-  const knownUsernames = useMemo(
-    () => new Set(allUsers.map((u) => u.username)),
-    [allUsers],
-  );
+  const knownByLower = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const u of allUsers) m.set(u.username.toLowerCase(), u.username);
+    return m;
+  }, [allUsers]);
 
   // General messages
   const { data: generalMsgs = [], refetch: refetchGeneral } = useQuery<Message[]>({
@@ -587,13 +591,18 @@ export default function Messaging() {
   return (
     <div
       className={cn(
-        "flex w-full min-h-0 overflow-hidden",
-        /* Match useIsMobile (incl. landscape phones): reserve top bar + bottom tabs + safe areas. */
+        "flex flex-col w-full min-h-0 overflow-hidden",
         isMobile
           ? "h-[calc(100dvh-7.25rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]"
           : "h-[min(100dvh,calc(100vh-2.5rem))] min-h-[28rem]",
       )}
     >
+      <SubPageNav items={COMMS_SUB} />
+      <div
+        className={cn(
+          "flex w-full min-h-0 flex-1 overflow-hidden",
+        )}
+      >
 
       {/* ── Channel sidebar ─────────────────────────────────── */}
       <div
@@ -849,7 +858,7 @@ export default function Messaging() {
                   onDelete={(id) => deleteMsg.mutate(id)}
                   canDelete={canDelete(msg)}
                   userMap={userMap}
-                  knownUsers={knownUsernames}
+                  knownByLower={knownByLower}
                 />
               </div>
             );
@@ -869,6 +878,7 @@ export default function Messaging() {
                 : `Message ${activeDMUser}…`
           }
         />
+      </div>
       </div>
     </div>
   );

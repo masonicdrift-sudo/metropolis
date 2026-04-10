@@ -18,8 +18,8 @@ import Messaging from "./pages/Messaging";
 import CommoCardPage from "./pages/CommoCard";
 import IsofacPage from "./pages/Isofac";
 import ChangePassword from "./pages/ChangePassword";
-import PerstatPage from "./pages/Perstat";
 import PersonnelRosterPage from "./pages/PersonnelRoster";
+import AdminHub from "./pages/AdminHub";
 import AfterActionPage from "./pages/AfterAction";
 import OpTaskBoard from "./pages/OpTaskBoard";
 import AwardsPage from "./pages/Awards";
@@ -59,7 +59,7 @@ import {
   LayoutDashboard, ShieldAlert, Radio, Signal,
   Crosshair, Users, LogOut, ShieldCheck,
   KeyRound, Crown, MessageSquare, BookOpen,
-  Settings, Menu, X, ChevronRight,   UserCheck, FileText,
+  Settings, Menu, X, ChevronRight, UserCheck, FileText,
   Kanban, Star, GraduationCap, FolderOpen, MapPin, Zap, Map, CalendarDays, Link2, ScrollText,
   ClipboardList, ClipboardCheck, Medal, Palmtree, Network
 } from "lucide-react";
@@ -132,6 +132,7 @@ const NAV_BLOCKS: NavBlock[] = [
       { path: "/intel", label: "INTEL REPORTS", icon: ShieldAlert, short: "Intel" },
       { path: "/intel/links", label: "LINK ANALYSIS", icon: Link2, short: "Links" },
       { path: "/intel/vault", label: "FILE VAULT", icon: FolderOpen, short: "Vault" },
+      { path: "/intel/isofac", label: "ISOFAC", icon: BookOpen, short: "ISOFAC" },
     ],
   },
   {
@@ -140,6 +141,7 @@ const NAV_BLOCKS: NavBlock[] = [
     items: [
       { path: "/comms", label: "COMMS LOG", icon: Radio, short: "Comms" },
       { path: "/comms/commo-card", label: "COMMO CARD", icon: Signal, short: "Card" },
+      { path: "/comms/messages", label: "MESSAGES", icon: MessageSquare, short: "Msgs" },
     ],
   },
   {
@@ -148,7 +150,6 @@ const NAV_BLOCKS: NavBlock[] = [
     items: [
       { path: "/personnel", label: "OVERVIEW", icon: Users, short: "Home" },
       { path: "/personnel/org-chart", label: "ORG CHART", icon: Network, short: "Org" },
-      { path: "/personnel/perstat", label: "PERSTAT", icon: UserCheck, short: "PERSTAT" },
       { path: "/personnel/roster", label: "ROSTER", icon: ClipboardList, short: "Roster" },
       { path: "/personnel/units", label: "UNITS", icon: Users, short: "Units" },
       { path: "/personnel/promotions", label: "PROMOTIONS", icon: Medal, short: "Promo" },
@@ -164,9 +165,6 @@ const NAV_BLOCKS: NavBlock[] = [
       { path: "/tactical/grid", label: "GRID TOOL", icon: MapPin, short: "Grid" },
     ],
   },
-  { type: "single", path: "/isofac", label: "ISOFAC", icon: BookOpen, short: "ISOFAC" },
-  { type: "single", path: "/approvals", label: "APPROVALS", icon: ShieldCheck, short: "Appr" },
-  { type: "single", path: "/messages", label: "MESSAGES", icon: MessageSquare, short: "Msgs" },
   {
     type: "group",
     title: "TRAINING",
@@ -176,15 +174,27 @@ const NAV_BLOCKS: NavBlock[] = [
       { path: "/training/awards", label: "AWARDS", icon: Star, short: "Awards" },
     ],
   },
-  { type: "single", path: "/activity", label: "ACTIVITY LOG", icon: ScrollText, short: "Audit" },
+  {
+    type: "group",
+    title: "ADMIN",
+    items: [
+      { path: "/admin", label: "OVERVIEW", icon: LayoutDashboard, short: "Home" },
+      { path: "/admin/approvals", label: "APPROVALS", icon: ShieldCheck, short: "Appr" },
+      { path: "/admin/activity", label: "ACTIVITY LOG", icon: ScrollText, short: "Audit" },
+      { path: "/admin/users", label: "USER MGMT", icon: Users, short: "Users" },
+      { path: "/admin/roles", label: "PERM ROLES", icon: UserCheck, short: "Roles" },
+      { path: "/admin/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" },
+      { path: "/admin/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" },
+    ],
+  },
 ];
 
 // Mobile bottom tab — primary destinations + "More" opens full nav (Discord-style rail)
 const MOBILE_TAB_ITEMS = [
-  { path: "/",           label: "Home",  icon: LayoutDashboard },
-  { path: "/messages",   label: "Msgs",  icon: MessageSquare },
-  { path: "/operations", label: "Ops",   icon: Crosshair },
-  { path: "/comms",      label: "Comms", icon: Radio },
+  { path: "/", label: "Home", icon: LayoutDashboard },
+  { path: "/comms/messages", label: "Msgs", icon: MessageSquare },
+  { path: "/operations", label: "Ops", icon: Crosshair },
+  { path: "/comms", label: "Comms", icon: Radio },
 ] as const;
 
 // ── Desktop Sidebar ───────────────────────────────────────────────────────────
@@ -223,8 +233,11 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {filterNavBlocks(NAV_BLOCKS, user).map((block) => {
           const row = (path: string, label: string, Icon: LucideIcon) => {
-            const active = path === "/" ? location === "/" : location === path;
-            const isMsg = path === "/messages";
+            const active =
+              path === "/"
+                ? location === "/"
+                : location === path || (path !== "/" && location.startsWith(`${path}/`));
+            const isMsg = path === "/comms/messages";
             return (
               <Link
                 key={path}
@@ -253,35 +266,6 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
             </div>
           );
         })}
-
-        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
-          <Link href="/users" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
-            location === "/users" ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-          }`}>
-            <ShieldCheck size={13} /> USER MGMT
-          </Link>
-        )}
-        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
-          <Link href="/users/roles" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
-            location === "/users/roles" ? "bg-yellow-950/60 text-yellow-400 border border-yellow-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-          }`}>
-            <ShieldCheck size={13} /> PERM ROLES
-          </Link>
-        )}
-        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
-          <Link href="/access-codes" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
-            location === "/access-codes" ? "bg-orange-950/60 text-orange-400 border border-orange-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-          }`}>
-            <KeyRound size={13} /> ACCESS CODES
-          </Link>
-        )}
-        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
-          <Link href="/broadcasts" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
-            location === "/broadcasts" ? "bg-red-950/60 text-red-400 border border-red-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-          }`}>
-            <Zap size={13} /> BROADCASTS
-          </Link>
-        )}
       </nav>
 
       <div className="px-3 py-3 border-t border-border space-y-2">
@@ -350,8 +334,8 @@ function MobileTopBar({ onMenuOpen, mobileShell }: { onMenuOpen: () => void; mob
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {totalUnread > 0 && location !== "/messages" && (
-          <Link href="/messages" className="relative">
+        {totalUnread > 0 && location !== "/comms/messages" && (
+          <Link href="/comms/messages" className="relative">
             <MessageSquare size={18} className="text-muted-foreground" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full text-[9px] text-white flex items-center justify-center font-bold">{totalUnread > 9 ? "9+" : totalUnread}</span>
           </Link>
@@ -373,10 +357,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
   const allNav: NavLeaf[] = [
     ...flattenNav(filterNavBlocks(NAV_BLOCKS, user)),
-    ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
-    ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users/roles", label: "PERM ROLES", icon: ShieldCheck, short: "Roles" }] : []),
-    ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
-    ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
     { path: "/settings", label: "SETTINGS", icon: Settings, short: "Settings" },
   ];
 
@@ -440,6 +420,13 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   );
 }
 
+function mobileTabActive(tabPath: string, location: string): boolean {
+  if (tabPath === "/") return location === "/";
+  if (tabPath === "/comms/messages") return location === "/comms/messages" || location.startsWith("/comms/messages/");
+  if (tabPath === "/comms") return location === "/comms" || location.startsWith("/comms/commo");
+  return location === tabPath || location.startsWith(`${tabPath}/`);
+}
+
 // ── Mobile Bottom Tab Bar ─────────────────────────────────────────────────────
 function BottomTabBar({ onOpenMore, mobileShell }: { onOpenMore: () => void; mobileShell: boolean }) {
   const [location] = useLocation();
@@ -459,8 +446,8 @@ function BottomTabBar({ onOpenMore, mobileShell }: { onOpenMore: () => void; mob
       )}
     >
       {MOBILE_TAB_ITEMS.filter((item) => user && canAccessAppRoute(user, item.path)).map(({ path, label, icon: Icon }) => {
-        const active = location === path || (path !== "/" && location.startsWith(path));
-        const showBadge = path === "/messages" && totalUnread > 0 && !active;
+        const active = mobileTabActive(path, location);
+        const showBadge = path === "/comms/messages" && totalUnread > 0 && !active;
         return (
           <Link key={path} href={path}
             className={`relative flex-1 flex flex-col items-center gap-0.5 py-2.5 px-0.5 min-h-[52px] min-w-0 justify-center transition-colors ${active ? "text-blue-400" : "text-muted-foreground"}`}>
@@ -572,13 +559,14 @@ function AppRoutes() {
 
         <Route path="/intel/links" component={gateRoute("/intel/links", LinkAnalysisPage)} />
         <Route path="/intel/vault" component={gateRoute("/intel/vault", FileVault)} />
+        <Route path="/intel/isofac" component={gateRoute("/intel/isofac", IsofacPage)} />
         <Route path="/intel" component={gateRoute("/intel", Intel)} />
 
         <Route path="/comms/commo-card" component={gateRoute("/comms/commo-card", CommoCardPage)} />
+        <Route path="/comms/messages" component={gateRoute("/comms/messages", Messaging)} />
         <Route path="/comms" component={gateRoute("/comms", Communications)} />
 
         <Route path="/personnel/org-chart" component={gateRoute("/personnel/org-chart", OrgChartPage)} />
-        <Route path="/personnel/perstat" component={gateRoute("/personnel/perstat", PerstatPage)} />
         <Route path="/personnel/roster" component={gateRoute("/personnel/roster", PersonnelRosterPage)} />
         <Route path="/personnel/units" component={gateRoute("/personnel/units", Units)} />
         <Route path="/personnel/promotions" component={gateRoute("/personnel/promotions", PromotionPacketsPage)} />
@@ -594,16 +582,15 @@ function AppRoutes() {
         <Route path="/training" component={gateRoute("/training", TrainingPage)} />
 
         <Route path="/assets" component={gateRoute("/assets", Assets)} />
-        <Route path="/messages" component={gateRoute("/messages", Messaging)} />
-        <Route path="/isofac" component={gateRoute("/isofac", IsofacPage)} />
         <Route path="/settings" component={gateRoute("/settings", ChangePassword)} />
-        <Route path="/approvals" component={gateRoute("/approvals", ApprovalsPage)} />
-        <Route path="/activity" component={gateRoute("/activity", ActivityLogPage)} />
 
-        <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
-        <Route path="/users/roles" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? TacticalRolesPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
-        <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
-        <Route path="/access-codes" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
+        <Route path="/admin/approvals" component={gateRoute("/admin/approvals", ApprovalsPage)} />
+        <Route path="/admin/activity" component={gateRoute("/admin/activity", ActivityLogPage)} />
+        <Route path="/admin/users" component={gateRoute("/admin/users", UserManagement)} />
+        <Route path="/admin/roles" component={gateRoute("/admin/roles", TacticalRolesPage)} />
+        <Route path="/admin/access-codes" component={gateRoute("/admin/access-codes", AccessCodes)} />
+        <Route path="/admin/broadcasts" component={gateRoute("/admin/broadcasts", BroadcastsPage)} />
+        <Route path="/admin" component={gateRoute("/admin", AdminHub)} />
         <Route path="/profile" component={ProfileIndexRedirect} />
         <Route path="/profile/:username" component={UserProfilePage} />
 
@@ -613,8 +600,17 @@ function AppRoutes() {
         <Route path="/links"><Redirect to="/intel/links" /></Route>
         <Route path="/file-vault"><Redirect to="/intel/vault" /></Route>
         <Route path="/commo-card"><Redirect to="/comms/commo-card" /></Route>
-        <Route path="/perstat"><Redirect to="/personnel/perstat" /></Route>
+        <Route path="/perstat"><Redirect to="/personnel" /></Route>
+        <Route path="/personnel/perstat"><Redirect to="/personnel" /></Route>
         <Route path="/personnel-roster"><Redirect to="/personnel/roster" /></Route>
+        <Route path="/messages"><Redirect to="/comms/messages" /></Route>
+        <Route path="/isofac"><Redirect to="/intel/isofac" /></Route>
+        <Route path="/approvals"><Redirect to="/admin/approvals" /></Route>
+        <Route path="/activity"><Redirect to="/admin/activity" /></Route>
+        <Route path="/users/roles"><Redirect to="/admin/roles" /></Route>
+        <Route path="/users"><Redirect to="/admin/users" /></Route>
+        <Route path="/access-codes"><Redirect to="/admin/access-codes" /></Route>
+        <Route path="/broadcasts"><Redirect to="/admin/broadcasts" /></Route>
         <Route path="/units"><Redirect to="/personnel/units" /></Route>
         <Route path="/terrain"><Redirect to="/tactical/map" /></Route>
         <Route path="/grid-tool"><Redirect to="/tactical/grid" /></Route>

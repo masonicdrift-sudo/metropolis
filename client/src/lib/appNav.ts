@@ -11,21 +11,33 @@ export const INTEL_SUB: SubNavItem[] = [
   { href: "/intel", label: "INTEL REPORTS", short: "Intel" },
   { href: "/intel/links", label: "LINK ANALYSIS", short: "Links" },
   { href: "/intel/vault", label: "FILE VAULT", short: "Vault" },
+  { href: "/intel/isofac", label: "ISOFAC", short: "ISOFAC" },
 ];
 
 export const COMMS_SUB: SubNavItem[] = [
   { href: "/comms", label: "COMMS LOG", short: "Log" },
   { href: "/comms/commo-card", label: "COMMO CARD", short: "Card" },
+  { href: "/comms/messages", label: "MESSAGES", short: "Msgs" },
 ];
 
 export const PERSONNEL_SUB: SubNavItem[] = [
   { href: "/personnel", label: "OVERVIEW", short: "Home" },
   { href: "/personnel/org-chart", label: "ORG CHART", short: "Org" },
-  { href: "/personnel/perstat", label: "PERSTAT", short: "PERSTAT" },
   { href: "/personnel/roster", label: "ROSTER", short: "Roster" },
   { href: "/personnel/units", label: "UNITS", short: "Units" },
   { href: "/personnel/promotions", label: "PROMOTIONS", short: "Promo" },
   { href: "/personnel/loa", label: "LOA", short: "LOA" },
+];
+
+/** Admin hub sub-tabs (admin / owner only). */
+export const ADMIN_SUB: SubNavItem[] = [
+  { href: "/admin", label: "OVERVIEW", short: "Home" },
+  { href: "/admin/approvals", label: "APPROVALS", short: "Appr" },
+  { href: "/admin/activity", label: "ACTIVITY LOG", short: "Audit" },
+  { href: "/admin/users", label: "USER MGMT", short: "Users" },
+  { href: "/admin/roles", label: "PERM ROLES", short: "Roles" },
+  { href: "/admin/access-codes", label: "ACCESS CODES", short: "Codes" },
+  { href: "/admin/broadcasts", label: "BROADCASTS", short: "Flash" },
 ];
 
 /** PROMOTIONS sub-tab is admin/owner only; operators still see other personnel tabs. */
@@ -76,11 +88,12 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/operations", label: "OPERATIONS" },
   { path: "/intel/links", label: "LINK ANALYSIS" },
   { path: "/intel/vault", label: "FILE VAULT" },
+  { path: "/intel/isofac", label: "ISOFAC" },
   { path: "/intel", label: "INTELLIGENCE" },
   { path: "/comms/commo-card", label: "COMMO CARD" },
+  { path: "/comms/messages", label: "MESSAGES" },
   { path: "/comms", label: "COMMS" },
   { path: "/personnel/org-chart", label: "ORG CHART" },
-  { path: "/personnel/perstat", label: "PERSTAT" },
   { path: "/personnel/roster", label: "ROSTER" },
   { path: "/personnel/units", label: "UNITS" },
   { path: "/personnel/promotions", label: "PROMOTIONS" },
@@ -92,17 +105,16 @@ export const ROUTE_TITLE_ENTRIES: { path: string; label: string }[] = [
   { path: "/training/qualifications", label: "TRAINING RECORDS" },
   { path: "/training/awards", label: "AWARDS" },
   { path: "/training", label: "SIGN IN SHEET" },
-  { path: "/isofac", label: "ISOFAC" },
-  { path: "/approvals", label: "APPROVALS" },
+  { path: "/admin/access-codes", label: "ACCESS CODES" },
+  { path: "/admin/broadcasts", label: "BROADCASTS" },
+  { path: "/admin/roles", label: "PERM ROLES" },
+  { path: "/admin/users", label: "USER MGMT" },
+  { path: "/admin/activity", label: "ACTIVITY LOG" },
+  { path: "/admin/approvals", label: "APPROVALS" },
+  { path: "/admin", label: "ADMIN" },
   { path: "/links", label: "LINK ANALYSIS" },
   { path: "/file-vault", label: "FILE VAULT" },
   { path: "/assets", label: "ASSETS" },
-  { path: "/messages", label: "MESSAGES" },
-  { path: "/activity", label: "ACTIVITY LOG" },
-  { path: "/users/roles", label: "PERM ROLES" },
-  { path: "/users", label: "USER MGMT" },
-  { path: "/access-codes", label: "ACCESS CODES" },
-  { path: "/broadcasts", label: "BROADCASTS" },
   { path: "/settings", label: "SETTINGS" },
   { path: "/profile", label: "PROFILE" },
 ];

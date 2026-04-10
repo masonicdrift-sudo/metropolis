@@ -163,7 +163,7 @@ export default function LeaveOfAbsencePage() {
             LEAVE OF ABSENCE (LOA)
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-wider mt-1 max-w-xl">
-            Submit dates for leave. When an admin approves, your PERSTAT shows ON LEAVE, your account records the approver and
+            Submit dates for leave. When an admin approves, your account records the approver and
             date range, and any Personnel Roster line linked to your username updates to Leave automatically.
           </p>
         </div>
@@ -258,8 +258,8 @@ export default function LeaveOfAbsencePage() {
             <Undo2 className="h-3.5 w-3.5" /> Approved leave (admin)
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Retract revokes the approval, clears the member&apos;s LOA window (when it matches this request), returns PERSTAT
-            to active if they were on leave, and restores linked roster lines to present.
+            Retract revokes the approval, clears the member&apos;s LOA window (when it matches this request), returns duty
+            status to active if they were on leave, and restores linked roster lines to present.
           </p>
           <div className="space-y-2">
             {approvedAdminList.map((r) => (

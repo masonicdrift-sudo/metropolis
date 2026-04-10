@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileLink } from "@/components/ProfileLink";
+import { SubPageNav } from "@/components/SubPageNav";
+import { ADMIN_SUB } from "@/lib/appNav";
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   flash:     { label: "FLASH",     color: "text-red-400",    bg: "bg-red-950/60",    border: "border-red-700" },
@@ -101,6 +103,7 @@ export default function BroadcastsPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
+      <SubPageNav items={ADMIN_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>FLASH BROADCASTS</h1>

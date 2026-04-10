@@ -317,12 +317,14 @@ export default function PersonnelRosterPage() {
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-wider mt-1 max-w-xl">
             Line roster for names, billets, and team assignment. Optionally link a line to an operator username to open their profile.
-            Separate from PERSTAT. You can edit lines you added; admins can edit any line.
+            Only admins can add lines; you can edit lines you created; admins can edit any line.
           </p>
         </div>
-        <Button size="sm" className="text-xs tracking-wider gap-1 shrink-0" onClick={openAdd}>
-          <Plus size={14} /> ADD LINE
-        </Button>
+        {isStaff && (
+          <Button size="sm" className="text-xs tracking-wider gap-1 shrink-0" onClick={openAdd}>
+            <Plus size={14} /> ADD LINE
+          </Button>
+        )}
       </div>
 
       {isLoading && (
@@ -331,7 +333,13 @@ export default function PersonnelRosterPage() {
 
       {!isLoading && sorted.length === 0 && (
         <div className="bg-card border border-border rounded-md px-4 py-10 text-center text-muted-foreground text-xs">
-          No roster lines yet. Use <span className="text-foreground font-semibold">ADD LINE</span> to create entries.
+          {isStaff ? (
+            <>
+              No roster lines yet. Use <span className="text-foreground font-semibold">ADD LINE</span> to create entries.
+            </>
+          ) : (
+            <>No roster lines yet. Contact an admin to add entries.</>
+          )}
         </div>
       )}
 

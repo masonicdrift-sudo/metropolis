@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { SubPageNav } from "@/components/SubPageNav";
+import { ADMIN_SUB } from "@/lib/appNav";
 
 type TacticalRoleRow = {
   id: number;
@@ -52,6 +54,7 @@ export default function TacticalRolesPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page max-w-4xl mx-auto">
+      <SubPageNav items={ADMIN_SUB} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>

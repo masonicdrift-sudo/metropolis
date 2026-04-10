@@ -154,7 +154,7 @@ export default function UserProfilePage() {
   return (
     <div className="p-3 md:p-4 tac-page space-y-3">
       <div className="flex items-center gap-2">
-        <Link href="/messages">
+        <Link href="/comms/messages">
           <Button variant="outline" size="sm" className="h-8 text-[10px] tracking-wider">
             <ArrowLeft className="h-3.5 w-3.5 mr-1" /> BACK
           </Button>

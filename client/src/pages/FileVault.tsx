@@ -83,7 +83,7 @@ export default function FileVault() {
             {docs.length} DOCUMENTS ▪ {docs.filter(d => d.status === "ACTIVE").length} ACTIVE ▪ ISOFAC ARCHIVE
           </div>
         </div>
-        <Link href="/isofac">
+        <Link href="/intel/isofac">
           <Button size="sm" variant="outline" className="text-xs tracking-wider gap-1">
             <FolderOpen size={12} /> OPEN ISOFAC
           </Button>
@@ -166,7 +166,7 @@ export default function FileVault() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <Link href="/isofac">
+                <Link href="/intel/isofac">
                   <button className="p-1 text-muted-foreground hover:text-blue-400 transition-colors" title="Open in ISOFAC">
                     <ExternalLink size={11} />
                   </button>

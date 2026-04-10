@@ -13,7 +13,7 @@ export type MilitaryBranch =
   | "Space Force"
   | "Coast Guard";
 
-export type MilitaryAwardType = "medal" | "commendation" | "citation" | "achievement";
+export type MilitaryAwardType = "medal" | "commendation" | "citation" | "achievement" | "badge";
 
 export type MilitaryAwardDefinition = {
   id: string;
@@ -71,7 +71,7 @@ const RAW: Row[] = [
   ["defense-sssm", "Defense Superior Service Medal", "Joint", 510, "medal", ""],
   ["defense-dmsm", "Defense Meritorious Service Medal", "Joint", 520, "medal", ""],
   ["joint-jsm", "Joint Service Commendation Medal", "Joint", 530, "commendation", ""],
-  ["joint-jsam", "Joint Service Achievement Medal", "Joint", 540, "achievement", ""],
+  ["joint-jsam", "Joint Service Achievement Medal", "Joint", 540, "medal", ""],
   ["army-silver-star", "Silver Star (Army)", "Army", 550, "medal", R.ss],
   ["navy-silver-star", "Silver Star (Navy)", "Navy", 551, "medal", R.ss],
   ["mc-silver-star", "Silver Star (Marine Corps)", "Marine Corps", 552, "medal", R.ss],
@@ -103,7 +103,7 @@ const RAW: Row[] = [
   ["navy-am", "Air Medal (Navy)", "Navy", 731, "medal", R.am],
   ["mc-am", "Air Medal (Marine Corps)", "Marine Corps", 732, "medal", R.am],
   ["af-am-af", "Air Medal (Air Force)", "Air Force", 733, "medal", R.am],
-  ["af-aerial-achievement", "Aerial Achievement Medal", "Air Force", 735, "achievement", ""],
+  ["af-aerial-achievement", "Aerial Achievement Medal", "Air Force", 735, "medal", ""],
   ["army-pebd", "Presidential Unit Citation (Army)", "Army", 740, "citation", ""],
   ["navy-pebd", "Presidential Unit Citation (Navy)", "Navy", 741, "citation", ""],
   ["af-pebd", "Presidential Unit Citation (Air Force)", "Air Force", 742, "citation", ""],
@@ -114,13 +114,13 @@ const RAW: Row[] = [
   ["af-afcm", "Air Force Commendation Medal", "Air Force", 803, "commendation", R.afcm],
   ["sf-afcm", "Space Force Commendation Medal", "Space Force", 804, "commendation", R.afcm],
   ["cg-cgcm", "Coast Guard Commendation Medal", "Coast Guard", 805, "commendation", R.cgcm],
-  ["army-aam", "Army Achievement Medal", "Army", 810, "achievement", R.aam],
-  ["navy-nam", "Navy Achievement Medal", "Navy", 811, "achievement", R.nam],
-  ["mc-nam", "Navy and Marine Corps Achievement Medal", "Marine Corps", 812, "achievement", R.nam],
-  ["af-afam", "Air Force Achievement Medal", "Air Force", 813, "achievement", R.afcam],
-  ["sf-afam", "Space Force Achievement Medal", "Space Force", 814, "achievement", R.afcam],
-  ["cg-cgam", "Coast Guard Achievement Medal", "Coast Guard", 815, "achievement", R.cgam],
-  ["army-combat-action", "Combat Action Badge", "Army", 820, "achievement", ""],
+  ["army-aam", "Army Achievement Medal", "Army", 810, "medal", R.aam],
+  ["navy-nam", "Navy Achievement Medal", "Navy", 811, "medal", R.nam],
+  ["mc-nam", "Navy and Marine Corps Achievement Medal", "Marine Corps", 812, "medal", R.nam],
+  ["af-afam", "Air Force Achievement Medal", "Air Force", 813, "medal", R.afcam],
+  ["sf-afam", "Space Force Achievement Medal", "Space Force", 814, "medal", R.afcam],
+  ["cg-cgam", "Coast Guard Achievement Medal", "Coast Guard", 815, "medal", R.cgam],
+  ["army-combat-action", "Combat Action Badge", "Army", 5202, "badge", ""],
   ["navy-combat-action", "Combat Action Ribbon", "Navy", 821, "achievement", ""],
   ["mc-combat-action", "Combat Action Ribbon (Marine Corps)", "Marine Corps", 822, "achievement", ""],
   ["joint-prisoner-of-war", "Prisoner of War Medal", "Joint", 830, "medal", ""],
@@ -129,7 +129,7 @@ const RAW: Row[] = [
   ["mc-good-conduct", "Marine Corps Good Conduct Medal", "Marine Corps", 902, "medal", ""],
   ["af-good-conduct", "Air Force Good Conduct Medal", "Air Force", 903, "medal", ""],
   ["cg-good-conduct", "Coast Guard Good Conduct Medal", "Coast Guard", 904, "medal", ""],
-  ["army-reserve-achievement", "Army Reserve Components Achievement Medal", "Army", 910, "achievement", ""],
+  ["army-reserve-achievement", "Army Reserve Components Achievement Medal", "Army", 910, "medal", ""],
   ["navy-reserve-merit", "Selected Marine Corps Reserve Medal", "Marine Corps", 911, "medal", ""],
   ["af-reserve-merit", "Air Reserve Forces Meritorious Service Medal", "Air Force", 912, "medal", ""],
   ["cg-reserve-merit", "Coast Guard Reserve Good Conduct", "Coast Guard", 913, "medal", ""],
@@ -228,6 +228,34 @@ const RAW: Row[] = [
   ["navy-jrotc", "Navy JROTC Ribbon", "Navy", 1802, "achievement", ""],
   ["mc-jrotc", "Marine Corps JROTC Ribbon", "Marine Corps", 1803, "achievement", ""],
   ["cg-cadet-ribbon", "Coast Guard JROTC Ribbon", "Coast Guard", 1804, "achievement", ""],
+
+  // ── U.S. Army skill tabs & warfare / combat / special-skill badges (awardType: badge; AR 670-1) ──
+  ["army-tab-ranger", "Ranger Tab", "Army", 5100, "badge", ""],
+  ["army-tab-special-forces", "Special Forces Tab", "Army", 5101, "badge", ""],
+  ["army-tab-sapper", "Sapper Tab", "Army", 5102, "badge", ""],
+  ["army-tab-presidents-hundred", "President's Hundred Tab", "Army", 5103, "badge", ""],
+  ["army-tab-sniper", "Sniper Tab", "Army", 5104, "badge", ""],
+  ["army-tab-jungle", "Jungle Expert Tab", "Army", 5105, "badge", ""],
+  ["army-tab-mountain", "Mountain Tab", "Army", 5106, "badge", ""],
+  ["army-badge-cib", "Combat Infantryman Badge", "Army", 5200, "badge", ""],
+  ["army-badge-cmb", "Combat Medical Badge", "Army", 5201, "badge", ""],
+  ["army-badge-eib", "Expert Infantryman Badge", "Army", 5203, "badge", ""],
+  ["army-badge-efmb", "Expert Field Medical Badge", "Army", 5204, "badge", ""],
+  ["army-badge-parachutist-basic", "Parachutist Badge (Basic)", "Army", 5300, "badge", ""],
+  ["army-badge-parachutist-senior", "Parachutist Badge (Senior)", "Army", 5301, "badge", ""],
+  ["army-badge-parachutist-master", "Parachutist Badge (Master)", "Army", 5302, "badge", ""],
+  ["army-badge-air-assault", "Air Assault Badge", "Army", 5310, "badge", ""],
+  ["army-badge-pathfinder", "Pathfinder Badge", "Army", 5320, "badge", ""],
+  ["army-badge-military-freefall", "Military Freefall Parachutist Badge", "Army", 5330, "badge", ""],
+  ["army-badge-military-freefall-jumpmaster", "Military Freefall Jumpmaster Badge", "Army", 5340, "badge", ""],
+  ["army-badge-space-operations", "Space Operations Badge", "Army", 5350, "badge", ""],
+  ["army-badge-eod-basic", "Explosive Ordnance Disposal Badge (Basic)", "Army", 5360, "badge", ""],
+  ["army-badge-eod-senior", "Explosive Ordnance Disposal Badge (Senior)", "Army", 5361, "badge", ""],
+  ["army-badge-eod-master", "Explosive Ordnance Disposal Badge (Master)", "Army", 5362, "badge", ""],
+  ["army-badge-aviator", "Aviator Badge", "Army", 5400, "badge", ""],
+  ["army-badge-aviator-senior", "Senior Aviator Badge", "Army", 5410, "badge", ""],
+  ["army-badge-aviator-master", "Master Aviator Badge", "Army", 5420, "badge", ""],
+  ["army-badge-aircrew", "Aircrew Badge", "Army", 5430, "badge", ""],
 ];
 
 export const MILITARY_AWARDS_CATALOG: MilitaryAwardDefinition[] = RAW.map(

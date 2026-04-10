@@ -25,8 +25,8 @@ import { permissionForApiPath } from "@shared/tacticalPermissions";
 import type { TacticalMapRangeRing } from "@shared/schema";
 import ms from "milsymbol";
 import { resolveMarkerSidc, sidcForAffiliation } from "@shared/natoSidc";
-import { MILITARY_AWARDS_CATALOG, getMilitaryAwardById } from "@shared/militaryAwardsCatalog";
-import { enrichAndSortAwards } from "./awardHelpers";
+import { MILITARY_AWARDS_CATALOG, getMilitaryAwardById, sortAwardsByPrecedence } from "@shared/militaryAwardsCatalog";
+import { enrichAndSortAwards, enrichAwardRow } from "./awardHelpers";
 import {
   createBlankOrgChart,
   parseOrgChart,
@@ -571,11 +571,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     storage.reconcileExpiredLoas();
     const u = storage.getUserByUsername(username);
     if (!u) return res.status(404).json({ error: "Not found" });
-    const awards = storage.getAwards(username);
-    const citations = awards.filter((a) => a.awardType === "citation");
-    const awardsOther = awards.filter((a) => a.awardType !== "citation");
-    const awardsSorted = enrichAndSortAwards(awardsOther);
-    const citationsSorted = enrichAndSortAwards(citations);
+    const awardRows = storage.getAwards(username).map(enrichAwardRow);
+    const citations = awardRows.filter((a) => a.awardType === "citation");
+    const badgeAwards = awardRows.filter((a) => a.awardType === "badge");
+    const awardsOther = awardRows.filter((a) => a.awardType !== "citation" && a.awardType !== "badge");
+    const awardsSorted = sortAwardsByPrecedence(awardsOther);
+    const badgesSorted = sortAwardsByPrecedence(badgeAwards);
+    const citationsSorted = sortAwardsByPrecedence(citations);
     const signInSheets = storage.getTrainingRecords(username).map((r) => {
       let attachedTitle: string | null = null;
       let attachedType: string | null = null;
@@ -624,6 +626,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       loaApprover,
       loaPhase,
       awards: awardsSorted,
+      badges: badgesSorted,
       citations: citationsSorted,
       signInSheets,
       qualifications,

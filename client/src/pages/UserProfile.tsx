@@ -16,6 +16,7 @@ import {
   ScrollText,
   Activity,
   ClipboardCheck,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileLink } from "@/components/ProfileLink";
@@ -75,6 +76,7 @@ type ProfilePayload = {
   /** Server: none | scheduled (before start) | active (in window). */
   loaPhase?: "none" | "scheduled" | "active";
   awards: AwardRow[];
+  badges: AwardRow[];
   citations: AwardRow[];
   signInSheets: SignInRow[];
   qualifications: ProfileQualification[];
@@ -143,6 +145,7 @@ export default function UserProfilePage() {
   }
 
   const awards = profile?.awards ?? [];
+  const badges = profile?.badges ?? [];
   const citations = profile?.citations ?? [];
   const signInSheets = profile?.signInSheets ?? [];
   const qualifications = profile?.qualifications ?? [];
@@ -289,7 +292,7 @@ export default function UserProfilePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         <div className="bg-card border border-border rounded p-3">
           <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
             <Award className="h-3.5 w-3.5 text-blue-300" /> AWARDS
@@ -324,6 +327,39 @@ export default function UserProfilePage() {
         </div>
 
         <div className="bg-card border border-border rounded p-3">
+          <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+            <Shield className="h-3.5 w-3.5 text-violet-300" /> BADGES & TABS
+            <span className="ml-auto text-[9px] text-muted-foreground/70">{badges.length}</span>
+          </div>
+          {badges.length === 0 ? (
+            <div className="text-xs text-muted-foreground">No badges or tabs on record.</div>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5">
+              {badges.map((a) => (
+                <div key={a.id} className="border border-border/60 rounded p-2 bg-background/40 flex gap-2 items-start">
+                  <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-7 w-[96px] shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-mono font-bold leading-tight">
+                      {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                        <span className="text-muted-foreground font-normal mr-1">[{a.catalogBranch}]</span>
+                      ) : null}
+                      {a.awardName}
+                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5">
+                      {fmtDate(a.awardedAt)} · BY{" "}
+                      <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                        {a.awardedBy}
+                      </ProfileLink>
+                      {a.relatedOpName ? ` · OP ${a.relatedOpName}` : ""}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card border border-border rounded p-3 md:col-span-2 lg:col-span-1">
           <div className="text-[10px] font-bold tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
             <ScrollText className="h-3.5 w-3.5 text-amber-300" /> CITATIONS
             <span className="ml-auto text-[9px] text-muted-foreground/70">{citations.length}</span>

@@ -11,6 +11,8 @@ export function enrichAwardRow(a: Award): EnrichedAward {
   const def = getMilitaryAwardById((a.awardCatalogId || "").trim());
   return {
     ...a,
+    /** Prefer current catalog classification (e.g. CAB moved to type badge). */
+    awardType: def?.awardType ?? a.awardType,
     catalogBranch: def?.branch ?? "Custom",
     catalogPrecedence: def?.precedence ?? 999_999,
     imageUrl: def?.imageUrl ? def.imageUrl : null,

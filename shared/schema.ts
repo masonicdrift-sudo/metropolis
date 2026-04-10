@@ -433,7 +433,7 @@ export const awards = sqliteTable("awards", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull(),
   awardName: text("award_name").notNull(),
-  awardType: text("award_type").notNull().default("commendation"), // commendation | medal | citation | achievement
+  awardType: text("award_type").notNull().default("commendation"), // commendation | medal | citation | achievement | badge
   /** When set, links to shared/militaryAwardsCatalog (image + precedence). */
   awardCatalogId: text("award_catalog_id").notNull().default(""),
   reason: text("reason").notNull().default(""),

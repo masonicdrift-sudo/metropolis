@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import type { Award, Operation } from "@shared/schema";
 import { MILITARY_AWARDS_CATALOG, type MilitaryAwardDefinition } from "@shared/militaryAwardsCatalog";
-import { Plus, Star, Trash2, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, Star, Trash2, ChevronsUpDown, Check, Shield, ScrollText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ const TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }
   commendation: { label: "COMMENDATION", color: "text-blue-400", icon: "⭐" },
   citation: { label: "CITATION", color: "text-blue-400", icon: "📋" },
   achievement: { label: "ACHIEVEMENT", color: "text-orange-400", icon: "🏆" },
+  badge: { label: "BADGE / TAB", color: "text-violet-300", icon: "🛡" },
 };
 
 type ListAward = Award & {
@@ -337,6 +338,9 @@ export default function AwardsPage() {
 
   const allUsers = Array.from(new Set(awards.map((a) => a.username)));
   const filtered = filterUser === "all" ? awards : awards.filter((a) => a.username === filterUser);
+  const decorationRows = filtered.filter((a) => a.awardType !== "citation" && a.awardType !== "badge");
+  const badgeRows = filtered.filter((a) => a.awardType === "badge");
+  const citationRows = filtered.filter((a) => a.awardType === "citation");
 
   const fmt = (iso: string) => {
     try {
@@ -356,6 +360,11 @@ export default function AwardsPage() {
           </h1>
           <div className="text-[10px] text-muted-foreground tracking-wider">
             {awards.length} TOTAL · ORDERED BY PRECEDENCE (most senior first)
+            {filtered.length > 0 ? (
+              <span className="block mt-0.5 text-muted-foreground/90">
+                SHOWN: {decorationRows.length} decorations · {badgeRows.length} badges/tabs · {citationRows.length} citations
+              </span>
+            ) : null}
           </div>
         </div>
         {canAdmin && (
@@ -399,53 +408,180 @@ export default function AwardsPage() {
         </div>
       )}
 
-      <div className="space-y-2">
-        {filtered.map((a) => {
-          const cfg = TYPE_CONFIG[a.awardType] || TYPE_CONFIG.commendation;
-          return (
-            <div
-              key={a.id}
-              className="bg-card border border-border rounded px-4 py-3 flex items-start justify-between gap-3"
-            >
-              <div className="flex items-start gap-3 min-w-0">
-                <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-9 w-[120px]" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-[10px] font-bold tracking-widest ${cfg.color}`}>{cfg.label}</span>
-                    {a.catalogBranch && a.catalogBranch !== "Custom" ? (
-                      <span className="text-[9px] text-muted-foreground font-mono">[{a.catalogBranch}]</span>
-                    ) : null}
-                    <span className="text-xs font-bold font-mono break-words">{a.awardName}</span>
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    AWARDED TO:{" "}
-                    <ProfileLink username={a.username} className="text-foreground font-bold hover:text-blue-400">
-                      {a.username}
-                    </ProfileLink>{" "}
-                    ▪ BY{" "}
-                    <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
-                      {a.awardedBy}
-                    </ProfileLink>{" "}
-                    ▪ {fmt(a.awardedAt)}
-                    {a.relatedOpName ? ` ▪ OP: ${a.relatedOpName}` : ""}
-                  </div>
-                  {a.reason ? <div className="text-[11px] mt-1 text-muted-foreground italic">"{a.reason}"</div> : null}
-                </div>
-              </div>
-              {canAdmin && (
-                <button
-                  onClick={() => del.mutate(a.id)}
-                  className="p-1 text-muted-foreground hover:text-red-400 shrink-0"
-                  type="button"
-                  aria-label="Remove award"
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
+      {filtered.length > 0 ? (
+        <div className="space-y-6">
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-muted-foreground border-b border-border/60 pb-1">
+              <Star className="h-3.5 w-3.5 text-yellow-500/90 shrink-0" />
+              DECORATIONS & SERVICE AWARDS
+              <span className="ml-auto text-[9px] font-mono text-muted-foreground/80">{decorationRows.length}</span>
             </div>
-          );
-        })}
-      </div>
+            {decorationRows.length === 0 ? (
+              <div className="text-xs text-muted-foreground pl-1">None in this view.</div>
+            ) : (
+              decorationRows.map((a) => {
+                const cfg = TYPE_CONFIG[a.awardType] || TYPE_CONFIG.commendation;
+                return (
+                  <div
+                    key={a.id}
+                    className="bg-card border border-border rounded px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-9 w-[120px]" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[10px] font-bold tracking-widest ${cfg.color}`}>{cfg.label}</span>
+                          {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                            <span className="text-[9px] text-muted-foreground font-mono">[{a.catalogBranch}]</span>
+                          ) : null}
+                          <span className="text-xs font-bold font-mono break-words">{a.awardName}</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          AWARDED TO:{" "}
+                          <ProfileLink username={a.username} className="text-foreground font-bold hover:text-blue-400">
+                            {a.username}
+                          </ProfileLink>{" "}
+                          ▪ BY{" "}
+                          <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                            {a.awardedBy}
+                          </ProfileLink>{" "}
+                          ▪ {fmt(a.awardedAt)}
+                          {a.relatedOpName ? ` ▪ OP: ${a.relatedOpName}` : ""}
+                        </div>
+                        {a.reason ? <div className="text-[11px] mt-1 text-muted-foreground italic">"{a.reason}"</div> : null}
+                      </div>
+                    </div>
+                    {canAdmin && (
+                      <button
+                        onClick={() => del.mutate(a.id)}
+                        className="p-1 text-muted-foreground hover:text-red-400 shrink-0"
+                        type="button"
+                        aria-label="Remove award"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-muted-foreground border-b border-border/60 pb-1">
+              <Shield className="h-3.5 w-3.5 text-violet-400/90 shrink-0" />
+              BADGES & TABS (U.S. ARMY)
+              <span className="ml-auto text-[9px] font-mono text-muted-foreground/80">{badgeRows.length}</span>
+            </div>
+            {badgeRows.length === 0 ? (
+              <div className="text-xs text-muted-foreground pl-1">None in this view.</div>
+            ) : (
+              badgeRows.map((a) => {
+                const cfg = TYPE_CONFIG.badge;
+                return (
+                  <div
+                    key={a.id}
+                    className="bg-card border border-border rounded px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-9 w-[120px]" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[10px] font-bold tracking-widest ${cfg.color}`}>{cfg.label}</span>
+                          {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                            <span className="text-[9px] text-muted-foreground font-mono">[{a.catalogBranch}]</span>
+                          ) : null}
+                          <span className="text-xs font-bold font-mono break-words">{a.awardName}</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          AWARDED TO:{" "}
+                          <ProfileLink username={a.username} className="text-foreground font-bold hover:text-blue-400">
+                            {a.username}
+                          </ProfileLink>{" "}
+                          ▪ BY{" "}
+                          <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                            {a.awardedBy}
+                          </ProfileLink>{" "}
+                          ▪ {fmt(a.awardedAt)}
+                          {a.relatedOpName ? ` ▪ OP: ${a.relatedOpName}` : ""}
+                        </div>
+                        {a.reason ? <div className="text-[11px] mt-1 text-muted-foreground italic">"{a.reason}"</div> : null}
+                      </div>
+                    </div>
+                    {canAdmin && (
+                      <button
+                        onClick={() => del.mutate(a.id)}
+                        className="p-1 text-muted-foreground hover:text-red-400 shrink-0"
+                        type="button"
+                        aria-label="Remove award"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest text-muted-foreground border-b border-border/60 pb-1">
+              <ScrollText className="h-3.5 w-3.5 text-amber-400/80 shrink-0" />
+              CITATIONS & UNIT AWARDS
+              <span className="ml-auto text-[9px] font-mono text-muted-foreground/80">{citationRows.length}</span>
+            </div>
+            {citationRows.length === 0 ? (
+              <div className="text-xs text-muted-foreground pl-1">None in this view.</div>
+            ) : (
+              citationRows.map((a) => {
+                const cfg = TYPE_CONFIG[a.awardType] || TYPE_CONFIG.commendation;
+                return (
+                  <div
+                    key={a.id}
+                    className="bg-card border border-border rounded px-4 py-3 flex items-start justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <AwardRibbonImage imageUrl={a.imageUrl} alt={a.awardName} className="h-9 w-[120px]" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[10px] font-bold tracking-widest ${cfg.color}`}>{cfg.label}</span>
+                          {a.catalogBranch && a.catalogBranch !== "Custom" ? (
+                            <span className="text-[9px] text-muted-foreground font-mono">[{a.catalogBranch}]</span>
+                          ) : null}
+                          <span className="text-xs font-bold font-mono break-words">{a.awardName}</span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          AWARDED TO:{" "}
+                          <ProfileLink username={a.username} className="text-foreground font-bold hover:text-blue-400">
+                            {a.username}
+                          </ProfileLink>{" "}
+                          ▪ BY{" "}
+                          <ProfileLink username={a.awardedBy} className="text-muted-foreground hover:text-foreground">
+                            {a.awardedBy}
+                          </ProfileLink>{" "}
+                          ▪ {fmt(a.awardedAt)}
+                          {a.relatedOpName ? ` ▪ OP: ${a.relatedOpName}` : ""}
+                        </div>
+                        {a.reason ? <div className="text-[11px] mt-1 text-muted-foreground italic">"{a.reason}"</div> : null}
+                      </div>
+                    </div>
+                    {canAdmin && (
+                      <button
+                        onClick={() => del.mutate(a.id)}
+                        className="p-1 text-muted-foreground hover:text-red-400 shrink-0"
+                        type="button"
+                        aria-label="Remove award"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

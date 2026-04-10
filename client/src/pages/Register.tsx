@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, KeyRound, Shield, ArrowLeft } from "lucide-react";
 import { MetropolisLogo } from "@/components/MetropolisLogo";
-import { ClassificationBanner } from "@/components/ClassificationBanner";
+import { ClassificationBanner, ClassificationBannerSpacer } from "@/components/ClassificationBanner";
 
 export default function Register({ onBack }: { onBack: () => void }) {
   const { login } = useAuth();
@@ -45,6 +45,7 @@ export default function Register({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-dvh bg-background flex flex-col scanlines overflow-x-hidden">
       <ClassificationBanner />
+      <ClassificationBannerSpacer />
       <div className="flex-1 flex items-center justify-center overflow-y-auto overflow-x-hidden px-4 py-8 safe-bottom min-h-0">
       <div className="fixed inset-0 map-grid-bg opacity-40 pointer-events-none" />
 

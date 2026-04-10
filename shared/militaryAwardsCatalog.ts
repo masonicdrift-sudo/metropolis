@@ -230,32 +230,68 @@ const RAW: Row[] = [
   ["cg-cadet-ribbon", "Coast Guard JROTC Ribbon", "Coast Guard", 1804, "achievement", ""],
 
   // ── U.S. Army skill tabs & warfare / combat / special-skill badges (awardType: badge; AR 670-1) ──
-  ["army-tab-ranger", "Ranger Tab", "Army", 5100, "badge", ""],
+  // Skill tabs (SSI / unit / individual tabs)
   ["army-tab-special-forces", "Special Forces Tab", "Army", 5101, "badge", ""],
+  ["army-tab-ranger", "Ranger Tab", "Army", 5100, "badge", ""],
   ["army-tab-sapper", "Sapper Tab", "Army", 5102, "badge", ""],
   ["army-tab-presidents-hundred", "President's Hundred Tab", "Army", 5103, "badge", ""],
+  ["army-tab-airborne", "Airborne Tab", "Army", 5107, "badge", ""],
+  ["army-tab-arctic", "Arctic Tab", "Army", 5108, "badge", ""],
   ["army-tab-sniper", "Sniper Tab", "Army", 5104, "badge", ""],
   ["army-tab-jungle", "Jungle Expert Tab", "Army", 5105, "badge", ""],
   ["army-tab-mountain", "Mountain Tab", "Army", 5106, "badge", ""],
+  // Master combat badges (Group 1; policy as of 2025 - Master CIB/CMB/CAB)
+  ["army-badge-mcib", "Master Combat Infantryman Badge (Master Infantryman)", "Army", 5185, "badge", ""],
+  // Master-level field medical wear is MCMB (not a separate "Master EFMB"; see also EFMB below)
+  ["army-badge-mcmb", "Master Combat Medical Badge (master field medical - EFMB/CMB pathway)", "Army", 5186, "badge", ""],
+  ["army-badge-mcab", "Master Combat Action Badge", "Army", 5187, "badge", ""],
+  // Combat / expert (standard)
   ["army-badge-cib", "Combat Infantryman Badge", "Army", 5200, "badge", ""],
   ["army-badge-cmb", "Combat Medical Badge", "Army", 5201, "badge", ""],
   ["army-badge-eib", "Expert Infantryman Badge", "Army", 5203, "badge", ""],
-  ["army-badge-efmb", "Expert Field Medical Badge", "Army", 5204, "badge", ""],
+  ["army-badge-efmb", "Expert Field Medical Badge (EFMB - no separate Master EFMB; master wear is MCMB)", "Army", 5204, "badge", ""],
+  // DA uses Expert Soldier Badge (ESB); no distinct badge titled Master Soldier in AR 670-1
+  ["army-badge-esb", "Expert Soldier Badge (ESB - soldier proficiency; not a separate Master Soldier badge)", "Army", 5205, "badge", ""],
+  // Parachutist & rigger
   ["army-badge-parachutist-basic", "Parachutist Badge (Basic)", "Army", 5300, "badge", ""],
   ["army-badge-parachutist-senior", "Parachutist Badge (Senior)", "Army", 5301, "badge", ""],
   ["army-badge-parachutist-master", "Parachutist Badge (Master)", "Army", 5302, "badge", ""],
+  ["army-badge-parachute-rigger", "Parachute Rigger Badge", "Army", 5303, "badge", ""],
+  // Air assault, pathfinder, MFF (special operations parachuting)
   ["army-badge-air-assault", "Air Assault Badge", "Army", 5310, "badge", ""],
   ["army-badge-pathfinder", "Pathfinder Badge", "Army", 5320, "badge", ""],
-  ["army-badge-military-freefall", "Military Freefall Parachutist Badge", "Army", 5330, "badge", ""],
-  ["army-badge-military-freefall-jumpmaster", "Military Freefall Jumpmaster Badge", "Army", 5340, "badge", ""],
+  ["army-badge-military-freefall", "Military Freefall Parachutist Badge (basic HALO/HAHO)", "Army", 5330, "badge", ""],
+  // MFF Jumpmaster course awards the master badge (star and wreath), not a separate Jumpmaster-only device
+  ["army-badge-military-freefall-jumpmaster", "Master Military Freefall Parachutist Badge (MFF Jumpmaster course)", "Army", 5340, "badge", ""],
+  // Underwater / diving (including Special Forces & special operations diver)
+  ["army-badge-special-operations-diver", "Special Operations Diver Badge", "Army", 5280, "badge", ""],
+  ["army-badge-scuba-diver-second-class", "Scuba Diver Badge (Second Class)", "Army", 5281, "badge", ""],
+  ["army-badge-diver-first-class", "Diver Badge (First Class)", "Army", 5282, "badge", ""],
+  ["army-badge-salvage-diver", "Salvage Diver Badge", "Army", 5283, "badge", ""],
+  // Space, EOD
   ["army-badge-space-operations", "Space Operations Badge", "Army", 5350, "badge", ""],
+  ["army-badge-space-operations-senior", "Space Operations Badge (Senior)", "Army", 5351, "badge", ""],
+  ["army-badge-space-operations-master", "Space Operations Badge (Master)", "Army", 5352, "badge", ""],
   ["army-badge-eod-basic", "Explosive Ordnance Disposal Badge (Basic)", "Army", 5360, "badge", ""],
   ["army-badge-eod-senior", "Explosive Ordnance Disposal Badge (Senior)", "Army", 5361, "badge", ""],
   ["army-badge-eod-master", "Explosive Ordnance Disposal Badge (Master)", "Army", 5362, "badge", ""],
+  // Aviation
   ["army-badge-aviator", "Aviator Badge", "Army", 5400, "badge", ""],
   ["army-badge-aviator-senior", "Senior Aviator Badge", "Army", 5410, "badge", ""],
   ["army-badge-aviator-master", "Master Aviator Badge", "Army", 5420, "badge", ""],
+  ["army-badge-flight-surgeon", "Flight Surgeon Badge", "Army", 5405, "badge", ""],
   ["army-badge-aircrew", "Aircrew Badge", "Army", 5430, "badge", ""],
+  ["army-badge-aircrew-senior", "Senior Aircrew Badge", "Army", 5431, "badge", ""],
+  ["army-badge-aircrew-master", "Master Aircrew Badge", "Army", 5432, "badge", ""],
+  // Driver & mechanic (wear levels / qualification)
+  ["army-badge-driver-mechanic", "Driver and Mechanic Badge", "Army", 5450, "badge", ""],
+  ["army-badge-senior-driver", "Senior Driver Badge", "Army", 5451, "badge", ""],
+  ["army-badge-master-driver", "Master Driver Badge", "Army", 5452, "badge", ""],
+  // Mariner & mountaineering (new / emerging DA badges)
+  ["army-badge-mariner-basic", "Mariner Badge (Basic)", "Army", 5460, "badge", ""],
+  ["army-badge-mariner-senior", "Mariner Badge (Senior)", "Army", 5461, "badge", ""],
+  ["army-badge-mariner-master", "Mariner Badge (Master)", "Army", 5462, "badge", ""],
+  ["army-badge-mountaineering", "Mountaineering Badge", "Army", 5465, "badge", ""],
 ];
 
 export const MILITARY_AWARDS_CATALOG: MilitaryAwardDefinition[] = RAW.map(

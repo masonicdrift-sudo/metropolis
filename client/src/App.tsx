@@ -43,7 +43,7 @@ import OrgChartPage from "./pages/OrgChart";
 import TacticalHub from "./pages/TacticalHub";
 import { BroadcastOverlay } from "./components/BroadcastOverlay";
 import { MetropolisLogo } from "@/components/MetropolisLogo";
-import { ClassificationBanner } from "@/components/ClassificationBanner";
+import { ClassificationBanner, ClassificationBannerSpacer } from "@/components/ClassificationBanner";
 import { ProfileLink } from "@/components/ProfileLink";
 import Login from "./pages/Login";
 import NotFound from "./pages/not-found";
@@ -500,6 +500,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       )}
     >
       <ClassificationBanner />
+      <ClassificationBannerSpacer />
 
       <div className="flex flex-1 min-h-0 min-w-0">
         {/* Desktop sidebar */}

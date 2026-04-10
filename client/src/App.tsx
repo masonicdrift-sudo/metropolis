@@ -268,7 +268,7 @@ function Sidebar({ mobileShell }: { mobileShell: boolean }) {
             <ShieldCheck size={13} /> PERM ROLES
           </Link>
         )}
-        {user?.accessLevel === "owner" && (
+        {(user?.accessLevel === "admin" || user?.accessLevel === "owner") && (
           <Link href="/access-codes" className={`flex items-center gap-3 px-3 py-2 rounded text-xs tracking-[0.08em] transition-all cursor-pointer ${
             location === "/access-codes" ? "bg-orange-950/60 text-orange-400 border border-orange-900/60" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
           }`}>
@@ -375,7 +375,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     ...flattenNav(filterNavBlocks(NAV_BLOCKS, user)),
     ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users", label: "USER MGMT", icon: ShieldCheck, short: "Users" }] : []),
     ...(user?.accessLevel === "admin" || user?.accessLevel === "owner" ? [{ path: "/users/roles", label: "PERM ROLES", icon: ShieldCheck, short: "Roles" }] : []),
-    ...(user?.accessLevel === "owner" ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
+    ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/access-codes", label: "ACCESS CODES", icon: KeyRound, short: "Codes" }] : []),
     ...((user?.accessLevel === "admin" || user?.accessLevel === "owner") ? [{ path: "/broadcasts", label: "BROADCASTS", icon: Zap, short: "Flash" }] : []),
     { path: "/settings", label: "SETTINGS", icon: Settings, short: "Settings" },
   ];
@@ -603,7 +603,7 @@ function AppRoutes() {
         <Route path="/broadcasts" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? BroadcastsPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/users/roles" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? TacticalRolesPage : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
         <Route path="/users" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? UserManagement : () => <div className="p-8 text-center text-xs text-muted-foreground">ACCESS DENIED</div>} />
-        <Route path="/access-codes" component={user.accessLevel === "owner" ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">OWNER ACCESS ONLY</div>} />
+        <Route path="/access-codes" component={(user.accessLevel === "admin" || user.accessLevel === "owner") ? AccessCodes : () => <div className="p-8 text-center text-xs text-muted-foreground">ADMIN ACCESS ONLY</div>} />
         <Route path="/profile" component={ProfileIndexRedirect} />
         <Route path="/profile/:username" component={UserProfilePage} />
 

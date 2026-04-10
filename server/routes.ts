@@ -549,13 +549,13 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.status(201).json(sessionUserJson(user));
   });
 
-  // ── Access codes (Owner only) ────────────────────────────────────────────
-  app.get("/api/access-codes", requireOwner, (_, res) => res.json(storage.getAccessCodes()));
-  app.post("/api/access-codes", requireOwner, (req, res) => {
+  // ── Access codes (admin or owner — same capabilities) ───────────────────
+  app.get("/api/access-codes", requireAdmin, (_, res) => res.json(storage.getAccessCodes()));
+  app.post("/api/access-codes", requireAdmin, (req, res) => {
     const code = storage.generateAccessCode(req.session.username!, req.body.expiresAt || "");
     res.status(201).json(code);
   });
-  app.delete("/api/access-codes/:id", requireOwner, (req, res) => {
+  app.delete("/api/access-codes/:id", requireAdmin, (req, res) => {
     storage.deleteAccessCode(Number(req.params.id));
     res.status(204).send();
   });

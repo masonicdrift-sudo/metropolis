@@ -1,5 +1,6 @@
 /**
- * US military decorations & service awards (all branches + Coast Guard + joint).
+ * US military decorations & service awards (all branches + Coast Guard + Space Force + joint).
+ * Includes branch warfare pins / occupational badges (awardType `badge`) and ribbons/medals.
  * Precedence follows consolidated DoD wear order (approximate); lower = more senior.
  * Ribbon images: Wikimedia Commons thumbnails where available; otherwise empty → UI placeholder.
  */
@@ -293,6 +294,99 @@ const RAW: Row[] = [
   ["army-badge-mariner-senior", "Mariner Badge (Senior)", "Army", 5461, "badge", ""],
   ["army-badge-mariner-master", "Mariner Badge (Master)", "Army", 5462, "badge", ""],
   ["army-badge-mountaineering", "Mountaineering Badge", "Army", 5465, "badge", ""],
+
+  // ── Navy & Marine Corps warfare pins / aviation / expeditionary badges (NAVPERS / MCO P1020) ──
+  ["navy-badge-naval-aviator", "Naval Aviator (Pilot) Insignia", "Navy", 6000, "badge", ""],
+  ["navy-badge-naval-flight-officer", "Naval Flight Officer Insignia", "Navy", 6001, "badge", ""],
+  ["navy-badge-naval-astronaut", "Naval Astronaut Insignia", "Navy", 6002, "badge", ""],
+  ["mc-badge-naval-aviator", "Naval Aviator Insignia (Marine Corps)", "Marine Corps", 6003, "badge", ""],
+  ["mc-badge-naval-flight-officer", "Naval Flight Officer Insignia (Marine Corps)", "Marine Corps", 6004, "badge", ""],
+  ["navy-badge-surface-warfare-officer", "Surface Warfare Officer Insignia", "Navy", 6010, "badge", ""],
+  ["navy-badge-enlisted-surface-warfare", "Enlisted Surface Warfare Specialist (ESWS)", "Navy", 6011, "badge", ""],
+  ["navy-badge-surface-warfare-medical", "Surface Warfare Medical Department Officer", "Navy", 6012, "badge", ""],
+  ["navy-badge-surface-warfare-dental", "Surface Warfare Dental Corps Officer", "Navy", 6013, "badge", ""],
+  ["navy-badge-submarine-officer", "Submarine Warfare Officer Insignia (Dolphins)", "Navy", 6020, "badge", ""],
+  ["navy-badge-enlisted-submarine-warfare", "Enlisted Submarine Warfare Specialist (SS)", "Navy", 6021, "badge", ""],
+  ["navy-badge-submarine-medical", "Submarine Medical Officer Insignia", "Navy", 6022, "badge", ""],
+  ["navy-badge-submarine-supply", "Submarine Supply Corps Officer Insignia", "Navy", 6023, "badge", ""],
+  ["navy-badge-special-warfare-seal", "Special Warfare Operator (SEAL) Insignia", "Navy", 6030, "badge", ""],
+  ["navy-badge-special-warfare-boat", "Special Warfare Combatant-Craft Crewman (SWCC) Insignia", "Navy", 6031, "badge", ""],
+  ["navy-badge-explosive-ordnance-disposal", "Explosive Ordnance Disposal Warfare Insignia (Navy)", "Navy", 6032, "badge", ""],
+  ["navy-badge-fleet-marine-force", "Fleet Marine Force Enlisted Warfare Specialist (FMF)", "Navy", 6035, "badge", ""],
+  ["navy-badge-fleet-marine-force-officer", "Fleet Marine Force Officer Insignia", "Navy", 6036, "badge", ""],
+  ["navy-badge-aircrew", "Naval Aircrew Warfare Specialist / Aircrew Insignia", "Navy", 6040, "badge", ""],
+  ["navy-badge-integrated-operations", "Integrated Undersea Surveillance System Officer / enlisted", "Navy", 6042, "badge", ""],
+  ["navy-badge-information-dominance", "Information Warfare / Cryptologic Warfare Insignia", "Navy", 6045, "badge", ""],
+  ["navy-badge-meteorology-oceanography", "Meteorology and Oceanography (METOC) Officer Insignia", "Navy", 6046, "badge", ""],
+  ["navy-badge-expeditionary-warfare", "Expeditionary Warfare Specialist", "Navy", 6048, "badge", ""],
+  ["navy-badge-parachutist", "Navy / Marine Corps Parachutist Insignia", "Navy", 6050, "badge", ""],
+  ["mc-badge-parachutist", "Parachutist Insignia (Marine Corps)", "Marine Corps", 6051, "badge", ""],
+  ["navy-badge-scuba", "Navy Scuba Diver Insignia", "Navy", 6052, "badge", ""],
+  ["mc-badge-combat-aircrew", "Combat Aircrew Insignia (Marine Corps — legacy / flight suit)", "Marine Corps", 6053, "badge", ""],
+  ["mc-badge-aircrew", "Aircrew Insignia (Marine Corps)", "Marine Corps", 6054, "badge", ""],
+  ["mc-badge-diver", "Diver Insignia (Marine Corps)", "Marine Corps", 6055, "badge", ""],
+  ["mc-badge-drill-instructor", "Drill Instructor Badge (Marine Corps)", "Marine Corps", 6056, "badge", ""],
+  ["mc-badge-security-forces", "Military Police / Security Forces Badge (Marine Corps)", "Marine Corps", 6057, "badge", ""],
+
+  // ── Air Force & Space Force occupational / warfare badges (AFI 36-2903; USSF guidance) ──
+  ["af-badge-command-pilot", "USAF Pilot / Command Pilot Badges (wings)", "Air Force", 6100, "badge", ""],
+  ["af-badge-rpa-pilot", "Remotely Piloted Aircraft (RPA) Pilot Badge", "Air Force", 6101, "badge", ""],
+  ["af-badge-combat-systems-officer", "Combat Systems Officer / Navigator Badge", "Air Force", 6102, "badge", ""],
+  ["af-badge-air-battle-manager", "Air Battle Manager Badge", "Air Force", 6103, "badge", ""],
+  ["af-badge-astronaut", "USAF / USSF Astronaut Badge", "Air Force", 6104, "badge", ""],
+  ["af-badge-missile-operations", "Missile Operations Badge", "Air Force", 6110, "badge", ""],
+  ["af-badge-missile-operations-senior", "Missile Operations Badge (Senior)", "Air Force", 6111, "badge", ""],
+  ["af-badge-missile-operations-master", "Missile Operations Badge (Master)", "Air Force", 6112, "badge", ""],
+  ["af-badge-cyberspace-operator", "Cyberspace Operator Badge", "Air Force", 6115, "badge", ""],
+  ["af-badge-cyberspace-operator-senior", "Cyberspace Operator Badge (Senior)", "Air Force", 6116, "badge", ""],
+  ["af-badge-cyberspace-operator-master", "Cyberspace Operator Badge (Master)", "Air Force", 6117, "badge", ""],
+  ["af-badge-intelligence", "Air Force Intelligence Badge", "Air Force", 6120, "badge", ""],
+  ["af-badge-weather", "Meteorologist / Weather Officer Badge", "Air Force", 6121, "badge", ""],
+  ["af-badge-space-operations-badge", "Space Operations Badge (Air Force — orbital & missile ops)", "Air Force", 6125, "badge", ""],
+  ["af-badge-space-operations-senior", "Space Operations Badge (Senior — Air Force)", "Air Force", 6126, "badge", ""],
+  ["af-badge-space-operations-master", "Space Operations Badge (Master — Air Force)", "Air Force", 6127, "badge", ""],
+  ["af-badge-aircrew-enlisted", "Enlisted Aircrew / Flight Engineer Badges", "Air Force", 6130, "badge", ""],
+  ["af-badge-parachutist-basic", "Basic Parachutist Badge (Air Force)", "Air Force", 6135, "badge", ""],
+  ["af-badge-parachutist-jumpmaster", "Jumpmaster Badge (Air Force)", "Air Force", 6136, "badge", ""],
+  ["af-badge-dive", "Dive Badge (Air Force combat / pararescue / special tactics)", "Air Force", 6138, "badge", ""],
+  ["af-badge-explosive-ordnance-disposal", "Explosive Ordnance Disposal Badge (Air Force)", "Air Force", 6140, "badge", ""],
+  ["af-badge-security-forces", "Security Forces Badge / Defender", "Air Force", 6142, "badge", ""],
+  ["af-badge-medical", "Medical Corps / Nurse / Biomedical Science Corps insignia", "Air Force", 6145, "badge", ""],
+
+  ["sf-badge-space-operations", "Space Operations Badge (Guardian — basic)", "Space Force", 6200, "badge", ""],
+  ["sf-badge-space-operations-senior", "Space Operations Badge (Guardian — senior)", "Space Force", 6201, "badge", ""],
+  ["sf-badge-space-operations-master", "Space Operations Badge (Guardian — master)", "Space Force", 6202, "badge", ""],
+  ["sf-badge-intelligence", "Intelligence Badge (Space Force)", "Space Force", 6210, "badge", ""],
+  ["sf-badge-cyber", "Cyberspace Operator Badge (Space Force)", "Space Force", 6215, "badge", ""],
+  ["sf-badge-acquisitions", "Acquisitions / Engineer Functional Badge (Space Force)", "Space Force", 6220, "badge", ""],
+  ["sf-badge-orbital-warfare", "Orbital Warfare Specialist identifier (functional area)", "Space Force", 6225, "badge", ""],
+  ["sf-badge-space-electronic-warfare", "Space Electronic Warfare identifier (functional area)", "Space Force", 6226, "badge", ""],
+  ["sf-badge-sustainment", "Space Sustainment identifier (functional area)", "Space Force", 6227, "badge", ""],
+  ["sf-badge-command-and-control", "Space Command & Control identifier (functional area)", "Space Force", 6228, "badge", ""],
+  ["sf-badge-missile-warning", "Missile Warning identifier (functional area)", "Space Force", 6229, "badge", ""],
+  ["sf-badge-guardian-astronaut", "Guardian Astronaut Badge (when authorized)", "Space Force", 6235, "badge", ""],
+
+  // ── Coast Guard qualification / warfare badges ──
+  ["cg-badge-aviator", "Coast Guard Aviator / Aircrew Wings", "Coast Guard", 6300, "badge", ""],
+  ["cg-badge-aircrew", "Coast Guard Advanced Boat Force / aircrew qualification badge", "Coast Guard", 6301, "badge", ""],
+  ["cg-badge-coxswain", "Coxswain Insignia", "Coast Guard", 6310, "badge", ""],
+  ["cg-badge-surfman", "Surfman Badge (heavy weather boat)", "Coast Guard", 6311, "badge", ""],
+  ["cg-badge-tactical-law-enforcement", "Tactical Law Enforcement (TACLET) Badge", "Coast Guard", 6315, "badge", ""],
+  ["cg-badge-diver", "Coast Guard Diver Insignia", "Coast Guard", 6320, "badge", ""],
+  ["cg-badge-rescue-swimmer", "Rescue Swimmer insignia", "Coast Guard", 6321, "badge", ""],
+  ["cg-badge-command-at-sea", "Command Afloat / Command Ashore insignia", "Coast Guard", 6325, "badge", ""],
+  ["cg-badge-permanent-cutter-forces", "Permanent Cutter Forces insignia", "Coast Guard", 6330, "badge", ""],
+  ["cg-badge-port-security", "Maritime Law Enforcement / Port Security Badge", "Coast Guard", 6335, "badge", ""],
+
+  // ── Joint / multi-service identification badges (wear on joint assignments) ──
+  ["joint-badge-office-secretary-defense", "Office of the Secretary of Defense Identification Badge", "Joint", 6400, "badge", ""],
+  ["joint-badge-joint-chiefs-staff", "Joint Chiefs of Staff Identification Badge", "Joint", 6401, "badge", ""],
+  ["joint-badge-hq-department-army", "Army Staff Identification Badge", "Joint", 6405, "badge", ""],
+  ["joint-badge-hq-department-navy", "Navy Staff Identification Badge", "Joint", 6406, "badge", ""],
+  ["joint-badge-hq-department-air-force", "Air Force Staff Identification Badge", "Joint", 6407, "badge", ""],
+  ["joint-badge-hq-coast-guard", "Coast Guard Headquarters Staff Badge", "Joint", 6408, "badge", ""],
+  ["joint-badge-nato", "NATO Identification Badge", "Joint", 6410, "badge", ""],
+  ["joint-badge-un-mission", "United Nations Mission Identification Badge", "Joint", 6411, "badge", ""],
 ];
 
 export const MILITARY_AWARDS_CATALOG: MilitaryAwardDefinition[] = RAW.map(

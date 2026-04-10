@@ -429,6 +429,13 @@ function shouldSkipTacticalApiGate(path: string): boolean {
 }
 
 export function registerRoutes(httpServer: ReturnType<typeof createServer>, app: Express) {
+  const prunedStaleLinks = storage.pruneStaleEntityLinks();
+  if (prunedStaleLinks > 0) {
+    console.log(
+      `[entity_links] Removed ${prunedStaleLinks} stale link(s) whose entities no longer exist.`,
+    );
+  }
+
   app.use((req: Request, res: Response, next: NextFunction) => {
     const path = req.path || "";
     if (!path.startsWith("/api/")) return next();
@@ -937,6 +944,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const targetRank = ACCESS_RANK[target.accessLevel] ?? 0;
     if (targetRank >= callerRank) return res.status(403).json({ error: "Cannot delete a user with equal or higher role" });
     storage.deleteUser(id);
+    wsPush("LINKS");
     appendActivity(req, { action: "DELETE", entityType: "user", entityId: id, summary: `Deleted user: ${target.username} (${target.accessLevel})`, before: { id: target.id, username: target.username, accessLevel: target.accessLevel, role: target.role || "" } });
     res.status(204).send();
   });
@@ -1034,6 +1042,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const before = storage.getIsofacDoc(id);
     storage.deleteIsofacDoc(id);
     wsPush("ISOFAC");
+    wsPush("LINKS");
     appendActivity(req, {
       action: "DELETE",
       entityType: "isofac",
@@ -1249,7 +1258,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     wsPush("UNIT"); res.json(unit);
   });
   app.delete("/api/units/:id", requireAdmin, (req, res) => {
-    storage.deleteUnit(Number(req.params.id)); wsPush("UNIT");
+    storage.deleteUnit(Number(req.params.id)); wsPush("UNIT"); wsPush("LINKS");
     res.status(204).send();
   });
 
@@ -1320,6 +1329,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const before = storage.getOperation(id);
     storage.deleteOperation(id);
     wsPush("OPERATION");
+    wsPush("LINKS");
     appendActivity(req, {
       action: "DELETE",
       entityType: "operations",
@@ -1444,6 +1454,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     const before = storage.getIntelReport(id);
     storage.deleteIntelReport(id);
     wsPush("INTEL");
+    wsPush("LINKS");
     appendActivity(req, {
       action: "DELETE",
       entityType: "intel",
@@ -2180,6 +2191,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Not found" });
     }
     wsPush("CALENDAR");
+    wsPush("LINKS");
     appendActivity(req, { action: "DELETE", entityType: "calendar", entityId: id, summary: `Deleted calendar event ${id}`, before });
     res.status(204).send();
   });
@@ -2389,6 +2401,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       return res.status(404).json({ error: "Not found" });
     }
     wsPush("CASUALTIES");
+    wsPush("LINKS");
     appendActivity(req, { action: "DELETE", entityType: "casualty", entityId: id, summary: `Deleted casualty ${id}`, before });
     res.status(204).send();
   });
@@ -2442,7 +2455,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
   });
 
   // ── Promotion packets (request → approvals queue → admin approves → rank + FLASH) ──
-  app.post("/api/promotion-packets/request", requireAuth, (req, res) => {
+  app.post("/api/promotion-packets/request", requireAdmin, (req, res) => {
     const parsed = promotionPacketRequestSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const seen = new Set<string>();

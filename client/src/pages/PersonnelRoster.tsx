@@ -35,7 +35,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SubPageNav } from "@/components/SubPageNav";
-import { PERSONNEL_SUB } from "@/lib/appNav";
+import { personnelSubNavForAccess } from "@/lib/appNav";
 
 const STATUS_OPTIONS = [
   { value: "present", label: "Present" },
@@ -305,7 +305,7 @@ export default function PersonnelRosterPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
-      <SubPageNav items={PERSONNEL_SUB} />
+      <SubPageNav items={personnelSubNavForAccess(user?.accessLevel)} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1

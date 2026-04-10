@@ -982,6 +982,10 @@ export interface IStorage {
     username: string,
     role: string,
   ): { ok: true } | { ok: false; reason: "not_found" | "forbidden" };
+  /** Remove stored links touching an entity (both ends). Call when deleting that entity. */
+  deleteEntityLinksTouchingEntity(entityType: string, entityId: string): void;
+  /** Delete links whose a_type/a_id or b_type/b_id point at missing rows (e.g. after manual DB edits). Returns count removed. */
+  pruneStaleEntityLinks(): number;
   // Support requests
   getSupportRequests(): SupportRequest[];
   getSupportRequest(id: number): SupportRequest | undefined;
@@ -1093,7 +1097,10 @@ export class Storage implements IStorage {
       .returning()
       .get();
   }
-  deleteIsofacDoc(id: number) { db.delete(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).run(); }
+  deleteIsofacDoc(id: number) {
+    this.deleteEntityLinksTouchingEntity("isofac", String(id));
+    db.delete(schema.isofacDocs).where(eq(schema.isofacDocs.id, id)).run();
+  }
 
   // Group Chats
   getGroupsForUser(username: string): GroupChat[] {
@@ -1339,6 +1346,10 @@ export class Storage implements IStorage {
     return created;
   }
   deleteUser(id: number) {
+    const row = db.select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.id, id)).get();
+    if (row?.username) {
+      this.deleteEntityLinksTouchingEntity("users", row.username);
+    }
     sqlite.prepare(`DELETE FROM user_tactical_roles WHERE user_id = ?`).run(id);
     db.delete(schema.users).where(eq(schema.users.id, id)).run();
   }
@@ -1570,7 +1581,10 @@ export class Storage implements IStorage {
   updateUnit(id: number, u: Partial<InsertUnit>) {
     return db.update(schema.units).set(u).where(eq(schema.units.id, id)).returning().get();
   }
-  deleteUnit(id: number) { db.delete(schema.units).where(eq(schema.units.id, id)).run(); }
+  deleteUnit(id: number) {
+    this.deleteEntityLinksTouchingEntity("units", String(id));
+    db.delete(schema.units).where(eq(schema.units.id, id)).run();
+  }
 
   // Operations
   getOperations() { return db.select().from(schema.operations).all(); }
@@ -1591,7 +1605,10 @@ export class Storage implements IStorage {
   updateOperation(id: number, o: Partial<InsertOperation>) {
     return db.update(schema.operations).set(o).where(eq(schema.operations.id, id)).returning().get();
   }
-  deleteOperation(id: number) { db.delete(schema.operations).where(eq(schema.operations.id, id)).run(); }
+  deleteOperation(id: number) {
+    this.deleteEntityLinksTouchingEntity("operations", String(id));
+    db.delete(schema.operations).where(eq(schema.operations.id, id)).run();
+  }
 
   // Intel
   getIntelReports() { return db.select().from(schema.intelReports).orderBy(desc(schema.intelReports.id)).all(); }
@@ -1608,7 +1625,10 @@ export class Storage implements IStorage {
       .returning()
       .get();
   }
-  deleteIntelReport(id: number) { db.delete(schema.intelReports).where(eq(schema.intelReports.id, id)).run(); }
+  deleteIntelReport(id: number) {
+    this.deleteEntityLinksTouchingEntity("intel", String(id));
+    db.delete(schema.intelReports).where(eq(schema.intelReports.id, id)).run();
+  }
 
   // Comms — message content encrypted at rest
   getCommsLog() {
@@ -1858,6 +1878,7 @@ export class Storage implements IStorage {
     const rank = schema.ACCESS_RANK[role] ?? 0;
     const isStaff = rank >= schema.ACCESS_RANK.admin;
     if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    this.deleteEntityLinksTouchingEntity("calendar", String(id));
     db.delete(schema.calendarEvents).where(eq(schema.calendarEvents.id, id)).run();
     return { ok: true };
   }
@@ -1947,6 +1968,73 @@ export class Storage implements IStorage {
     if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
     db.delete(schema.entityLinks).where(eq(schema.entityLinks.id, id)).run();
     return { ok: true };
+  }
+
+  deleteEntityLinksTouchingEntity(entityType: string, entityId: string): void {
+    const et = entityType.trim();
+    const eid = String(entityId).trim();
+    if (!et || !eid) return;
+    db.delete(schema.entityLinks)
+      .where(
+        or(
+          and(eq(schema.entityLinks.aType, et), eq(schema.entityLinks.aId, eid)),
+          and(eq(schema.entityLinks.bType, et), eq(schema.entityLinks.bId, eid)),
+        ),
+      )
+      .run();
+  }
+
+  private entityLinkEndpointExists(type: string, id: string): boolean {
+    const t = type.trim();
+    const sid = id.trim();
+    if (!t || !sid) return false;
+    switch (t) {
+      case "users":
+        return !!this.getUserByUsername(sid);
+      case "units": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getUnit(n);
+      }
+      case "intel": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getIntelReport(n);
+      }
+      case "operations": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getOperation(n);
+      }
+      case "isofac": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getIsofacDoc(n);
+      }
+      case "casualties": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getCasualty(n);
+      }
+      case "calendar": {
+        const n = Number(sid);
+        return Number.isFinite(n) && !!this.getCalendarEvent(n);
+      }
+      case "location":
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  pruneStaleEntityLinks(): number {
+    const all = this.getAllEntityLinks();
+    let removed = 0;
+    for (const l of all) {
+      if (
+        !this.entityLinkEndpointExists(l.aType, l.aId) ||
+        !this.entityLinkEndpointExists(l.bType, l.bId)
+      ) {
+        db.delete(schema.entityLinks).where(eq(schema.entityLinks.id, l.id)).run();
+        removed++;
+      }
+    }
+    return removed;
   }
 
   getSupportRequests(): SupportRequest[] {
@@ -2311,6 +2399,7 @@ export class Storage implements IStorage {
     const rank = schema.ACCESS_RANK[role] ?? 0;
     const isStaff = rank >= schema.ACCESS_RANK.admin;
     if (row.createdBy !== username && !isStaff) return { ok: false, reason: "forbidden" };
+    this.deleteEntityLinksTouchingEntity("casualties", String(id));
     db.delete(schema.casualties).where(eq(schema.casualties.id, id)).run();
     // child rows best-effort cleanup
     db.delete(schema.casualtyEvac).where(eq(schema.casualtyEvac.casualtyId, id)).run();

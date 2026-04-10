@@ -48,7 +48,7 @@ import {
   type OrgSlotView,
 } from "@shared/orgChart";
 import { SubPageNav } from "@/components/SubPageNav";
-import { PERSONNEL_SUB } from "@/lib/appNav";
+import { personnelSubNavForAccess } from "@/lib/appNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -649,7 +649,7 @@ export default function OrgChartPage() {
         ) : null}
       </div>
 
-      <SubPageNav items={PERSONNEL_SUB} />
+      <SubPageNav items={personnelSubNavForAccess(user?.accessLevel)} />
 
       <div className="flex-1 flex min-h-0 gap-2 border border-border rounded-md bg-black/40 overflow-hidden">
         <DndContext

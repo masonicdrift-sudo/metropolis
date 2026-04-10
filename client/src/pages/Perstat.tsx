@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { SubPageNav } from "@/components/SubPageNav";
-import { PERSONNEL_SUB } from "@/lib/appNav";
+import { personnelSubNavForAccess } from "@/lib/appNav";
 import { ProfileLink } from "@/components/ProfileLink";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
@@ -90,7 +90,7 @@ export default function PerstatPage() {
 
   return (
     <div className="p-3 md:p-4 tac-page">
-      <SubPageNav items={PERSONNEL_SUB} />
+      <SubPageNav items={personnelSubNavForAccess(user?.accessLevel)} />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
         <div>
           <h1 className="text-sm font-bold tracking-[0.15em]" style={{ fontFamily: "'Cabinet Grotesk', sans-serif" }}>PERSTAT — PERSONNEL ACCOUNTABILITY</h1>

@@ -28,6 +28,12 @@ export const PERSONNEL_SUB: SubNavItem[] = [
   { href: "/personnel/loa", label: "LOA", short: "LOA" },
 ];
 
+/** PROMOTIONS sub-tab is admin/owner only; operators still see other personnel tabs. */
+export function personnelSubNavForAccess(accessLevel: string | undefined): SubNavItem[] {
+  if (accessLevel === "admin" || accessLevel === "owner") return PERSONNEL_SUB;
+  return PERSONNEL_SUB.filter((i) => i.href !== "/personnel/promotions");
+}
+
 export const TACTICAL_SUB: SubNavItem[] = [
   { href: "/tactical", label: "OVERVIEW", short: "Home" },
   { href: "/tactical/map", label: "TAC MAP", short: "Map" },

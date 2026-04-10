@@ -44,11 +44,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// ── Demo mode: injected at build time for GitHub Pages ──────────────────────
+const DEMO_USER: AuthUser = {
+  id: 0,
+  username: "DEMO",
+  accessLevel: "admin",
+  role: "GFC",
+  rank: "SSG",
+  assignedUnit: "1/A/1-1 IN",
+  teamAssignment: "HQ",
+  milIdNumber: "",
+  mos: "11B",
+  tacticalRoles: [{ id: 1, name: "Base node access", color: "#5865F2" }],
+  permissions: ["*"],
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // In demo/static builds skip the API call and auto-login as DEMO user
+    if (import.meta.env.VITE_DEMO_MODE === "true") {
+      setUser(DEMO_USER);
+      setLoading(false);
+      return;
+    }
+
     apiRequest("GET", "/api/auth/me")
       .then((u: AuthUser) =>
         setUser({
@@ -62,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
+    if (import.meta.env.VITE_DEMO_MODE === "true") return;
     const u = await apiRequest("POST", "/api/auth/login", { username, password });
     setUser({
       ...u,
@@ -71,11 +94,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (import.meta.env.VITE_DEMO_MODE === "true") return;
     await apiRequest("POST", "/api/auth/logout");
     setUser(null);
   };
 
   const refreshUser = async () => {
+    if (import.meta.env.VITE_DEMO_MODE === "true") return;
     try {
       const u = await apiRequest("GET", "/api/auth/me");
       setUser({

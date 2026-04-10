@@ -49,8 +49,8 @@ import type { TacticalMapLine, TacticalMapLineRow } from "@shared/schema";
 import { existsSync, mkdirSync } from "fs";
 const RENDER_DISK = "/var/data";
 const DB_PATH = process.env.NODE_ENV === "production" && existsSync(RENDER_DISK)
-  ? `${RENDER_DISK}/tacedge.db`
-  : "tacedge.db";
+  ? `${RENDER_DISK}/metropolis.db`
+  : "metropolis.db";
 const sqlite = new Database(DB_PATH);
 const db = drizzle(sqlite, { schema });
 

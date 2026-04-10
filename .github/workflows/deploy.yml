@@ -34,6 +34,7 @@ jobs:
         run: npx vite build --base=/metropolis/
         env:
           NODE_ENV: production
+          VITE_DEMO_MODE: "true"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

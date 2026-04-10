@@ -3,7 +3,7 @@ import { AwardRibbonImage } from "@/components/AwardRibbonImage";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type TacticalRoleBadge } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import {
   BadgeCheck,
@@ -58,6 +58,7 @@ type ProfilePayload = {
   username: string;
   accessLevel: "user" | "admin" | "owner" | string;
   tacticalRole: string;
+  tacticalRoles?: TacticalRoleBadge[];
   rank: string;
   assignedUnit: string;
   teamAssignment: string;
@@ -145,6 +146,7 @@ export default function UserProfilePage() {
   const citations = profile?.citations ?? [];
   const signInSheets = profile?.signInSheets ?? [];
   const qualifications = profile?.qualifications ?? [];
+  const tacticalPermRoles = profile?.tacticalRoles ?? [];
 
   return (
     <div className="p-3 md:p-4 tac-page space-y-3">
@@ -203,6 +205,27 @@ export default function UserProfilePage() {
               <div>TEAM ASSIGNMENT: <span className="text-foreground/80 font-mono">{profile?.teamAssignment || "—"}</span></div>
               <div>MOS: <span className="text-foreground/80 font-mono">{profile?.mos || "—"}</span></div>
               <div>MIL ID: <span className="text-foreground/80 font-mono">{profile?.milIdNumber || "—"}</span></div>
+              <div className="sm:col-span-2 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-2">
+                <span className="text-muted-foreground shrink-0">PERM ROLES:</span>
+                {tacticalPermRoles.length > 0 ? (
+                  <span className="inline-flex flex-wrap gap-1">
+                    {tacticalPermRoles.map((tr) => (
+                      <span
+                        key={tr.id}
+                        className="text-[8px] px-1.5 py-0.5 rounded border font-mono tracking-tight"
+                        style={{
+                          borderColor: `${tr.color || "#5865F2"}55`,
+                          color: tr.color || "#93c5fd",
+                        }}
+                      >
+                        {tr.name}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-foreground/80 font-mono">—</span>
+                )}
+              </div>
             </div>
           </div>
 

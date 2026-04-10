@@ -610,6 +610,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
       username: u.username,
       accessLevel: u.accessLevel,
       tacticalRole: u.role || "",
+      tacticalRoles: storage.getTacticalRolesDisplayForUser(u.id),
       rank: u.rank || "",
       assignedUnit: u.assignedUnit || "",
       teamAssignment: u.teamAssignment || "",
@@ -2568,6 +2569,11 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     res.json(row ?? null);
   });
 
+  app.get("/api/loa/my-return-requests", requireAuth, (req, res) => {
+    storage.reconcileExpiredLoas();
+    res.json(storage.listLoaEarlyReturnApprovalsForUser(req.session.username!));
+  });
+
   app.get("/api/loa/approved-for-admin", requireAuth, requireAdmin, (_req, res) => {
     storage.reconcileExpiredLoas();
     res.json(storage.listApprovedLoaRequests());
@@ -2594,10 +2600,7 @@ export function registerRoutes(httpServer: ReturnType<typeof createServer>, app:
     }
     const ret = parsed.data.returnDate.trim();
     if (ret < loaStart || ret > loaEnd) {
-      return res.status(400).json({ error: "Return date must be within your current leave window." });
-    }
-    if (ret >= loaEnd) {
-      return res.status(400).json({ error: "Choose a date before your scheduled leave end date to return early." });
+      return res.status(400).json({ error: "Return date must be within your approved leave window (inclusive)." });
     }
     const today = new Date().toISOString().slice(0, 10);
     if (ret < today) {

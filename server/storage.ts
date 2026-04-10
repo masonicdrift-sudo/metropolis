@@ -1011,6 +1011,8 @@ export interface IStorage {
   findApprovedLoaMatchingUserWindow(username: string): LoaRequest | undefined;
   hasPendingEarlyReturnApproval(username: string): boolean;
   getPendingEarlyReturnApprovalForUser(username: string): Approval | undefined;
+  /** All return-from-LOA approval rows requested by this user (pending, approved, rejected, cancelled). */
+  listLoaEarlyReturnApprovalsForUser(username: string): Approval[];
   applyApprovedEarlyReturn(row: Approval, approverUsername: string): { ok: true } | { ok: false; error: string };
   syncPersonnelRosterStatusForLinkedUser(username: string, status: string): void;
   // Medical / Casualty
@@ -2189,6 +2191,17 @@ export class Storage implements IStorage {
       )
       .orderBy(desc(schema.approvals.id))
       .get();
+  }
+
+  listLoaEarlyReturnApprovalsForUser(username: string) {
+    return db
+      .select()
+      .from(schema.approvals)
+      .where(
+        and(eq(schema.approvals.requestedBy, username), eq(schema.approvals.entityType, "loa_early_return")),
+      )
+      .orderBy(desc(schema.approvals.id))
+      .all();
   }
 
   applyApprovedEarlyReturn(row: Approval, _approverUsername: string): { ok: true } | { ok: false; error: string } {
